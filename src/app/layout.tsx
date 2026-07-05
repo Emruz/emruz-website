@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Header, Footer } from "@/components";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://emruz.com";
@@ -60,7 +61,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900 antialiased">
-        {children}
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
       </body>
     </html>
   );

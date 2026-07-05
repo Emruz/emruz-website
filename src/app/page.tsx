@@ -1,65 +1,379 @@
-import Image from "next/image";
+import {
+  Hero,
+  SectionIntro,
+  Container,
+  Card,
+  ServiceCard,
+  CTABanner,
+  FAQAccordion,
+} from '@/components';
+import {
+  Shield,
+  Cloud,
+  Zap,
+  BarChart3,
+  Brain,
+  CheckCircle2,
+} from 'lucide-react';
 
 export default function Home() {
+  // Capability cards data
+  const capabilities = [
+    {
+      icon: Shield,
+      title: 'vCISO & Leadership',
+      description: 'Security strategy and governance from someone who thinks like a CISO.',
+      benefits: [
+        'Strategic security roadmap',
+        'Board-ready reporting',
+        'Governance framework',
+      ],
+      href: '/services/vciso',
+      color: 'blue' as const,
+    },
+    {
+      icon: CheckCircle2,
+      title: 'Security & Compliance',
+      description: 'GRC programs and security operations that actually work.',
+      benefits: [
+        'Compliance framework',
+        'Risk assessment',
+        'Security operations',
+      ],
+      href: '/services/security',
+      color: 'teal' as const,
+    },
+    {
+      icon: Cloud,
+      title: 'Cloud Strategy & Security',
+      description: 'Cloud architecture that\'s secure and cost-effective from day one.',
+      benefits: [
+        'Migration roadmap',
+        'Security architecture',
+        'Cost optimization',
+      ],
+      href: '/services/cloud',
+      color: 'blue' as const,
+    },
+    {
+      icon: BarChart3,
+      title: 'Data Science & Analytics',
+      description: 'Turn data into insight. Threat hunting, anomaly detection, risk prediction.',
+      benefits: [
+        'Analytics roadmap',
+        'Threat hunting',
+        'Predictive models',
+      ],
+      href: '/services/data-science',
+      color: 'teal' as const,
+    },
+    {
+      icon: Brain,
+      title: 'AI Advisory & Enablement',
+      description: 'Understand AI opportunity and risk. Build governance. Upskill your team.',
+      benefits: [
+        'AI strategy',
+        'Governance framework',
+        'Team enablement',
+      ],
+      href: '/services/ai',
+      color: 'blue' as const,
+    },
+  ];
+
+  // Value propositions
+  const valueProps = [
+    {
+      title: 'Framework-First Methodology',
+      description:
+        'Every engagement grounded in NIST CSF, CIS Controls, or equivalent. We speak the language of compliance, auditors, and boards.',
+      icon: CheckCircle2,
+    },
+    {
+      title: 'Assessment-Driven Engagement',
+      description:
+        'No guessing. We start by understanding where you are, what\'s at risk, and what\'s possible. Then we design and deliver based on real gaps.',
+      icon: Zap,
+    },
+    {
+      title: 'Operational Delivery Capability',
+      description:
+        'Strategy is just paper without execution. We have the team and platform to deliver outcomes at scale, not just advise from the sidelines.',
+      icon: Cloud,
+    },
+  ];
+
+  // Engagement model phases
+  const phases = [
+    {
+      number: '01',
+      title: 'Assess',
+      description: 'Understand current state, gaps, and opportunities',
+    },
+    {
+      number: '02',
+      title: 'Design',
+      description: 'Build roadmap and implementation plan',
+    },
+    {
+      number: '03',
+      title: 'Deliver',
+      description: 'Execute outcomes and support your team',
+    },
+    {
+      number: '04',
+      title: 'Optimize',
+      description: 'Refine, measure, and improve',
+    },
+  ];
+
+  // Proof points
+  const proofPoints = [
+    {
+      stat: '200+',
+      label: 'Organizations Served',
+    },
+    {
+      stat: '15+',
+      label: 'Years of Combined Experience',
+    },
+    {
+      stat: 'NIST/CIS',
+      label: 'Framework-Grounded Approach',
+    },
+  ];
+
+  // FAQ items
+  const faqItems = [
+    {
+      question: 'What does an assessment involve?',
+      answer:
+        'Our assessments are diagnostic engagements (typically 3-4 weeks) where we understand your current state, gaps, and opportunities. You\'ll receive a clear roadmap and next steps. No sales pitch—just honest diagnosis.',
+    },
+    {
+      question: 'How long do programs typically take?',
+      answer:
+        'It depends on scope and complexity. Most engagements range from 3-12 months. We\'ll give you realistic timelines and milestones upfront.',
+    },
+    {
+      question: 'Do you work with remote teams?',
+      answer:
+        'Yes. We work with distributed teams across multiple time zones. Most of our engagements blend remote and in-person work based on your needs.',
+    },
+    {
+      question: 'What makes you different from other consultancies?',
+      answer:
+        'We combine strategic clarity with execution capability. Most consultancies advise; most vendors execute. We do both. We\'re grounded in frameworks (NIST, CIS, CSF) and focused on outcomes.',
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+    <>
+      {/* Hero Section */}
+      <Hero
+        headline="Strategy and execution. Technical clarity without the overhead."
+        subheadline="Emruz helps organizations understand their security, cloud, and AI landscape—and how to evolve it. Through frameworks like NIST and CIS. Through outcomes we can measure."
+        primaryCta={{
+          label: 'Schedule an Assessment',
+          href: '/assessments',
+        }}
+        secondaryCta={{
+          label: 'Explore Services',
+          href: '#capabilities',
+        }}
+      />
+
+      {/* Trust Strip - Framework Logos */}
+      <section className="bg-gray-50 py-8 md:py-12 border-y border-gray-200">
+        <Container>
+          <div className="flex items-center justify-center gap-8 md:gap-12 flex-wrap">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 font-semibold mb-2">
+                Framework-Grounded
+              </p>
+              <div className="flex gap-4 items-center">
+                <span className="font-bold text-gray-700">NIST CSF</span>
+                <span className="text-gray-300">•</span>
+                <span className="font-bold text-gray-700">CIS Controls</span>
+                <span className="text-gray-300">•</span>
+                <span className="font-bold text-gray-700">CSF</span>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Capabilities Section */}
+      <section id="capabilities" className="py-16 md:py-24">
+        <Container>
+          <SectionIntro
+            heading="Core Capabilities"
+            description="We deliver across security, cloud, data science, and AI. Choose based on your challenge, or let's talk about what matters most."
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {capabilities.map((cap, i) => (
+              <ServiceCard
+                key={i}
+                icon={cap.icon}
+                title={cap.title}
+                description={cap.description}
+                benefits={cap.benefits}
+                href={cap.href}
+                color={cap.color}
+              />
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* Assessments Entry Section */}
+      <section className="bg-blue-50 py-16 md:py-24">
+        <Container>
+          <SectionIntro
+            heading="Start With a Diagnostic"
+            description="Every engagement starts with clarity. We'll assess where you are, what's at risk, and what's possible. Then we'll design and deliver outcomes."
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {['Security', 'Cloud', 'AI'].map((type) => (
+              <Card key={type} hoverable className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {type} Assessment
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Diagnostic readiness and opportunity assessment
+                </p>
+                <a
+                  href="/assessments"
+                  className="inline-block text-blue-600 font-semibold hover:text-blue-700"
+                >
+                  Learn More →
+                </a>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="/assessments"
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+              Explore All Assessments
+            </a>
+          </div>
+        </Container>
+      </section>
+
+      {/* Why Emruz Section */}
+      <section className="py-16 md:py-24">
+        <Container>
+          <SectionIntro
+            heading="Why Emruz"
+            description="Three reasons organizations choose Emruz"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {valueProps.map((prop, i) => {
+              const Icon = prop.icon;
+              return (
+                <div key={i} className="text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {prop.title}
+                  </h3>
+                  <p className="text-gray-600">{prop.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
+      {/* Engagement Model Section */}
+      <section className="bg-gray-50 py-16 md:py-24">
+        <Container>
+          <SectionIntro
+            heading="How We Work"
+            description="Most consultancies stop at recommendations. We don't. We assess, design, and deliver outcomes."
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {phases.map((phase, i) => (
+              <div key={i}>
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {phase.number}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {phase.title}
+                </h3>
+                <p className="text-gray-600">{phase.description}</p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* Proof/Trust Section */}
+      <section className="py-16 md:py-24">
+        <Container>
+          <SectionIntro heading="Why Teams Trust Emruz" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {proofPoints.map((point, i) => (
+              <Card key={i} className="text-center">
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {point.stat}
+                </div>
+                <p className="text-gray-600">{point.label}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-12 bg-blue-50 rounded-lg p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              Team Credentials
+            </h3>
+            <p className="text-gray-600">
+              Leadership with 15+ years in security operations, cloud
+              architecture, and governance. Certifications: CISSP, CCSK, AWS
+              Security Specialty, Azure Administrator.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="bg-gray-50 py-16 md:py-24">
+        <Container>
+          <SectionIntro
+            heading="Frequently Asked Questions"
+            description="Get answers to common questions about our approach and services"
+          />
+
+          <div className="max-w-3xl mx-auto">
+            <FAQAccordion items={faqItems} />
+          </div>
+        </Container>
+      </section>
+
+      {/* Final CTA Banner */}
+      <CTABanner
+        heading="Ready to assess your security, cloud, or AI posture?"
+        description="Schedule a diagnostic assessment with our team. No sales pitch. Just honest diagnosis and a clear roadmap."
+        primaryCta={{
+          label: 'Schedule an Assessment',
+          href: '/assessments',
+        }}
+        secondaryCta={{
+          label: 'Get in Touch',
+          href: '/contact',
+        }}
+      />
+    </>
   );
 }

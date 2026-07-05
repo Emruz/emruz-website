@@ -13,9 +13,9 @@ interface ServiceCardProps {
 }
 
 const colorMap = {
-  blue: 'bg-blue-100 text-blue-600',
-  teal: 'bg-teal-100 text-teal-600',
-  purple: 'bg-purple-100 text-purple-600',
+  blue: { bg: 'bg-gradient-to-br from-blue-500 to-blue-600', text: 'text-white' },
+  teal: { bg: 'bg-gradient-to-br from-cyan-500 to-teal-600', text: 'text-white' },
+  purple: { bg: 'bg-gradient-to-br from-purple-500 to-purple-600', text: 'text-white' },
 };
 
 export default function ServiceCard({
@@ -28,10 +28,13 @@ export default function ServiceCard({
   color = 'blue',
 }: ServiceCardProps) {
   return (
-    <Card hoverable className="flex flex-col">
+    <Card hoverable className="flex flex-col relative overflow-hidden">
+      {/* Gradient background accent */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -mr-12 -mt-12 opacity-30"></div>
+
       {/* Icon */}
-      <div className={`${colorMap[color]} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
-        <Icon className="w-6 h-6" />
+      <div className={`${colorMap[color].bg} ${colorMap[color].text} w-14 h-14 rounded-xl flex items-center justify-center mb-4 relative z-10 shadow-lg`}>
+        <Icon className="w-7 h-7" />
       </div>
 
       {/* Title */}

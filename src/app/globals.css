@@ -14,10 +14,12 @@
   --dark-gray: #2a3140;
   --black: #0f1419;
 
-  /* Brand Colors */
-  --brand-primary: #0e6ba0;
-  --brand-primary-light: #4a9fd8;
-  --brand-primary-dark: #084c6f;
+  /* Brand Colors - Modern, High Contrast */
+  --brand-primary: #2563eb; /* Vibrant blue */
+  --brand-primary-light: #60a5fa;
+  --brand-primary-dark: #1e40af;
+  --brand-accent: #7c3aed; /* Purple accent */
+  --brand-accent-light: #a78bfa;
 
   /* Semantic Colors */
   --success: #27ae60;

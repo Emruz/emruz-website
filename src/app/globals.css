@@ -100,12 +100,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a {
-  color: var(--brand-primary);
   text-decoration: none;
   transition: all 200ms ease-in-out;
 }
 
-a:hover {
+/* Regular links (not buttons) */
+a:not(.bg-blue-500):not(.bg-blue-600):not(.bg-white):not(.bg-white\/10):not([class*="bg-gradient"]) {
+  color: var(--brand-primary);
+}
+
+a:not(.bg-blue-500):not(.bg-blue-600):not(.bg-white):not(.bg-white\/10):not([class*="bg-gradient"]):hover {
   text-decoration: underline;
   color: var(--brand-primary-dark);
 }

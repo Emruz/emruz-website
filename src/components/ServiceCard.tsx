@@ -58,7 +58,7 @@ export default function ServiceCard({
       {/* CTA */}
       <Link
         href={href}
-        className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+        className="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors mt-auto"
       >
         {ctaLabel} →
       </Link>

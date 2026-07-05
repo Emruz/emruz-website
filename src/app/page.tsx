@@ -238,16 +238,16 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {['Security', 'Cloud', 'AI'].map((type) => (
-              <Card key={type} hoverable className="text-center">
+              <Card key={type} hoverable className="text-center flex flex-col">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {type} Assessment
                 </h3>
-                <p className="text-gray-600 text-sm mb-4">
+                <p className="text-gray-600 text-sm mb-4 flex-grow">
                   Diagnostic readiness and opportunity assessment
                 </p>
                 <a
                   href="/assessments"
-                  className="inline-block text-blue-600 font-semibold hover:text-blue-700"
+                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Learn More →
                 </a>

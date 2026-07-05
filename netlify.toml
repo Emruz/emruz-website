@@ -1,0 +1,41 @@
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = ".next"
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.next/sitemap.xml"
+  status = 200
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/.next/robots.txt"
+  status = 200
+
+# Redirect 404s to home (optional, for SPA-style routing)
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
+
+[functions]
+  node_bundler = "esbuild"
+
+[dev]
+  framework = "next"
+  command = "npm run dev"
+  port = 3000
+
+[context.production]
+  command = "npm run build"
+  publish = ".next"
+
+[context.production.environment]
+  NEXT_PUBLIC_SITE_URL = "https://emruz.com"
+
+[context.deploy-preview]
+  command = "npm run build"
+
+[context.branch-deploy]
+  command = "npm run build"

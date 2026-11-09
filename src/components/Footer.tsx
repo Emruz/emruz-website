@@ -18,9 +18,12 @@ export default function Footer() {
       { label: 'GRC Program', href: '/services/grc' },
       { label: 'Data Science', href: '/services/data-science' },
       { label: 'AI Advisory', href: '/services/ai' },
-      { label: 'Service Packages', href: '/services/packages' },
     ],
     products: [
+      { label: 'EDR', href: '/products/edr' },
+      { label: 'MDR', href: '/products/mdr' },
+      { label: 'XDR', href: '/products/xdr' },
+      { label: 'ΔDR', href: '/products/ddr' },
       { label: 'Motiv', href: '/motiv' },
       { label: 'All products', href: '/products' },
     ],
@@ -31,6 +34,7 @@ export default function Footer() {
     legal: [
       { label: 'Privacy', href: '/privacy' },
       { label: 'Terms', href: '/terms' },
+      { label: 'Motiv EULA', href: '/motiv/eula' },
     ],
   };
 

@@ -1,0 +1,206 @@
+import Link from 'next/link';
+import LegalPage, { LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
+
+export const metadata = {
+  title: 'Privacy policy',
+  description: 'How Emruz collects, uses and protects personal information on emruz.com, including accounts and Motiv subscriptions.',
+};
+
+export default function PrivacyPage() {
+  return (
+    <LegalPage
+      title="Privacy policy"
+      summary="What we collect on emruz.com, why, who helps us run it, and the choices you have."
+      updated="9 November 2026"
+      path="/privacy"
+    >
+      <p>
+        This policy covers emruz.com, including the contact form, your Emruz account, Motiv purchases and the
+        licensing service Motiv uses to keep Premium on. It is published by {LEGAL_PARTY} (&quot;Emruz&quot;,
+        &quot;we&quot;, &quot;us&quot;). The Motiv desktop app has its own{' '}
+        <Link href="/motiv/privacy">Motiv privacy policy</Link>, which explains what happens on your computer.
+      </p>
+      <p>
+        <strong>The short version:</strong> we collect only what we need to answer you, run your account and sell
+        Motiv. We don&apos;t use analytics or advertising trackers, and we don&apos;t sell or share personal
+        information for advertising.
+      </p>
+
+      <h2>What we collect</h2>
+      <h3>When you contact us</h3>
+      <p>
+        The contact form collects your name, email address, company (optional), the topic and your message. We use
+        it only to reply to you and to follow up on your request.
+      </p>
+
+      <h3>When you create an account or sign in</h3>
+      <ul>
+        <li>Your email address, and your name if you or your sign-in provider gives it.</li>
+        <li>
+          If you sign in with Microsoft, Google or Apple: an identifier for your account with that provider, the
+          email it shares and whether it has verified that email. We never receive your password. If you use
+          Apple&apos;s &quot;Hide My Email&quot;, we receive the relay address Apple creates.
+        </li>
+        <li>If you sign in with an email link: the address the link was sent to and when it was used.</li>
+        <li>A session cookie that keeps you signed in (see Cookies below).</li>
+      </ul>
+
+      <h3>When you buy Motiv</h3>
+      <p>
+        Payments are handled by Stripe. Your card details go directly to Stripe and never reach our servers. From
+        Stripe we receive and keep your email address, name, billing country and postal code (to calculate tax),
+        the plan you bought, its status and renewal date, and Stripe&apos;s references to your customer record and
+        payments.
+      </p>
+
+      <h3>When Motiv checks in</h3>
+      <p>
+        With Motiv Premium, the app contacts emruz.com when you register a computer and about once a day afterwards.
+        We receive and keep:
+      </p>
+      <ul>
+        <li>your subscription ID;</li>
+        <li>a random ID Motiv creates for the computer (not derived from its hardware);</li>
+        <li>the computer&apos;s name, only if you choose to share it in Motiv;</li>
+        <li>the Motiv version and operating system family (macOS or Windows);</li>
+        <li>when the computer was registered and last checked in.</li>
+      </ul>
+      <p>
+        Motiv never sends us recordings, transcripts, summaries, meeting details, calendar data or how you use the
+        app.
+      </p>
+
+      <h3>Technical information</h3>
+      <p>
+        Like most websites, our hosting provider records technical details of requests, such as IP address, browser
+        and the page requested, to deliver the site and protect it from abuse. We use IP addresses briefly to limit
+        repeated requests (for example, too many sign-in attempts).
+      </p>
+
+      <h2>How we use it</h2>
+      <ul>
+        <li>To provide your account, sign you in and keep it secure.</li>
+        <li>To sell, deliver and manage Motiv subscriptions, including tax, receipts, renewals and refunds.</li>
+        <li>To confirm that a computer is entitled to Motiv Premium and to enforce the number of computers per subscription.</li>
+        <li>To send emails you need: sign-in links, purchase confirmations and important account notices.</li>
+        <li>To answer questions and give support.</li>
+        <li>To detect and prevent fraud and abuse, and to meet legal and tax obligations.</li>
+      </ul>
+      <p>
+        We don&apos;t send marketing email unless you ask for it, and you can stop it any time. To help you, our
+        support staff may view your account as you see it, for example to check a subscription or a registered
+        computer. That access is limited to Emruz administrators and is logged.
+      </p>
+
+      <h2>Who helps us run emruz.com</h2>
+      <p>We share information only with service providers who process it for us, under their own privacy terms:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>What it does</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Netlify</td><td>Hosts the website, the contact form and the database</td></tr>
+          <tr><td>Stripe</td><td>Payments, tax calculation, invoices and the billing portal</td></tr>
+          <tr><td>Resend</td><td>Sends sign-in and purchase emails</td></tr>
+          <tr><td>Microsoft, Google, Apple</td><td>Sign-in, only if you choose that option</td></tr>
+        </tbody>
+      </table>
+      <p>
+        We may also disclose information if the law requires it, to protect our rights or the safety of others, or as
+        part of a sale or reorganization of the business, in which case this policy continues to apply.
+      </p>
+
+      <h2>Information from Google</h2>
+      <p>
+        If you sign in with Google, we receive only your basic profile: an account identifier, your name and your
+        email address. Our use of information received from Google APIs adheres to the{' '}
+        <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+        including the Limited Use requirements. We use it only to sign you in and link your purchases, and we
+        don&apos;t transfer it for advertising or let anyone read it except as needed to support you.
+      </p>
+
+      <h2>Cookies</h2>
+      <p>We use only cookies that are needed for the site to work. No analytics or advertising cookies.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Cookie</th>
+            <th>Purpose</th>
+            <th>Lasts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>emruz_session</td><td>Keeps you signed in</td><td>30 days</td></tr>
+          <tr><td>emruz_oauth_…</td><td>Protects a Microsoft, Google or Apple sign-in while it is in progress</td><td>10 minutes</td></tr>
+          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Until they switch back</td></tr>
+        </tbody>
+      </table>
+
+      <h2>How long we keep it</h2>
+      <ul>
+        <li>Contact form messages: as long as needed to handle your request and any follow-up.</li>
+        <li>Account and sign-in details: while your account is open.</li>
+        <li>
+          Purchase and billing records: for as long as tax and accounting law requires, usually up to seven years,
+          even after an account is closed.
+        </li>
+        <li>Registered computers: until you remove them or your account is closed.</li>
+        <li>Sign-in links, sign-in attempts and rate-limit records: hours to days.</li>
+      </ul>
+
+      <h2>Your choices and rights</h2>
+      <p>
+        You can see and manage your subscriptions, computers and sign-in methods on your{' '}
+        <Link href="/motiv/account">account page</Link>, and change or cancel billing in the Stripe billing portal
+        linked from there. You can also ask us to:
+      </p>
+      <ul>
+        <li>give you a copy of the personal information we hold about you;</li>
+        <li>correct it;</li>
+        <li>delete it, except what we must keep for legal, tax or fraud-prevention reasons;</li>
+        <li>stop using it for a purpose, where the law gives you that right.</li>
+      </ul>
+      <p>
+        Email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> from the address on your account. We&apos;ll
+        respond within the time the law requires, and we won&apos;t treat you differently for exercising these
+        rights.
+      </p>
+      <p>
+        <strong>California residents:</strong> we don&apos;t sell or share personal information as the California
+        Consumer Privacy Act defines those terms, and we don&apos;t use sensitive personal information to infer
+        characteristics about you.
+      </p>
+      <p>
+        <strong>Visitors from the EU, UK and similar regions:</strong> we process personal information to perform our
+        contract with you (your account and purchases), to meet legal obligations (tax records), and for our
+        legitimate interests in running and securing the service. Our providers may process information in the
+        United States. You may complain to your local data protection authority.
+      </p>
+
+      <h2>Security</h2>
+      <p>
+        We use encrypted connections, store sign-in tokens only in hashed form, keep secrets out of our code, and limit
+        administrative access. No system is perfectly secure, so please tell us at{' '}
+        <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> if you believe your account is at risk.
+      </p>
+
+      <h2>Children</h2>
+      <p>emruz.com and Motiv are for business use and are not directed to children under 16. We don&apos;t knowingly collect their information.</p>
+
+      <h2>Changes</h2>
+      <p>
+        We&apos;ll post changes here and update the date above. If a change materially affects how we use your
+        information, we&apos;ll tell account holders by email before it takes effect.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        {LEGAL_PARTY}, Santa Clara, California, USA.{' '}
+        <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>
+      </p>
+    </LegalPage>
+  );
+}

@@ -48,9 +48,78 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use.' },
 };
 
+export type FamilySlug = 'EDR' | 'MDR' | 'XDR' | 'DDR';
+
+export interface ProductFamily {
+  slug: FamilySlug;
+  /** URL segment under /products */
+  path: string;
+  /** Display name; DDR is shown as ΔDR */
+  label: string;
+  name: string;
+  tagline: string;
+  summary: string;
+  bestFor: string;
+}
+
+/** Managed security product families. Delivered with WhiteDog Cyber. */
+export const families: ProductFamily[] = [
+  {
+    slug: 'EDR',
+    path: 'edr',
+    label: 'EDR',
+    name: 'Endpoint Detection & Response',
+    tagline: 'Modern protection on every device',
+    summary: 'Prevention plus detection, containment and rollback on laptops, desktops and servers.',
+    bestFor: 'Organizations starting a security program or replacing legacy antivirus.',
+  },
+  {
+    slug: 'MDR',
+    path: 'mdr',
+    label: 'MDR',
+    name: 'Managed Detection & Response',
+    tagline: 'Experts watching around the clock',
+    summary:
+      'A 24/7 security operations team monitors, investigates and responds for you, with incident response, exposure management and continuous pen testing included.',
+    bestFor: 'Teams without their own 24/7 security operations center.',
+  },
+  {
+    slug: 'XDR',
+    path: 'xdr',
+    label: 'XDR',
+    name: 'Extended Detection & Response',
+    tagline: 'Beyond the endpoint',
+    summary:
+      'Everything in MDR plus email, collaboration and internet threat protection, threat hunting and data security posture, in three tiers.',
+    bestFor: 'Organizations where phishing, web threats and sensitive data are the main risks.',
+  },
+  {
+    slug: 'DDR',
+    path: 'ddr',
+    label: 'ΔDR',
+    name: 'Detect, Defend & Respond',
+    tagline: 'Active defense with identity and data at the center',
+    summary:
+      'Everything in XDR plus identity and data risk and posture management, DNS and cloud file security, and compliance reporting, in four tiers.',
+    bestFor: 'Enterprises and regulated organizations that need the complete portfolio.',
+  },
+];
+
+export const familyBySlug = (slug: FamilySlug) => families.find((f) => f.slug === slug)!;
+export const familyByPath = (path: string) => families.find((f) => f.path === path);
+
+/** Package code as shown to people: DDR codes display as ΔDR. */
+export const displayCode = (code: string) => code.replace(/^DDR/, 'ΔDR');
+
+/** Where a package's details live: its family page, opened to that package. */
+export const packageHref = (pkg: { code: string; family: FamilySlug }) =>
+  `/products/${familyBySlug(pkg.family).path}#${pkg.code}`;
+
+export const POWERED_BY = 'Powered by WhiteDog Cyber';
+
 export interface ServicePackage {
   code: string;
-  family: 'Foundation' | 'MDR' | 'XDR' | 'DDR';
+  family: FamilySlug;
   name: string;
   tagline: string;
   summary: string;
@@ -64,7 +133,7 @@ export interface ServicePackage {
 export const packages: ServicePackage[] = [
   {
     code: 'EDR',
-    family: 'Foundation',
+    family: 'EDR',
     name: 'Endpoint Detection & Response',
     tagline: 'Your first line of defense',
     summary: 'Protects every device with prevention plus detection and rollback when something gets through.',

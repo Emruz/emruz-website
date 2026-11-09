@@ -257,10 +257,10 @@ export default function Home() {
         <Container>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Service Package Portfolio</h2>
-              <p className="text-lg text-gray-600 mt-2">Managed security from endpoint protection to full detect, defend and respond. Each tier builds on the last.</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Managed security products</h2>
+              <p className="text-lg text-gray-600 mt-2">EDR, MDR, XDR and ΔDR, from endpoint protection to full detect, defend and respond. Each tier builds on the last.</p>
             </div>
-            <Link href="/services/packages" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
+            <Link href="/products/compare" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
               Compare all packages →
             </Link>
           </div>

@@ -16,7 +16,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   const p = provider as Provider;
   const link = url.searchParams.get('link') === '1' && !!(await currentAccount());
   const start = startAuth(p);
-  (await cookies()).set('emruz_oauth', JSON.stringify({ p, state: start.state, cv: start.codeVerifier, nonce: start.nonce, next, link }), {
+  // One cookie per attempt, keyed by state, so a double click or a second tab
+  // can't overwrite an attempt that is still in progress.
+  (await cookies()).set(`emruz_oauth_${start.state}`, JSON.stringify({ p, state: start.state, cv: start.codeVerifier, nonce: start.nonce, next, link }), {
     httpOnly: true,
     secure: IS_PROD,
     // Apple returns with a cross-site POST, which only carries SameSite=None cookies

@@ -64,7 +64,10 @@ export default function MotivPage() {
       {/* Privacy */}
       <section id="privacy" className="scroll-mt-20 py-12 md:py-16">
         <Container>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Private by default</h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-2 mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Private by default</h2>
+            <Link href="/motiv/privacy" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">Read the Motiv privacy policy →</Link>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {motivPrivacy.map((item, i) => {
               const Icon = privacyIcons[i];
@@ -140,6 +143,13 @@ export default function MotivPage() {
               </div>
             ))}
           </div>
+          {salesOpen && (
+            <p className="mt-4 text-sm text-gray-500">
+              By buying you agree to the <Link href="/terms" className="underline">terms of service</Link> and the{' '}
+              <Link href="/motiv/eula" className="underline">Motiv license agreement</Link>. Full refund within 14 days of
+              your first purchase.
+            </p>
+          )}
           <p className="mt-6 text-sm text-gray-500">
             Register a computer by signing in on emruz.com and entering the code Motiv shows you, or paste your
             subscription ID. Manage billing and devices from your account.

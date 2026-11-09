@@ -1,7 +1,17 @@
 import 'server-only';
 
-/** Public base URL of the site, no trailing slash. */
-export const SITE_URL = (process.env.SITE_URL || process.env.URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/$/, '');
+/**
+ * Public base URL of the site, no trailing slash. Redirects are built from this,
+ * never from the request URL: on Netlify the request URL is an internal deploy
+ * address, and redirecting there loses the session cookie set for emruz.com.
+ */
+export const SITE_URL = (
+  process.env.SITE_URL ||
+  (process.env.CONTEXT && process.env.CONTEXT !== 'production' ? process.env.DEPLOY_PRIME_URL : undefined) ||
+  process.env.URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'http://localhost:3000'
+).replace(/\/$/, '');
 
 export const IS_PROD = process.env.NODE_ENV === 'production' && SITE_URL.startsWith('https://');
 

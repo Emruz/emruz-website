@@ -1,3 +1,4 @@
+import { SITE_URL } from '@/lib/server/config';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { signInWithIdentity } from '@/lib/server/accounts';
@@ -29,7 +30,7 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
     pending = null;
   }
   const back = (error: string, next = '/motiv/account') =>
-    NextResponse.redirect(new URL(`/signin?error=${encodeURIComponent(error)}&next=${encodeURIComponent(next)}`, req.url), 303);
+    NextResponse.redirect(new URL(`/signin?error=${encodeURIComponent(error)}&next=${encodeURIComponent(next)}`, SITE_URL), 303);
 
   const reject = (reason: string, error: string, next?: string) => {
     console.warn(`oauth callback rejected (${provider}): ${reason}`);
@@ -55,7 +56,7 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
     const result = await signInWithIdentity(claims, current?.id ?? null);
     if (!result.ok) return back(result.error, pending.next);
     if (!current) await createSession(result.accountId);
-    return NextResponse.redirect(new URL(safeNext(pending.next), req.url), 303);
+    return NextResponse.redirect(new URL(safeNext(pending.next), SITE_URL), 303);
   } catch (e) {
     console.error('sign-in failed', e);
     return back('failed', pending.next);

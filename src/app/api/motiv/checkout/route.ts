@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   if (!sameOrigin(req)) return new NextResponse('Forbidden', { status: 403 });
   const plan = String((await req.formData()).get('plan')) as Plan;
   const price = PLANS.includes(plan) ? priceId(plan) : undefined;
-  if (!motiv.salesOpen || !price) return NextResponse.redirect(new URL('/motiv#plans', req.url), 303);
+  if (!motiv.salesOpen || !price) return NextResponse.redirect(new URL('/motiv#plans', SITE_URL), 303);
 
   const account = await currentAccount();
   const lifetime = plan === 'lifetime';

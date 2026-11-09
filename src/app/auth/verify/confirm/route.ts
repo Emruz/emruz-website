@@ -1,3 +1,4 @@
+import { SITE_URL } from '@/lib/server/config';
 import { NextResponse } from 'next/server';
 import { sameOrigin } from '@/lib/server/api';
 import { claimEmail, signInWithIdentity } from '@/lib/server/accounts';
@@ -10,7 +11,7 @@ import { createSession, currentAccount, safeNext } from '@/lib/server/session';
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return new NextResponse('Forbidden', { status: 403 });
   const token = String((await req.formData()).get('token') || '');
-  const to = (path: string) => NextResponse.redirect(new URL(path, req.url), 303);
+  const to = (path: string) => NextResponse.redirect(new URL(path, SITE_URL), 303);
   const [t] = await db()<{ email: string; purpose: string; account_id: string | null; return_to: string | null }[]>`
     update email_tokens set used_at = now()
     where token_hash = ${sha256(token)} and used_at is null and expires_at > now()

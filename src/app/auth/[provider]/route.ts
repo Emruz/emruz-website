@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { IS_PROD } from '@/lib/server/config';
+import { IS_PROD, SITE_URL } from '@/lib/server/config';
 import { PROVIDERS, providerConfigured, startAuth, type Provider } from '@/lib/server/oauth';
 import { currentAccount, safeNext } from '@/lib/server/session';
 
@@ -11,7 +11,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   const url = new URL(req.url);
   const next = safeNext(url.searchParams.get('next'));
   if (!PROVIDERS.includes(provider as Provider) || !providerConfigured(provider as Provider)) {
-    return NextResponse.redirect(new URL(`/signin?error=unavailable&next=${encodeURIComponent(next)}`, req.url));
+    return NextResponse.redirect(new URL(`/signin?error=unavailable&next=${encodeURIComponent(next)}`, SITE_URL));
   }
   const p = provider as Provider;
   const link = url.searchParams.get('link') === '1' && !!(await currentAccount());

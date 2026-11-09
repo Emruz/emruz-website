@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const email = String(form.get('email') || '').trim().toLowerCase();
   const purpose = form.get('purpose') === 'claim' ? 'claim' : 'signin';
   const next = safeNext(form.get('next'));
-  const to = (path: string) => NextResponse.redirect(new URL(path, req.url), 303);
+  const to = (path: string) => NextResponse.redirect(new URL(path, SITE_URL), 303);
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return to(`${purpose === 'claim' ? '/motiv/account?claim=invalid' : `/signin?error=email&next=${encodeURIComponent(next)}`}`);

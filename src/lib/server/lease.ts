@@ -65,14 +65,29 @@ export function signLease(privateKey: crypto.KeyObject, kid: string, payload: Le
 
 let cachedKey: crypto.KeyObject | null = null;
 
-/** Production signing key from MOTIV_LICENSE_PRIVATE_KEY (PEM; literal \n allowed). */
+/**
+ * Production signing key from MOTIV_LICENSE_PRIVATE_KEY: the PKCS8 PEM, or just
+ * its base64 body. Line breaks may be missing, escaped (\\n) or turned into
+ * spaces by the hosting dashboard or CLI; the key is rebuilt either way.
+ */
+export function parseSigningKey(raw: string): crypto.KeyObject {
+  const body = raw
+    .replace(/\\n/g, '\n')
+    .replace(/-----(BEGIN|END) PRIVATE KEY-----/g, '')
+    .replace(/[^A-Za-z0-9+/=]/g, '');
+  if (!body) throw new Error('MOTIV_LICENSE_PRIVATE_KEY is empty');
+  const key = crypto.createPrivateKey({ key: Buffer.from(body, 'base64'), format: 'der', type: 'pkcs8' });
+  if (key.asymmetricKeyType !== 'ed25519') throw new Error(`Signing key is ${key.asymmetricKeyType}, expected ed25519`);
+  return key;
+}
+
 export function signingKey(): { key: crypto.KeyObject; kid: string } {
   if (!cachedKey) {
-    const pem = process.env.MOTIV_LICENSE_PRIVATE_KEY;
-    if (!pem) throw new Error('MOTIV_LICENSE_PRIVATE_KEY is not set');
-    cachedKey = crypto.createPrivateKey(pem.includes('\\n') ? pem.replace(/\\n/g, '\n') : pem);
+    const raw = process.env.MOTIV_LICENSE_PRIVATE_KEY;
+    if (!raw) throw new Error('MOTIV_LICENSE_PRIVATE_KEY is not set');
+    cachedKey = parseSigningKey(raw);
   }
-  return { key: cachedKey, kid: process.env.MOTIV_LICENSE_KID || 'k1' };
+  return { key: cachedKey, kid: (process.env.MOTIV_LICENSE_KID || 'k1').trim() };
 }
 
 export function sha256(s: string): string {

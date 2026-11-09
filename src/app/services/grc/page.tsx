@@ -1,5 +1,5 @@
 import {
-  Hero,
+  DetailHeader,
   SectionIntro,
   Container,
   Card,
@@ -9,7 +9,7 @@ import {
 import { CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'GRC Program | Emruz',
+  title: 'GRC Program',
   description:
     'Governance, risk, and compliance programs grounded in NIST CSF, CIS Controls, and industry-specific frameworks.',
 };
@@ -35,20 +35,15 @@ export default function GRC() {
 
   return (
     <>
-      <Hero
-        headline="GRC Program"
-        subheadline="Build a compliance program grounded in NIST, CIS, or ISO frameworks. Then maintain it without it becoming a second job."
-        primaryCta={{
-          label: 'Schedule GRC Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Discuss Compliance Needs',
-          href: '/contact',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance', href: '/services/security' }, { label: 'GRC Program' }]}
+        title="GRC Program"
+        summary="Build a compliance program grounded in NIST, CIS, or ISO frameworks. Then maintain it without it becoming a second job."
+        primaryCta={{ label: 'Schedule GRC Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Discuss Compliance Needs', href: '/contact' }}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="What GRC Encompasses"
@@ -84,7 +79,7 @@ export default function GRC() {
         </Container>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro heading="Typical Deliverables" />
 
@@ -108,7 +103,7 @@ export default function GRC() {
         </Container>
       </section>
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Frequently Asked Questions"

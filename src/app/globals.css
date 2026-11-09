@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Geist:wght@400;500;600&display=swap");
+@import "tailwindcss";
 
 :root {
   /* Neutral Colors */
@@ -104,14 +103,19 @@ a {
   transition: all 200ms ease-in-out;
 }
 
-/* Regular links (not buttons) */
-a:not(.bg-blue-500):not(.bg-blue-600):not(.bg-white):not(.bg-white\/10):not([class*="bg-gradient"]) {
+/* Plain links (no utility classes) get the brand color. Styled links and
+   buttons set their own colors with utility classes. */
+a:where(:not([class])) {
   color: var(--brand-primary);
 }
 
-a:not(.bg-blue-500):not(.bg-blue-600):not(.bg-white):not(.bg-white\/10):not([class*="bg-gradient"]):hover {
+a:where(:not([class])):hover {
   text-decoration: underline;
   color: var(--brand-primary-dark);
+}
+
+.crumb-link:hover {
+  color: var(--brand-primary);
 }
 
 a:focus-visible {

@@ -1,5 +1,5 @@
 import {
-  Hero,
+  DetailHeader,
   SectionIntro,
   Container,
   Card,
@@ -7,10 +7,9 @@ import {
   FAQAccordion,
 } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
 
 export const metadata = {
-  title: 'vCISO & Leadership | Emruz',
+  title: 'vCISO & Leadership',
   description:
     'Fractional CISO services combining strategic security leadership with governance design and board-level reporting.',
 };
@@ -67,21 +66,16 @@ export default function VCISo() {
   return (
     <>
       {/* Hero */}
-      <Hero
-        headline="vCISO & Leadership"
-        subheadline="Strategic security leadership and governance from someone who thinks like a CISO. Define and execute security strategy. Get board-ready risk reporting."
-        primaryCta={{
-          label: 'Schedule vCISO Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Discuss Your Needs',
-          href: '/contact',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'vCISO & Leadership' }]}
+        title="vCISO & Leadership"
+        summary="Strategic security leadership and governance from someone who thinks like a CISO. Define and execute security strategy. Get board-ready risk reporting."
+        primaryCta={{ label: 'Schedule vCISO Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Discuss Your Needs', href: '/contact' }}
       />
 
       {/* What It Is */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="What a vCISO Does"
@@ -131,7 +125,7 @@ export default function VCISo() {
       </section>
 
       {/* When Needed */}
-      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="When Organizations Need a vCISO"
@@ -152,7 +146,7 @@ export default function VCISo() {
       </section>
 
       {/* Engagement Model */}
-      <section className="py-16 md:py-24 relative overflow-hidden">
+      <section className="py-12 md:py-16 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full -mr-48 opacity-10"></div>
         <Container className="relative z-10">
           <SectionIntro
@@ -188,7 +182,7 @@ export default function VCISo() {
       </section>
 
       {/* Deliverables */}
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro heading="Typical Deliverables" />
 
@@ -213,7 +207,7 @@ export default function VCISo() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Frequently Asked Questions"

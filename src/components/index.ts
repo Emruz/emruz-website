@@ -5,6 +5,8 @@ export { default as Container } from './Container';
 
 // Section Components
 export { default as Hero } from './Hero';
+export { default as PageHeader } from './PageHeader';
+export { default as DetailHeader } from './DetailHeader';
 export { default as SectionIntro } from './SectionIntro';
 export { default as CTABanner } from './CTABanner';
 
@@ -14,3 +16,4 @@ export { default as ServiceCard } from './ServiceCard';
 
 // Interactive Components
 export { default as FAQAccordion } from './FAQAccordion';
+export { default as Logo } from './Logo';

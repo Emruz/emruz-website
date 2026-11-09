@@ -1,0 +1,49 @@
+import { redirect } from 'next/navigation';
+import { DetailHeader, Container } from '@/components';
+import SignInOptions from '@/components/account/SignInOptions';
+import { currentAccount, safeNext } from '@/lib/server/session';
+
+export const metadata = { title: 'Sign in', robots: { index: false } };
+
+const errors: Record<string, string> = {
+  expired: 'That sign-in took too long or was interrupted. Please try again.',
+  cancelled: 'Sign-in was cancelled.',
+  failed: 'Sign-in failed. Please try again or use an email link.',
+  unavailable: 'That sign-in option is not available yet. Use an email link instead.',
+  email: 'Enter a valid email address.',
+  send: 'We could not send the email. Please try again shortly.',
+  link: 'That sign-in link has expired or was already used. Request a new one.',
+  claim: 'Sign in to the account that asked to add that email, then open the link again.',
+};
+
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+  const sp = await searchParams;
+  const next = safeNext(sp.next);
+  if (await currentAccount()) redirect(next);
+  const error = sp.error ? errors[sp.error] ?? sp.error : null;
+
+  return (
+    <>
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Sign in' }]}
+        title="Sign in"
+        summary="Manage your Motiv subscription, register computers and see receipts."
+      />
+      <section className="py-10 md:py-12">
+        <Container>
+          <div className="max-w-md">
+            {error && (
+              <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            <SignInOptions next={next} />
+            <p className="mt-6 text-sm text-gray-500">
+              Use the email you bought with, or any sign-in linked to it. New here? Signing in creates your account.
+            </p>
+          </div>
+        </Container>
+      </section>
+    </>
+  );
+}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -14,8 +15,14 @@ export default function Footer() {
       { label: 'vCISO & Leadership', href: '/services/vciso' },
       { label: 'Security & Compliance', href: '/services/security' },
       { label: 'Cloud Strategy', href: '/services/cloud' },
+      { label: 'GRC Program', href: '/services/grc' },
       { label: 'Data Science', href: '/services/data-science' },
       { label: 'AI Advisory', href: '/services/ai' },
+      { label: 'Service Packages', href: '/services/packages' },
+    ],
+    products: [
+      { label: 'Motiv', href: '/motiv' },
+      { label: 'All products', href: '/products' },
     ],
     resources: [
       { label: 'Assessments', href: '/assessments' },
@@ -28,15 +35,13 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-dark-gray text-white">
+    <footer className="bg-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center mb-4">
-              <span className="text-2xl font-bold text-blue-400">Emruz</span>
-            </Link>
+            <Logo className="inline-block mb-4 text-3xl text-blue-400" />
             <p className="text-gray-400 text-sm">
               Strategy and execution. Technical clarity without the overhead.
             </p>
@@ -64,6 +69,23 @@ export default function Footer() {
             <h3 className="font-semibold mb-4">Services</h3>
             <ul className="space-y-2">
               {sections.services.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Products */}
+          <div>
+            <h3 className="font-semibold mb-4">Products</h3>
+            <ul className="space-y-2">
+              {sections.products.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}

@@ -1,28 +1,23 @@
-import { Hero, SectionIntro, Container, Card, CTABanner } from '@/components';
+import { DetailHeader, SectionIntro, Container, Card, CTABanner } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Security Operations | Emruz',
+  title: 'Security Operations',
   description: 'Security operations and SOC services focused on detection, response, and 24/7 monitoring.',
 };
 
 export default function SecurityOps() {
   return (
     <>
-      <Hero
-        headline="Security Operations"
-        subheadline="Build or optimize your security operations program. From SOC design through 24/7 monitoring and incident response."
-        primaryCta={{
-          label: 'Schedule Security Ops Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Get in Touch',
-          href: '/contact',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance', href: '/services/security' }, { label: 'Security Operations' }]}
+        title="Security Operations"
+        summary="Build or optimize your security operations program. From SOC design through 24/7 monitoring and incident response."
+        primaryCta={{ label: 'Schedule Security Ops Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro heading="What We Help With" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

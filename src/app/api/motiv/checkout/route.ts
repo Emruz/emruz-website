@@ -16,7 +16,8 @@ export async function POST(req: Request) {
   const session = await stripe().checkout.sessions.create({
     mode: lifetime ? 'payment' : 'subscription',
     line_items: [{ price, quantity: 1 }],
-    automatic_tax: { enabled: true },
+    // Stripe Tax can't be activated in a sandbox; set STRIPE_AUTOMATIC_TAX=false there
+    automatic_tax: { enabled: process.env.STRIPE_AUTOMATIC_TAX !== 'false' },
     billing_address_collection: 'auto',
     allow_promotion_codes: true,
     ...(lifetime ? { customer_creation: 'always' as const } : {}),

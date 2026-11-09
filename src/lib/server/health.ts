@@ -51,6 +51,7 @@ export async function systemChecks(): Promise<Check[]> {
   const stripeVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_ANNUAL', 'STRIPE_PRICE_LIFETIME'];
   const missing = stripeVars.filter((k) => !has(k));
   checks.push({ name: 'Stripe', ok: missing.length === 0, detail: missing.length ? `Missing: ${missing.join(', ')}` : `Configured${process.env.STRIPE_SECRET_KEY?.startsWith('sk_test') ? ' (test mode)' : ''}` });
+  checks.push({ name: 'Sales tax at checkout', ok: true, detail: process.env.STRIPE_AUTOMATIC_TAX === 'false' ? 'Off (STRIPE_AUTOMATIC_TAX=false; turn on before selling)' : 'On (Stripe Tax)' });
   checks.push({ name: 'Sales', ok: true, detail: process.env.MOTIV_SALES_OPEN === 'true' ? 'Buy buttons shown' : 'Closed (MOTIV_SALES_OPEN is not "true")' });
   for (const p of PROVIDERS) {
     checks.push({ name: `${providerLabel[p]} sign-in`, ok: providerConfigured(p), detail: providerConfigured(p) ? 'Configured' : 'Not configured (button hidden)' });

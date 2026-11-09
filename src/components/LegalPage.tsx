@@ -4,6 +4,8 @@ import Container from './Container';
 
 export const LEGAL_PARTY = 'Shahin Pirooz, doing business as Emruz';
 export const LEGAL_CONTACT = 'contact@emruz.com';
+export const COPYRIGHT_YEAR = 2026;
+export const WHITEDOG_LEGAL_URL = 'https://www.whitedogcyber.com/legal';
 
 const related = [
   { label: 'Privacy policy', href: '/privacy' },
@@ -53,6 +55,10 @@ export default function LegalPage({ title, summary, updated, path, parent, child
                 ))}
               </ul>
               <p className="mt-6 text-sm text-gray-500">
+                Managed security products (EDR, MDR, XDR, ΔDR):{' '}
+                <a href={WHITEDOG_LEGAL_URL} className="text-blue-700">WhiteDog Cyber terms</a>
+              </p>
+              <p className="mt-3 text-sm text-gray-500">
                 Questions: <a href={`mailto:${LEGAL_CONTACT}`} className="text-blue-700">{LEGAL_CONTACT}</a>
               </p>
             </aside>

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import LegalPage, { LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
+import LegalPage, { COPYRIGHT_YEAR, LEGAL_CONTACT, LEGAL_PARTY, WHITEDOG_LEGAL_URL } from '@/components/LegalPage';
 
 export const metadata = {
   title: 'Terms of service',
@@ -32,6 +32,14 @@ export default function TermsPage() {
         Information on the site about our services is general and isn&apos;t professional advice for your situation.
         Consulting and managed security services are provided only under a separate written agreement, which governs
         those services instead of these terms.
+      </p>
+
+      <h3>Managed security products</h3>
+      <p>
+        Our managed security products (EDR, MDR, XDR and ΔDR) are powered by WhiteDog Cyber. Their use is governed by
+        your service agreement with Emruz and by WhiteDog Cyber&apos;s terms and conditions, available at{' '}
+        <a href={WHITEDOG_LEGAL_URL}>{WHITEDOG_LEGAL_URL.replace('https://', '')}</a>. If those terms conflict with
+        your agreement with Emruz, your agreement with Emruz controls as between you and us.
       </p>
 
       <h2>2. Your account</h2>
@@ -119,11 +127,27 @@ export default function TermsPage() {
         period.
       </p>
 
-      <h2>4. Intellectual property</h2>
+      <h2>4. Copyright and trademarks</h2>
       <p>
-        The site, the Emruz and Motiv names and logos, and Motiv are owned by Emruz or its licensors. These terms
-        don&apos;t give you any rights in them except to use the site and Motiv as described here and in the EULA.
-        If you send us feedback, we may use it without obligation to you.
+        © {COPYRIGHT_YEAR} {LEGAL_PARTY}. All rights reserved. The content, design and code of emruz.com, and the Motiv
+        software, are protected by copyright. You may view the site and print or save pages for your own reference;
+        any other copying, reproduction, distribution or reuse requires our written permission.
+      </p>
+      <p>
+        Emruz, Motiv and their logos are trademarks of {LEGAL_PARTY}. WhiteDog Cyber and its product names are
+        trademarks of WhiteDog Cyber. Other names and logos (including Microsoft, Google, Apple, Stripe, Zoom and
+        Teams) belong to their owners and are used only to identify their products, without implying endorsement.
+      </p>
+      <p>
+        Motiv includes open-source software, including Meetily Community Edition (MIT License), which remains under
+        its own license. These terms don&apos;t give you any rights in our copyrights or trademarks except to use the
+        site and Motiv as described here and in the EULA. If you send us feedback, we may use it without obligation to
+        you.
+      </p>
+      <p>
+        If you believe content on the site infringes your copyright, email{' '}
+        <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> with the work, where it appears, and your contact
+        details.
       </p>
 
       <h2>5. Disclaimers</h2>

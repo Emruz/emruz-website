@@ -149,7 +149,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
-            &copy; {currentYear} Emruz. All rights reserved.
+            &copy; {currentYear} Shahin Pirooz, dba Emruz. All rights reserved.
           </div>
 
           <div className="flex gap-6">

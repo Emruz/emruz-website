@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import LegalPage, { LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
+import LegalPage, { COPYRIGHT_YEAR, LEGAL_CONTACT, LEGAL_PARTY, WHITEDOG_LEGAL_URL } from '@/components/LegalPage';
 
 export const metadata = {
   title: 'Privacy policy',
@@ -109,6 +109,12 @@ export default function PrivacyPage() {
         </tbody>
       </table>
       <p>
+        <strong>Managed security customers:</strong> our EDR, MDR, XDR and ΔDR products are powered by WhiteDog Cyber.
+        Data processed to deliver those services is handled under your service agreement with Emruz and WhiteDog
+        Cyber&apos;s terms, at <a href={WHITEDOG_LEGAL_URL}>{WHITEDOG_LEGAL_URL.replace('https://', '')}</a>. This
+        policy covers emruz.com itself.
+      </p>
+      <p>
         We may also disclose information if the law requires it, to protect our rights or the safety of others, or as
         part of a sale or reorganization of the business, in which case this policy continues to apply.
       </p>
@@ -201,6 +207,7 @@ export default function PrivacyPage() {
         {LEGAL_PARTY}, Santa Clara, California, USA.{' '}
         <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>
       </p>
+      <p className="text-sm text-gray-500">© {COPYRIGHT_YEAR} {LEGAL_PARTY}. All rights reserved.</p>
     </LegalPage>
   );
 }

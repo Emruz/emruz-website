@@ -2,6 +2,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { rateLimit } from './db';
 import { fail, type ApiResult } from './licensing';
+import { SITE_URL } from './config';
 
 export function clientIp(req: Request): string {
   return (
@@ -46,7 +47,7 @@ export function licensingRoute(
 export function sameOrigin(req: Request): boolean {
   const origin = req.headers.get('origin');
   if (!origin) return req.headers.get('sec-fetch-site') !== 'cross-site';
-  return origin === new URL(req.url).origin || origin === (process.env.SITE_URL || process.env.URL);
+  return origin === SITE_URL || origin === new URL(req.url).origin;
 }
 
 export const isUuid = (v: unknown): v is string =>

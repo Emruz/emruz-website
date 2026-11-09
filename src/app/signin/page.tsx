@@ -26,7 +26,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Sign in' }]}
-        title="Sign in"
+        title="Sign in or create an account"
         summary="Manage your Motiv subscription, register computers and see receipts."
       />
       <section className="py-10 md:py-12">

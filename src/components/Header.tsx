@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { mainNav } from '@/content/navigation';
 import Logo from './Logo';
+import AccountMenu, { Avatar, SessionButtons, accountLinks, useMe } from './AccountMenu';
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileGroup, setMobileGroup] = useState<string | null>(null);
+  const me = useMe();
   const navRef = useRef<HTMLDivElement>(null);
 
   // Close menus on navigation (adjust state during render, no effect needed)
@@ -42,6 +44,18 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200">
+      {me?.impersonatedBy && me.account && (
+        <div className="bg-amber-100 text-amber-900 text-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Viewing the site as <strong>{me.account.email}</strong>
+            </span>
+            <form action="/auth/switch-back" method="post">
+              <button className="font-semibold underline">Switch back to {me.impersonatedBy}</button>
+            </form>
+          </div>
+        </div>
+      )}
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Logo className="text-[3.375rem] text-blue-600" />
 
@@ -112,13 +126,14 @@ export default function Header() {
           )}
         </div>
 
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
           <Link
             href="/assessments"
-            className="bg-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors"
+            className="hidden xl:inline-block bg-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors"
           >
             Schedule Assessment
           </Link>
+          <AccountMenu me={me} />
         </div>
 
         <button
@@ -174,6 +189,32 @@ export default function Header() {
               </li>
             ))}
           </ul>
+          <div className="px-4 pb-3 border-t border-gray-200 pt-3">
+            {me?.account ? (
+              <>
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar me={me.account} />
+                  <span className="text-sm text-gray-600 truncate">{me.account.email}</span>
+                </div>
+                <ul className="pl-11 space-y-2 mb-2">
+                  {[...accountLinks(me).links, ...accountLinks(me).admin].map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className="block text-gray-700">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <div className="pl-11 space-y-2">
+                  <SessionButtons me={me} className="block text-left" />
+                </div>
+              </>
+            ) : (
+              <Link href="/signin" className="block py-1 font-semibold text-gray-900">
+                Sign in or create an account
+              </Link>
+            )}
+          </div>
           <div className="px-4 pb-4">
             <Link
               href="/assessments"

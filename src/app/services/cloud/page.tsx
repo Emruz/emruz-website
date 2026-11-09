@@ -1,5 +1,5 @@
 import {
-  Hero,
+  DetailHeader,
   SectionIntro,
   Container,
   Card,
@@ -9,7 +9,7 @@ import {
 import { CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Cloud Strategy & Security | Emruz',
+  title: 'Cloud Strategy & Security',
   description:
     'Cloud architecture, strategy, and security services for organizations migrating to or optimizing cloud environments.',
 };
@@ -53,20 +53,15 @@ export default function Cloud() {
 
   return (
     <>
-      <Hero
-        headline="Cloud Strategy & Security"
-        subheadline="Architect cloud for security, cost, and organizational capability. From readiness assessment through implementation and optimization."
-        primaryCta={{
-          label: 'Schedule Cloud Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Discuss Your Cloud Journey',
-          href: '/contact',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Cloud Strategy & Security' }]}
+        title="Cloud Strategy & Security"
+        summary="Architect cloud for security, cost, and organizational capability. From readiness assessment through implementation and optimization."
+        primaryCta={{ label: 'Schedule Cloud Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Discuss Your Cloud Journey', href: '/contact' }}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Why Cloud Strategy Matters"
@@ -102,7 +97,7 @@ export default function Cloud() {
         </Container>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Engagement Model"
@@ -136,7 +131,7 @@ export default function Cloud() {
         </Container>
       </section>
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro heading="What We Help With" />
 
@@ -160,7 +155,7 @@ export default function Cloud() {
         </Container>
       </section>
 
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Frequently Asked Questions"

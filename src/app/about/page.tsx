@@ -1,5 +1,5 @@
 import {
-  Hero,
+  PageHeader,
   SectionIntro,
   Container,
   Card,
@@ -38,8 +38,7 @@ export default function About() {
   ];
 
   const teamHighlights = [
-    '15+ years of combined security operations, cloud architecture, and governance expertise',
-    'Certifications: CISSP, CCSK, AWS Security Specialty, Azure Administrator',
+    'Security operations, cloud architecture and governance expertise',
     'Experience across enterprise and mid-market organizations',
     'Track record delivering outcomes across security, compliance, cloud, and data domains',
   ];
@@ -47,21 +46,15 @@ export default function About() {
   return (
     <>
       {/* Hero */}
-      <Hero
-        headline="About Emruz"
-        subheadline="We created Emruz because the choice between expensive consultants who advise (but don't execute) and vendors who execute (but don't advise) was false. We do both."
-        primaryCta={{
-          label: 'Get in Touch',
-          href: '/contact',
-        }}
-        secondaryCta={{
-          label: 'Explore Services',
-          href: '/services',
-        }}
+      <PageHeader
+        eyebrow="Company"
+        title="About Emruz"
+        description="We created Emruz because the choice between expensive consultants who advise (but don't execute) and vendors who execute (but don't advise) was false. We do both."
+        cta={{ label: 'Get in Touch', href: '/contact' }}
       />
 
       {/* Company Story */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Why Emruz Exists"
@@ -70,11 +63,11 @@ export default function About() {
 
           <div className="max-w-3xl">
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              Too many organizations have a choice: expensive consultancies that advise but don't execute, or vendors that execute but don't advise. We created Emruz to break that false choice.
+              Too many organizations have a choice: expensive consultancies that advise but don’t execute, or vendors that execute but don’t advise. We created Emruz to break that false choice.
             </p>
 
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              We're a team of security, cloud, and AI leaders. We've spent years building programs, leading security functions, architecting cloud environments, and delivering at scale. We know what works and what doesn't.
+              We’re a team of security, cloud, and AI leaders. We’ve spent years building programs, leading security functions, architecting cloud environments, and delivering at scale. We know what works and what doesn’t.
             </p>
 
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
@@ -82,14 +75,14 @@ export default function About() {
             </p>
 
             <p className="text-lg text-gray-600 leading-relaxed">
-              That's Emruz. Strategy and execution. Technical clarity without the overhead.
+              That’s Emruz. Strategy and execution. Technical clarity without the overhead.
             </p>
           </div>
         </Container>
       </section>
 
       {/* Core Values */}
-      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro heading="How We Think About This Work" />
 
@@ -112,7 +105,7 @@ export default function About() {
       </section>
 
       {/* Team */}
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Our Team"
@@ -152,7 +145,7 @@ export default function About() {
                   Cloud Architecture
                 </h4>
                 <p className="text-gray-600">
-                  Expertise across AWS, Azure, and GCP. We've architected and migrated complex cloud environments with security and cost optimization built in.
+                  Expertise across AWS, Azure, and GCP. We’ve architected and migrated complex cloud environments with security and cost optimization built in.
                 </p>
               </Card>
 
@@ -161,7 +154,7 @@ export default function About() {
                   Delivery at Scale
                 </h4>
                 <p className="text-gray-600">
-                  Track record delivering outcomes for 200+ organizations. We know how to execute complex programs and deliver measurable results.
+                  We stay through implementation, with the team and platform to run complex programs and measure the results.
                 </p>
               </Card>
             </div>
@@ -170,7 +163,7 @@ export default function About() {
       </section>
 
       {/* Approach */}
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Our Approach"
@@ -207,7 +200,7 @@ export default function About() {
                 Outcome-Focused
               </h3>
               <p className="text-gray-600 mb-4">
-                We measure success by results, not activity. Our goal is for your organization to be better off when we're done—measurably better.
+                We measure success by results, not activity. Our goal is for your organization to be better off when we’re done, measurably better.
               </p>
               <p className="text-gray-600">
                 Clear outcomes, clear metrics, clear accountability.
@@ -219,7 +212,7 @@ export default function About() {
                 Execution-Capable
               </h3>
               <p className="text-gray-600 mb-4">
-                We don't just advise and walk away. We stay involved from design through implementation and help your team execute successfully.
+                We don’t just advise and walk away. We stay involved from design through implementation and help your team execute successfully.
               </p>
               <p className="text-gray-600">
                 Strategy + execution = outcomes that matter.

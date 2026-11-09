@@ -1,9 +1,9 @@
-import { Hero, SectionIntro, Container, Card, CTABanner } from '@/components';
+import { DetailHeader, SectionIntro, Container, Card, CTABanner } from '@/components';
 import Link from 'next/link';
 import { ArrowRight, Shield, CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Security & Compliance | Emruz',
+  title: 'Security & Compliance',
   description:
     'GRC programs and security operations that deliver outcomes. Compliance that actually works, security operations that scale.',
 };
@@ -11,20 +11,15 @@ export const metadata = {
 export default function SecurityHub() {
   return (
     <>
-      <Hero
-        headline="Security & Compliance"
-        subheadline="Build GRC programs that work. Optimize security operations that scale. Both grounded in frameworks and focused on outcomes."
-        primaryCta={{
-          label: 'Schedule Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Explore Services',
-          href: '#services',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance' }]}
+        title="Security & Compliance"
+        summary="Build GRC programs that work. Optimize security operations that scale. Both grounded in frameworks and focused on outcomes."
+        primaryCta={{ label: 'Schedule Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Talk to us', href: '/contact' }}
       />
 
-      <section id="services" className="py-16 md:py-24">
+      <section id="services" className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Two Connected Offerings"
@@ -101,7 +96,7 @@ export default function SecurityHub() {
         </Container>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-slate-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Why Both Matter"

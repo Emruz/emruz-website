@@ -1,28 +1,23 @@
-import { Hero, SectionIntro, Container, Card, CTABanner } from '@/components';
+import { DetailHeader, SectionIntro, Container, Card, CTABanner } from '@/components';
 import { CheckCircle2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'AI Advisory & Enablement | Emruz',
+  title: 'AI Advisory & Enablement',
   description: 'AI strategy, governance, and team enablement for organizations evaluating AI opportunity and risk.',
 };
 
 export default function AIAdvisory() {
   return (
     <>
-      <Hero
-        headline="AI Advisory & Enablement"
-        subheadline="Understand AI opportunity and risk. Build governance. Upskill your team. Execute with confidence."
-        primaryCta={{
-          label: 'Schedule AI Readiness Assessment',
-          href: '/assessments',
-        }}
-        secondaryCta={{
-          label: 'Explore AI Strategy',
-          href: '/contact',
-        }}
+      <DetailHeader
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'AI Advisory & Enablement' }]}
+        title="AI Advisory & Enablement"
+        summary="Understand AI opportunity and risk. Build governance. Upskill your team. Execute with confidence."
+        primaryCta={{ label: 'Schedule AI Readiness Assessment', href: '/assessments' }}
+        secondaryCta={{ label: 'Explore AI Strategy', href: '/contact' }}
       />
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro heading="What We Help With" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

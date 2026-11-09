@@ -3,16 +3,6 @@
   functions = "netlify/functions"
   publish = ".next"
 
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/.next/sitemap.xml"
-  status = 200
-
-[[redirects]]
-  from = "/robots.txt"
-  to = "/.next/robots.txt"
-  status = 200
-
 # Redirect 404s to home (optional, for SPA-style routing)
 # [[redirects]]
 #   from = "/*"

@@ -6,13 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "node scripts/migrate.mjs",
+    "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {
+    "@netlify/database": "^2.0.3",
+    "arctic": "^3.7.0",
+    "jose": "^6.2.16",
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
+    "postgres": "^4.1.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

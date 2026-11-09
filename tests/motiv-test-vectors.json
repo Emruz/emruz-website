@@ -1,0 +1,58 @@
+{
+  "note": "TEST KEY ONLY (seed 0x2A x 32). Never use for real leases.",
+  "kid": "test",
+  "public_key": "GX9rI-FshTLGq8g4-s1ep4m-DHaykgM0A5v6iz02jWE",
+  "device_id": "c9b1e7a4-0000-4000-8000-000000000001",
+  "check_at": "2026-11-10T00:00:00Z",
+  "cases": [
+    {
+      "name": "annual, all features",
+      "payload": {
+        "v": 2,
+        "lease_id": "8f3c1a2b9d4e",
+        "sub": "MOTIV-7K2M-QX9R-4HTP-W3ND",
+        "device": "c9b1e7a4-0000-4000-8000-000000000001",
+        "plan": "annual",
+        "status": "active",
+        "features": [
+          "assistant",
+          "action_items",
+          "speakers",
+          "awareness",
+          "calendars",
+          "terms",
+          "cleanup",
+          "templates",
+          "trim"
+        ],
+        "issued_at": "2026-11-08T21:00:00Z",
+        "lease_expires": "2026-11-22T21:00:00Z",
+        "period_end": "2027-11-08T21:00:00Z",
+        "server_time": "2026-11-08T21:00:00Z"
+      },
+      "token": "MOTIV2.test.eyJ2IjoyLCJsZWFzZV9pZCI6IjhmM2MxYTJiOWQ0ZSIsInN1YiI6Ik1PVElWLTdLMk0tUVg5Ui00SFRQLVczTkQiLCJkZXZpY2UiOiJjOWIxZTdhNC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJwbGFuIjoiYW5udWFsIiwic3RhdHVzIjoiYWN0aXZlIiwiZmVhdHVyZXMiOlsiYXNzaXN0YW50IiwiYWN0aW9uX2l0ZW1zIiwic3BlYWtlcnMiLCJhd2FyZW5lc3MiLCJjYWxlbmRhcnMiLCJ0ZXJtcyIsImNsZWFudXAiLCJ0ZW1wbGF0ZXMiLCJ0cmltIl0sImlzc3VlZF9hdCI6IjIwMjYtMTEtMDhUMjE6MDA6MDBaIiwibGVhc2VfZXhwaXJlcyI6IjIwMjYtMTEtMjJUMjE6MDA6MDBaIiwicGVyaW9kX2VuZCI6IjIwMjctMTEtMDhUMjE6MDA6MDBaIiwic2VydmVyX3RpbWUiOiIyMDI2LTExLTA4VDIxOjAwOjAwWiJ9.jnaZRnMDPIipRqFjNUZndnxGBdSjlQ28zZfOOu1J9Rl1ZYah581Q37_IHtOFD6C72pL817heIrGo9-xxKP-dBA",
+      "expect_premium": true
+    },
+    {
+      "name": "lifetime, two features",
+      "payload": {
+        "v": 2,
+        "lease_id": "aa11bb22cc33",
+        "sub": "MOTIV-7K2M-QX9R-4HTP-W3ND",
+        "device": "c9b1e7a4-0000-4000-8000-000000000001",
+        "plan": "lifetime",
+        "status": "active",
+        "features": [
+          "assistant",
+          "calendars"
+        ],
+        "issued_at": "2026-11-08T21:00:00Z",
+        "lease_expires": "2026-11-22T21:00:00Z",
+        "period_end": null,
+        "server_time": "2026-11-08T21:00:00Z"
+      },
+      "token": "MOTIV2.test.eyJ2IjoyLCJsZWFzZV9pZCI6ImFhMTFiYjIyY2MzMyIsInN1YiI6Ik1PVElWLTdLMk0tUVg5Ui00SFRQLVczTkQiLCJkZXZpY2UiOiJjOWIxZTdhNC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJwbGFuIjoibGlmZXRpbWUiLCJzdGF0dXMiOiJhY3RpdmUiLCJmZWF0dXJlcyI6WyJhc3Npc3RhbnQiLCJjYWxlbmRhcnMiXSwiaXNzdWVkX2F0IjoiMjAyNi0xMS0wOFQyMTowMDowMFoiLCJsZWFzZV9leHBpcmVzIjoiMjAyNi0xMS0yMlQyMTowMDowMFoiLCJwZXJpb2RfZW5kIjpudWxsLCJzZXJ2ZXJfdGltZSI6IjIwMjYtMTEtMDhUMjE6MDA6MDBaIn0.tZJnhNiD2HOVBYCmwgm0hsw3MP1GkJrxqeqQirhw8itX6t8V0q6rM64x-t2fKZ1rRY3Bf4GfKVaw4ucHpiO8Dg",
+      "expect_premium": true
+    }
+  ]
+}

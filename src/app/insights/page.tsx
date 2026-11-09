@@ -1,9 +1,9 @@
-import { Hero, SectionIntro, Container, Card, CTABanner } from '@/components';
+import { PageHeader, SectionIntro, Container, Card, CTABanner } from '@/components';
 import Link from 'next/link';
 import { ArrowRight, Calendar } from 'lucide-react';
 
 export const metadata = {
-  title: 'Insights | Emruz',
+  title: 'Insights',
   description:
     'Security, cloud, and AI insights from our team. Frameworks, trends, and practical guidance for organizations.',
 };
@@ -63,21 +63,15 @@ export default function Insights() {
   return (
     <>
       {/* Hero */}
-      <Hero
-        headline="Insights"
-        subheadline="Security, cloud, and AI thinking from our team. Frameworks, trends, and practical guidance for organizations serious about outcomes."
-        primaryCta={{
-          label: 'Subscribe for Updates',
-          href: '/contact',
-        }}
-        secondaryCta={{
-          label: 'Explore Services',
-          href: '/services',
-        }}
+      <PageHeader
+        eyebrow="Insights"
+        title="Insights"
+        description="Security, cloud, and AI thinking from our team. Frameworks, trends, and practical guidance for organizations serious about outcomes."
+        cta={{ label: 'Subscribe for Updates', href: '/contact' }}
       />
 
       {/* Insights Grid */}
-      <section className="py-16 md:py-24 relative overflow-hidden">
+      <section className="py-12 md:py-16 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100 rounded-full -ml-32 -mt-32 opacity-20"></div>
         <Container className="relative z-10">
           <SectionIntro heading="Latest Insights" />
@@ -122,7 +116,7 @@ export default function Insights() {
       </section>
 
       {/* Newsletter */}
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Stay Updated"

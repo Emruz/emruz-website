@@ -15,6 +15,8 @@ import {
   Brain,
   CheckCircle2,
 } from 'lucide-react';
+import Link from 'next/link';
+import PackagePortfolio from '@/components/PackagePortfolio';
 
 export default function Home() {
   // Capability cards data
@@ -127,22 +129,6 @@ export default function Home() {
     },
   ];
 
-  // Proof points
-  const proofPoints = [
-    {
-      stat: '200+',
-      label: 'Organizations Served',
-    },
-    {
-      stat: '15+',
-      label: 'Years of Combined Experience',
-    },
-    {
-      stat: 'NIST/CIS',
-      label: 'Framework-Grounded Approach',
-    },
-  ];
-
   // FAQ items
   const faqItems = [
     {
@@ -172,7 +158,7 @@ export default function Home() {
       {/* Hero Section */}
       <Hero
         headline="Strategy and execution. Technical clarity without the overhead."
-        subheadline="Emruz helps organizations understand their security, cloud, and AI landscape—and how to evolve it. Through frameworks like NIST and CIS. Through outcomes we can measure."
+        subheadline="Emruz helps organizations understand their security, cloud, and AI landscape, and how to evolve it. Through frameworks like NIST and CIS. Through outcomes we can measure."
         primaryCta={{
           label: 'Schedule an Assessment',
           href: '/assessments',
@@ -196,7 +182,7 @@ export default function Home() {
                 <span className="text-gray-300">•</span>
                 <span className="font-bold text-gray-700">CIS Controls</span>
                 <span className="text-gray-300">•</span>
-                <span className="font-bold text-gray-700">CSF</span>
+                <span className="font-bold text-gray-700">ISO 27001</span>
               </div>
             </div>
           </div>
@@ -204,7 +190,7 @@ export default function Home() {
       </section>
 
       {/* Capabilities Section */}
-      <section id="capabilities" className="py-16 md:py-24 relative overflow-hidden">
+      <section id="capabilities" className="py-12 md:py-16 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-100 rounded-full -ml-32 -mt-32 opacity-20"></div>
         <Container className="relative z-10">
           <SectionIntro
@@ -229,7 +215,7 @@ export default function Home() {
       </section>
 
       {/* Assessments Entry Section */}
-      <section className="bg-blue-50 py-16 md:py-24">
+      <section className="bg-blue-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Start With a Diagnostic"
@@ -266,8 +252,43 @@ export default function Home() {
         </Container>
       </section>
 
+      {/* Package portfolio preview */}
+      <section className="py-16 md:py-20 bg-gray-50 border-y border-gray-200">
+        <Container>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Service Package Portfolio</h2>
+              <p className="text-lg text-gray-600 mt-2">Managed security from endpoint protection to full detect, defend and respond. Each tier builds on the last.</p>
+            </div>
+            <Link href="/services/packages" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
+              Compare all packages →
+            </Link>
+          </div>
+          <PackagePortfolio preview />
+        </Container>
+      </section>
+
+      {/* Products */}
+      <section className="py-12 md:py-16">
+        <Container>
+          <Link
+            href="/motiv"
+            className="group flex flex-col md:flex-row md:items-center gap-6 rounded-2xl p-6 md:p-8 bg-gradient-to-br from-[#4F46E5] via-[#6D5AE6] to-[#7C3AED] text-white"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/motiv/motiv-logo.svg" alt="" width={64} height={64} className="w-16 h-16 flex-shrink-0 drop-shadow-lg" />
+            <div className="flex-grow">
+              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-100">New from Emruz · Coming soon</p>
+              <h2 className="text-2xl md:text-3xl font-bold mt-1">Motiv, the private AI meeting assistant</h2>
+              <p className="text-indigo-100 mt-1">Meetings recorded, transcribed and understood on your own computer. Your audio never leaves it.</p>
+            </div>
+            <span className="font-semibold whitespace-nowrap group-hover:translate-x-1 transition-transform">Meet Motiv →</span>
+          </Link>
+        </Container>
+      </section>
+
       {/* Why Emruz Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-slate-50 to-purple-50 relative overflow-hidden">
+      <section className="py-12 md:py-16 bg-gradient-to-br from-slate-50 to-purple-50 relative overflow-hidden">
         <div className="absolute top-20 right-0 w-96 h-96 bg-purple-200 rounded-full -mr-48 opacity-10"></div>
         <Container className="relative z-10">
           <SectionIntro
@@ -302,7 +323,7 @@ export default function Home() {
       </section>
 
       {/* Engagement Model Section */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 py-16 md:py-24 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-slate-900 to-slate-800 py-12 md:py-16 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
         <Container className="relative z-10">
           <SectionIntro
@@ -334,37 +355,8 @@ export default function Home() {
         </Container>
       </section>
 
-      {/* Proof/Trust Section */}
-      <section className="py-16 md:py-24">
-        <Container>
-          <SectionIntro heading="Why Teams Trust Emruz" />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {proofPoints.map((point, i) => (
-              <Card key={i} className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {point.stat}
-                </div>
-                <p className="text-gray-600">{point.label}</p>
-              </Card>
-            ))}
-          </div>
-
-          <div className="mt-12 bg-blue-50 rounded-lg p-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Team Credentials
-            </h3>
-            <p className="text-gray-600">
-              Leadership with 15+ years in security operations, cloud
-              architecture, and governance. Certifications: CISSP, CCSK, AWS
-              Security Specialty, Azure Administrator.
-            </p>
-          </div>
-        </Container>
-      </section>
-
       {/* FAQ Section */}
-      <section className="bg-gray-50 py-16 md:py-24">
+      <section className="bg-gray-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Frequently Asked Questions"

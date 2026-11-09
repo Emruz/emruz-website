@@ -1,9 +1,9 @@
-import { Hero, SectionIntro, Container, Card, CTABanner, FAQAccordion } from '@/components';
+import { PageHeader, SectionIntro, Container, Card, CTABanner, FAQAccordion } from '@/components';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 export const metadata = {
-  title: 'Assessments | Emruz',
+  title: 'Assessments',
   description:
     'Diagnostic assessments across security, compliance, cloud, data science, and AI. Low-pressure entry point with clear actionable insights.',
 };
@@ -43,20 +43,14 @@ export default function Assessments() {
 
   return (
     <>
-      <Hero
-        headline="Assessments"
-        subheadline="Start with clarity. Diagnostic assessments across security, compliance, cloud, and AI. Understanding your current state leads to better decisions."
-        primaryCta={{
-          label: 'Schedule an Assessment',
-          href: '/contact',
-        }}
-        secondaryCta={{
-          label: 'Learn More',
-          href: '#types',
-        }}
+      <PageHeader
+        eyebrow="Start here"
+        title="Assessments"
+        description="Start with clarity. Diagnostic assessments across security, compliance, cloud, and AI. Understanding your current state leads to better decisions."
+        cta={{ label: 'Schedule an Assessment', href: '/contact' }}
       />
 
-      <section id="types" className="py-16 md:py-24">
+      <section id="types" className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Assessment Types"
@@ -84,7 +78,7 @@ export default function Assessments() {
         </Container>
       </section>
 
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-16 md:py-24">
+      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="What to Expect"
@@ -128,7 +122,7 @@ export default function Assessments() {
         </Container>
       </section>
 
-      <section className="py-16 md:py-24">
+      <section className="py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Frequently Asked Questions"

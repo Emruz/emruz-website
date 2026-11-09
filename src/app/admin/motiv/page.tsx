@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
+import { systemChecks } from '@/lib/server/health';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
 import { isAdmin, requireAccount } from '@/lib/server/session';
 import { adminRemoveDevice, grant, reinstate, revoke, setSeats } from './actions';
@@ -22,6 +23,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     select (select count(*)::int from subscriptions where status in ('active','past_due')) as active,
            (select count(*)::int from devices where deactivated_at is null) as devices`;
 
+  const checks = await systemChecks();
+
   const input = 'px-3 py-2 border border-gray-300 rounded-md text-sm';
   const btn = 'px-3 py-2 rounded-md text-sm font-semibold border border-gray-300 hover:bg-gray-50';
 
@@ -35,6 +38,21 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <section className="py-8">
         <Container>
           {sp.msg && <p className="mb-4 p-3 rounded-md bg-green-50 border border-green-200 text-green-900 text-sm">{sp.msg}</p>}
+
+          <details className="mb-6 rounded-lg border border-gray-200" open={checks.some((c) => !c.ok && !c.name.includes('sign-in'))}>
+            <summary className="cursor-pointer px-4 py-3 font-semibold text-gray-900">
+              System check {checks.every((c) => c.ok) ? '· all good' : `· ${checks.filter((c) => !c.ok).length} to fix`}
+            </summary>
+            <ul className="px-4 pb-4 space-y-1 text-sm">
+              {checks.map((c) => (
+                <li key={c.name} className="flex gap-2">
+                  <span className={c.ok ? 'text-green-700' : 'text-red-700'}>{c.ok ? '✓' : '✗'}</span>
+                  <span className="font-semibold text-gray-900 w-44 flex-shrink-0">{c.name}</span>
+                  <span className="text-gray-600 break-all">{c.detail}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
 
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             <form method="get" className="flex gap-2">

@@ -18,6 +18,7 @@ export type CapabilityCode =
   | 'CPT'
   | 'APP'
   | 'ITP'
+  | 'BTH'
   | 'ATH'
   | 'DSPM'
   | 'ISPM'
@@ -29,6 +30,7 @@ export type CapabilityCode =
 export const capabilities: Record<CapabilityCode, { name: string; description: string }> = {
   EPP: { name: 'Endpoint Protection', description: 'Prevents known and unknown malware on laptops, desktops and servers.' },
   EDR: { name: 'Endpoint Detection & Response', description: 'Records endpoint activity to detect, contain and roll back attacks.' },
+  BTH: { name: 'Basic Threat Hunting', description: 'Regular hunts across your environment for common attacker techniques.' },
   ATH: { name: 'Advanced Threat Hunting', description: 'Hypothesis-driven hunts for threats that evade automated detection.' },
   SIEM: { name: 'AI-driven SIEM', description: 'Central collection and correlation of security signals across your environment.' },
   ESPM: { name: 'Endpoint Security Posture', description: 'Finds misconfigured and unpatched endpoints before attackers do.' },
@@ -88,7 +90,7 @@ export const families: ProductFamily[] = [
     name: 'Extended Detection & Response',
     tagline: 'Beyond the endpoint',
     summary:
-      'Managed detection and response with email, collaboration and internet threat protection, threat hunting, and at Premier endpoint response and data security posture, in three editions.',
+      'Managed detection and response with email, collaboration and internet threat protection and threat hunting, in three editions.',
     bestFor: 'Organizations where phishing, web threats and sensitive data are the main risks.',
   },
   {
@@ -98,7 +100,7 @@ export const families: ProductFamily[] = [
     name: 'Detect, Defend & Respond',
     tagline: 'Active defense with identity and data at the center',
     summary:
-      'Everything in XDR Premier plus identity and data risk and posture management, DNS and cloud file security, identity threat response and compliance reporting, in four editions.',
+      'Active defense with data and identity risk and posture management, compliance reporting, DNS and cloud file security, and identity threat response, in four editions.',
     bestFor: 'Enterprises and regulated organizations that need the complete portfolio.',
   },
 ];
@@ -189,41 +191,41 @@ export const packages: ServicePackage[] = [
     code: 'XDR-ES',
     family: 'XDR',
     name: 'Extended Detection & Response, Enterprise',
-    tagline: 'Hunt what tools miss',
-    summary: 'Upgrades endpoint protection to full detection and response, and adds proactive threat hunting by experienced analysts.',
-    bestFor: 'Enterprises with valuable targets and sophisticated adversaries.',
-    includes: ['EDR', ...XDR_CORE, 'ATH'],
-    outcomes: ['Proactive hunts, not just alerts', 'Earlier detection of stealthy attacks', 'Findings that harden your controls'],
+    tagline: 'Full endpoint detection and response',
+    summary: 'Upgrades endpoint protection to full detection and response, alongside email, collaboration and internet threat protection.',
+    bestFor: 'Organizations that need to investigate and contain attacks on endpoints, not just block them.',
+    includes: ['EDR', ...XDR_CORE],
+    outcomes: ['Containment and rollback on every endpoint', 'Phishing and web threats blocked', 'One correlated view across endpoint, email and web'],
   },
   {
     code: 'XDR-PM',
     family: 'XDR',
     name: 'Extended Detection & Response, Premier',
-    tagline: 'Endpoints and sensitive data covered',
-    summary: 'Adds data security posture management to find sensitive data and where it is exposed.',
-    bestFor: 'Organizations with regulated or high-value data.',
-    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM'],
-    outcomes: ['Map of sensitive data across systems', 'Exposed data found and prioritized', 'Endpoint, email, web and data in one view'],
+    tagline: 'Add threat hunting',
+    summary: 'Adds basic threat hunting: regular hunts across your environment for common attacker techniques.',
+    bestFor: 'Organizations that want full endpoint response alongside email and web protection.',
+    includes: ['EDR', 'BTH', ...XDR_CORE],
+    outcomes: ['Threats found before they trigger alerts', 'Containment and rollback on every endpoint', 'Phishing and web threats blocked'],
   },
   {
     code: 'DDR-ST',
     family: 'DDR',
     name: 'Detect, Defend & Respond, Standard',
-    tagline: 'Active defense for identity',
-    summary: 'Moves from detection to active defense and adds identity security posture management.',
-    bestFor: 'Organizations where identities are the new perimeter.',
-    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM'],
-    outcomes: ['Risky accounts and permissions found', 'Threats blocked in real time', 'Identity hygiene tracked over time'],
+    tagline: 'Active defense with data and compliance in view',
+    summary: 'Moves from detection to active defense, and adds data security posture management and compliance reporting.',
+    bestFor: 'Organizations with sensitive data and audit obligations.',
+    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'CRPT'],
+    outcomes: ['Sensitive data found and exposure prioritized', 'Audit-ready evidence and reporting', 'Threats blocked in real time'],
   },
   {
     code: 'DDR-ES',
     family: 'DDR',
     name: 'Detect, Defend & Respond, Enterprise',
-    tagline: 'Defense coordinated across the estate',
-    summary: 'Adds DNS security posture so domains and DNS are protected from hijack and spoofing.',
-    bestFor: 'Enterprises with many domains, brands or business units.',
-    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM'],
-    outcomes: ['Domain and DNS risks monitored', 'Brand spoofing exposure reduced', 'Defense coordinated across infrastructure'],
+    tagline: 'Identity and DNS covered',
+    summary: 'Adds identity security posture management and DNS security posture, protecting accounts, domains and DNS.',
+    bestFor: 'Enterprises where identities and domains are prime targets.',
+    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CRPT'],
+    outcomes: ['Risky accounts and permissions found', 'Domain and DNS risks monitored', 'Brand spoofing exposure reduced'],
   },
   {
     code: 'DDR-PM',
@@ -232,17 +234,17 @@ export const packages: ServicePackage[] = [
     tagline: 'Cloud files covered too',
     summary: 'Adds security for files stored and shared in cloud platforms.',
     bestFor: 'Organizations that collaborate heavily in cloud storage.',
-    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM', 'CFS'],
+    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'CRPT'],
     outcomes: ['Malicious files caught in cloud storage', 'Safer external sharing', 'Coverage where work actually happens'],
   },
   {
     code: 'DDR-CP',
     family: 'DDR',
     name: 'Detect, Defend & Respond, Compliance Plus',
-    tagline: 'Maximum protection with compliance built in',
-    summary: 'Adds identity threat detection and response plus compliance reporting mapped to your frameworks.',
-    bestFor: 'Regulated organizations that need protection and audit evidence together.',
-    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'ITDR', 'CRPT'],
+    tagline: 'Maximum protection, identity attacks stopped',
+    summary: 'Adds identity threat detection and response to stop account takeover as it happens.',
+    bestFor: 'Regulated organizations that need the complete portfolio.',
+    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'ITDR', 'CRPT'],
     outcomes: ['Account takeover detected and stopped', 'Audit-ready evidence and reporting', 'The complete portfolio in one service'],
   },
 ];

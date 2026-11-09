@@ -19,7 +19,7 @@ export default function GRC() {
     {
       question: 'Which compliance frameworks do you work with?',
       answer:
-        'We work with NIST CSF, CIS Controls, ISO 27001, SOC 2, HIPAA, PCI-DSS, and other industry-specific frameworks. We align your program to what your business needs.',
+        'We work with NIST CSF, CIS Controls, ISO 27001, SOC 2, CMMC, NIST SP 800-171, HIPAA, PCI-DSS, and other industry-specific frameworks. We align your program to what your business needs.',
     },
     {
       question: 'How long does it take to build a GRC program?',
@@ -65,7 +65,7 @@ export default function GRC() {
               {
                 title: 'Compliance',
                 description:
-                  'Evidence collection, audit readiness, and certification preparation (SOC 2, ISO, etc.).',
+                  'Evidence collection, audit readiness, and certification preparation (SOC 2, ISO 27001, CMMC, etc.).',
               },
             ].map((item, i) => (
               <Card key={i} hoverable className="border-0 shadow-lg">

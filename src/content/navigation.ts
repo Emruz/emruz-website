@@ -21,7 +21,7 @@ export const mainNav: NavGroup[] = [
     href: '/services',
     children: [
       { label: 'vCISO & Leadership', href: '/services/vciso', description: 'Fractional security leadership and board reporting' },
-      { label: 'GRC Program', href: '/services/grc', description: 'Compliance grounded in NIST, CIS and ISO' },
+      { label: 'GRC Program', href: '/services/grc', description: 'Compliance grounded in NIST, CIS, ISO and CMMC' },
       { label: 'Security & Compliance', href: '/services/security', description: 'Security programs and operations' },
       { label: 'Cloud Strategy & Security', href: '/services/cloud', description: 'Secure, cost-effective cloud architecture' },
       { label: 'Data Science & Analytics', href: '/services/data-science', description: 'Threat hunting, anomaly detection, risk models' },

@@ -34,8 +34,8 @@ export default function ComparePage() {
         <Container>
           <PackagePortfolio filters />
           <p className="mt-6 text-sm text-gray-500">
-            Every package from MDR up includes 24/7 security operations, continuous incident response,
-            exposure management and continuous pen testing. Scope and pricing are set per engagement.
+            Every edition is monitored and managed by our 24x7 SOC. From MDR up, editions also include the AI-driven
+            SIEM, continuous incident response, exposure management and continuous pen testing. Scope and pricing are set per engagement.
           </p>
           <p className="mt-2 text-xs text-gray-400">{POWERED_BY}</p>
         </Container>

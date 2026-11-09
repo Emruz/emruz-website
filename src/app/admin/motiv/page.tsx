@@ -34,6 +34,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin' }, { label: 'Motiv' }]}
         title="Motiv admin"
         summary={`${totals.active} active subscriptions · ${totals.devices} registered computers`}
+        secondaryCta={{ label: 'Switch user', href: '/admin/users' }}
       />
       <section className="py-8">
         <Container>

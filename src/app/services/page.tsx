@@ -142,9 +142,9 @@ export default function Services() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Managed security packages</h2>
-              <p className="text-gray-600 mt-1">Nine tiers from endpoint protection to full detect, defend and respond with compliance reporting.</p>
+              <p className="text-gray-600 mt-1">EDR, MDR, XDR and ΔDR: nine tiers from endpoint protection to full detect, defend and respond with compliance reporting.</p>
             </div>
-            <Link href="/services/packages" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
+            <Link href="/products/compare" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
               Compare all packages →
             </Link>
           </div>

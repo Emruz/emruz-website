@@ -6,36 +6,42 @@ import { ChevronDown, Check } from 'lucide-react';
 import {
   packages,
   capabilities,
+  families,
+  familyBySlug,
+  displayCode,
   includedCapabilities,
-  type ServicePackage,
+  packageHref,
+  POWERED_BY,
+  type FamilySlug,
 } from '@/content/packages';
 
-type Family = 'All' | ServicePackage['family'];
-const families: Family[] = ['All', 'Foundation', 'MDR', 'XDR', 'DDR'];
-
-const familyStyle: Record<ServicePackage['family'], string> = {
-  Foundation: 'bg-slate-100 text-slate-700',
+const familyStyle: Record<FamilySlug, string> = {
+  EDR: 'bg-slate-100 text-slate-700',
   MDR: 'bg-blue-50 text-blue-700',
   XDR: 'bg-indigo-50 text-indigo-700',
   DDR: 'bg-violet-50 text-violet-700',
 };
 
 interface Props {
-  /** Compact preview: no filters, no expansion, cards link to the full portfolio */
+  /** Compact preview: no filters or expansion; cards link to their product page */
   preview?: boolean;
+  /** Show only one product family (its product page) */
+  family?: FamilySlug;
+  /** Family filter buttons (full comparison only) */
+  filters?: boolean;
 }
 
-export default function PackagePortfolio({ preview = false }: Props) {
-  const [family, setFamily] = useState<Family>('All');
+export default function PackagePortfolio({ preview = false, family, filters = false }: Props) {
+  const [filter, setFilter] = useState<FamilySlug | 'All'>('All');
   const [open, setOpen] = useState<string | null>(null);
 
-  // Open the package named in the URL hash (e.g. /services/packages#XDR-ES)
+  // Open the package named in the URL hash (e.g. /products/xdr#XDR-ES)
   useEffect(() => {
     if (preview) return;
     const openFromHash = () => {
       const fromHash = decodeURIComponent(window.location.hash.slice(1));
       if (packages.some((p) => p.code === fromHash)) {
-        setFamily('All');
+        setFilter('All');
         setOpen(fromHash);
         requestAnimationFrame(() =>
           document.getElementById(`pkg-${fromHash}`)?.scrollIntoView({ block: 'start' }),
@@ -50,25 +56,23 @@ export default function PackagePortfolio({ preview = false }: Props) {
     };
   }, [preview]);
 
-  const shown = family === 'All' ? packages : packages.filter((p) => p.family === family);
+  const active = family ?? (filter === 'All' ? null : filter);
+  const shown = active ? packages.filter((p) => p.family === active) : packages;
 
   return (
     <div>
-      {!preview && (
-        <div role="tablist" aria-label="Filter packages" className="flex flex-wrap gap-2 mb-6">
-          {families.map((f) => (
+      {filters && !family && !preview && (
+        <div role="group" aria-label="Filter by product" className="flex flex-wrap gap-2 mb-6">
+          {(['All', ...families.map((f) => f.slug)] as const).map((f) => (
             <button
               key={f}
-              role="tab"
-              aria-selected={family === f}
-              onClick={() => setFamily(f)}
+              aria-pressed={filter === f}
+              onClick={() => setFilter(f)}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
-                family === f
-                  ? 'bg-slate-900 text-white border-slate-900'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                filter === f ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              {f === 'All' ? 'All packages' : f}
+              {f === 'All' ? 'All tiers' : familyBySlug(f).label}
             </button>
           ))}
         </div>
@@ -89,12 +93,14 @@ export default function PackagePortfolio({ preview = false }: Props) {
             >
               <div className="flex items-center justify-between mb-3">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded ${familyStyle[pkg.family]}`}>
-                  {pkg.family}
+                  {familyBySlug(pkg.family).label}
                 </span>
-                <span className="text-xs text-gray-400">Tier {tier + 1} of {packages.length}</span>
+                <span className="text-xs text-gray-400">
+                  Tier {tier + 1} of {packages.length}
+                </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">{pkg.code}</h3>
-              <p className="text-sm text-gray-500">{pkg.name}</p>
+              <h3 className="text-2xl font-bold text-gray-900">{displayCode(pkg.code)}</h3>
+              <p className="text-sm text-gray-500">{pkg.name.replace(/^Detect, Defend & Respond/, 'ΔDR')}</p>
               <p className="mt-3 font-semibold text-gray-900">{pkg.tagline}</p>
               <p className="mt-1 text-sm text-gray-600">{pkg.summary}</p>
 
@@ -106,9 +112,7 @@ export default function PackagePortfolio({ preview = false }: Props) {
                       key={c}
                       title={capabilities[c].name}
                       className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
-                        isNew
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-gray-50 text-gray-600 border-gray-200'
+                        isNew ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-gray-50 text-gray-600 border-gray-200'
                       }`}
                     >
                       {c}
@@ -118,28 +122,28 @@ export default function PackagePortfolio({ preview = false }: Props) {
               </ul>
               {tier > 0 && (
                 <p className="mt-2 text-xs text-gray-500">
-                  Includes everything in {packages[tier - 1].code}, plus the highlighted capabilities.
+                  Includes everything in {displayCode(packages[tier - 1].code)}, plus the highlighted capabilities.
                 </p>
               )}
 
-              {preview ? (
-                <Link
-                  href={`/services/packages#${pkg.code}`}
-                  className="mt-4 inline-block text-sm font-semibold text-indigo-700 hover:text-indigo-900"
-                >
-                  View details →
-                </Link>
-              ) : (
-                <button
-                  onClick={() => setOpen(isOpen ? null : pkg.code)}
-                  aria-expanded={isOpen}
-                  aria-controls={`pkg-detail-${pkg.code}`}
-                  className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:text-indigo-900"
-                >
-                  {isOpen ? 'Hide details' : 'View details'}
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                </button>
-              )}
+              <div className="mt-4 flex items-end justify-between gap-3">
+                {preview ? (
+                  <Link href={packageHref(pkg)} className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+                    View details →
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setOpen(isOpen ? null : pkg.code)}
+                    aria-expanded={isOpen}
+                    aria-controls={`pkg-detail-${pkg.code}`}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-700 hover:text-indigo-900"
+                  >
+                    {isOpen ? 'Hide details' : 'View details'}
+                    <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+                <span className="text-[11px] text-gray-400">{POWERED_BY}</span>
+              </div>
 
               {!preview && isOpen && (
                 <div id={`pkg-detail-${pkg.code}`} className="mt-4 pt-4 border-t border-gray-200 space-y-4">
@@ -172,10 +176,10 @@ export default function PackagePortfolio({ preview = false }: Props) {
                     </dl>
                   </div>
                   <Link
-                    href={`/contact?topic=${encodeURIComponent(pkg.code)}`}
+                    href={`/contact?topic=${encodeURIComponent(displayCode(pkg.code))}`}
                     className="inline-block bg-indigo-600 text-white text-sm px-4 py-2 rounded-md font-semibold hover:bg-indigo-700 transition-colors"
                   >
-                    Discuss {pkg.code}
+                    Discuss {displayCode(pkg.code)}
                   </Link>
                 </div>
               )}

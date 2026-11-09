@@ -96,6 +96,7 @@ export default function Header() {
                               {item.description && (
                                 <span className="block text-sm text-gray-500">{item.description}</span>
                               )}
+                              {item.note && <span className="block text-[11px] text-gray-400 mt-0.5">{item.note}</span>}
                             </Link>
                           </li>
                         ))}

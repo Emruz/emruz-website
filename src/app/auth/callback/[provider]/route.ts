@@ -15,8 +15,10 @@ interface Pending {
 
 async function handle(req: Request, provider: string, params: URLSearchParams) {
   const jar = await cookies();
-  const raw = jar.get('emruz_oauth')?.value;
-  jar.delete({ name: 'emruz_oauth', path: '/auth/callback' });
+  const state = params.get('state') || '';
+  const cookieName = /^[\w-]{10,100}$/.test(state) ? `emruz_oauth_${state}` : '';
+  const raw = cookieName ? jar.get(cookieName)?.value : undefined;
+  if (cookieName) jar.delete({ name: cookieName, path: '/auth/callback' });
   let pending: Pending | null = null;
   try {
     pending = raw ? (JSON.parse(raw) as Pending) : null;
@@ -26,10 +28,20 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
   const back = (error: string, next = '/motiv/account') =>
     NextResponse.redirect(new URL(`/signin?error=${encodeURIComponent(error)}&next=${encodeURIComponent(next)}`, req.url), 303);
 
-  if (!PROVIDERS.includes(provider as Provider) || !pending || pending.p !== provider) return back('expired');
-  if (params.get('error')) return back('cancelled', pending.next);
+  const reject = (reason: string, error: string, next?: string) => {
+    console.warn(`oauth callback rejected (${provider}): ${reason}`);
+    return back(error, next);
+  };
+  if (params.get('error')) {
+    return reject(`provider error ${params.get('error')}: ${params.get('error_description') ?? ''}`, 'cancelled', pending?.next);
+  }
+  if (!PROVIDERS.includes(provider as Provider)) return reject('unknown provider', 'expired');
+  if (!pending) {
+    return reject(`no sign-in cookie for this attempt (host ${new URL(req.url).host}, cookies: ${jar.getAll().map((c) => c.name).join(',')})`, 'expired');
+  }
+  if (pending.p !== provider) return reject(`cookie is for ${pending.p}`, 'expired', pending.next);
   const code = params.get('code');
-  if (!code || params.get('state') !== pending.state) return back('expired', pending.next);
+  if (!code || state !== pending.state) return reject('missing code or state mismatch', 'expired', pending.next);
 
   try {
     const claims = await finishAuth(pending.p, code, pending.cv, pending.nonce, params.get('user'));

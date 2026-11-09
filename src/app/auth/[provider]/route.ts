@@ -21,8 +21,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   (await cookies()).set(`emruz_oauth_${start.state}`, JSON.stringify({ p, state: start.state, cv: start.codeVerifier, nonce: start.nonce, next, link }), {
     httpOnly: true,
     secure: IS_PROD,
-    // Apple returns with a cross-site POST, which only carries SameSite=None cookies
-    sameSite: p === 'apple' && IS_PROD ? 'none' : 'lax',
+    // Providers can return through a cross-site POST or a redirect chain that
+    // starts with one (Apple always; Microsoft for some personal accounts).
+    // Browsers only send SameSite=None cookies there. The state value in the
+    // cookie name still ties the response to this browser.
+    sameSite: IS_PROD ? 'none' : 'lax',
     path: '/auth/callback',
     maxAge: 600,
   });

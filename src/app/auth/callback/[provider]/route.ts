@@ -15,6 +15,9 @@ interface Pending {
 
 async function handle(req: Request, provider: string, params: URLSearchParams) {
   const jar = await cookies();
+  // What the browser actually sent, before this handler changes anything
+  const sent = jar.getAll().map((c) => c.name).filter((n) => n.startsWith('emruz_oauth'));
+  if (sent.includes('emruz_oauth')) jar.delete({ name: 'emruz_oauth', path: '/auth/callback' }); // older format
   const state = params.get('state') || '';
   const cookieName = /^[\w-]{10,100}$/.test(state) ? `emruz_oauth_${state}` : '';
   const raw = cookieName ? jar.get(cookieName)?.value : undefined;
@@ -37,7 +40,10 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
   }
   if (!PROVIDERS.includes(provider as Provider)) return reject('unknown provider', 'expired');
   if (!pending) {
-    return reject(`no sign-in cookie for this attempt (host ${new URL(req.url).host}, cookies: ${jar.getAll().map((c) => c.name).join(',')})`, 'expired');
+    return reject(
+      `no sign-in cookie for this attempt (${req.method}, from ${req.headers.get('referer') ? new URL(req.headers.get('referer')!).host : 'no referer'}, sign-in cookies sent: ${sent.join(',') || 'none'})`,
+      'expired',
+    );
   }
   if (pending.p !== provider) return reject(`cookie is for ${pending.p}`, 'expired', pending.next);
   const code = params.get('code');

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import LegalPage, { LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
+import LegalPage, { COPYRIGHT_YEAR, LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
 
 export const metadata = {
   title: 'Motiv privacy policy',
@@ -117,6 +117,7 @@ export default function MotivPrivacyPage() {
       <p>
         Questions about this policy: <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>.
       </p>
+      <p className="text-sm text-gray-500">Motiv © {COPYRIGHT_YEAR} {LEGAL_PARTY}. All rights reserved.</p>
     </LegalPage>
   );
 }

@@ -18,7 +18,7 @@ Tick items off as they are done. Grouped by when they're needed.
 
 ## Sign-in providers
 
-- [ ] Microsoft: registered; signed-out sign-in failed once, fix deployed, retest
+- [x] Microsoft (redirect fix: always return to the public site address)
 - [x] Google (OAuth client)
 - [ ] Apple (Services ID and key; needs the paid Apple Developer account)
 

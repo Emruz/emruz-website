@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import LegalPage, { LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
+import LegalPage, { COPYRIGHT_YEAR, LEGAL_CONTACT, LEGAL_PARTY } from '@/components/LegalPage';
 
 export const metadata = {
   title: 'Motiv license agreement (EULA)',
@@ -79,10 +79,15 @@ export default function EulaPage() {
         using Premium or to keep connecting to emruz.com.
       </p>
 
-      <h2>7. Ownership</h2>
+      <h2>7. Ownership and copyright</h2>
       <p>
-        Motiv is licensed, not sold. The publisher and its licensors keep all rights in Motiv, including its code,
-        design, name and logo, except the rights this agreement grants you.
+        Motiv is licensed, not sold. Motiv © {COPYRIGHT_YEAR} {LEGAL_PARTY}. All rights reserved. The publisher and its
+        licensors keep all rights in Motiv, including its code, design, name and logo, except the rights this agreement
+        grants you. Motiv and the Motiv logo are trademarks of the publisher.
+      </p>
+      <p>
+        Motiv is based on Meetily Community Edition v0.5.0 by Zackriya Solutions, used under the MIT License; that code
+        remains under its license, and its copyright notice is included with the app.
       </p>
 
       <h2>8. No warranty</h2>

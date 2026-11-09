@@ -25,7 +25,7 @@ export default function ProductsPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-5">
             <h2 className="text-2xl font-bold text-gray-900">Managed security</h2>
             <Link href="/products/compare" className="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-              Compare all nine tiers →
+              Compare all {packages.length} editions →
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -43,7 +43,7 @@ export default function ProductsPage() {
                     </span>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{f.label}</h3>
-                      <p className="text-xs text-gray-500">{tiers === 1 ? '1 package' : `${tiers} tiers`}</p>
+                      <p className="text-xs text-gray-500">{tiers === 1 ? '1 package' : `${tiers} editions`}</p>
                     </div>
                   </div>
                   <p className="font-semibold text-gray-900">{f.name}</p>

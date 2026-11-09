@@ -7,7 +7,7 @@ import {
   displayCode,
   families,
   familyByPath,
-  includedCapabilities,
+  familyCapabilities,
   packages,
   POWERED_BY,
 } from '@/content/packages';
@@ -27,9 +27,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
   if (!f) notFound();
 
   const tiers = packages.filter((p) => p.family === f.slug);
-  // Everything the top tier of this family includes, for the capability list
-  const top = tiers[tiers.length - 1];
-  const all = includedCapabilities(top.code);
+  const all = familyCapabilities(f.slug);
   const idx = families.indexOf(f);
   const prev = families[idx - 1];
   const next = families[idx + 1];
@@ -43,7 +41,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
         primaryCta={{ label: `Discuss ${f.label}`, href: `/contact?topic=${encodeURIComponent(f.label)}` }}
         secondaryCta={{ label: 'Compare all', href: '/products/compare' }}
         sections={[
-          { label: tiers.length > 1 ? 'Tiers' : 'Package', href: '#tiers' },
+          { label: tiers.length > 1 ? 'Editions' : 'Package', href: '#tiers' },
           { label: "What's included", href: '#included' },
         ]}
       />
@@ -67,9 +65,9 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
         <Container>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">What&apos;s included</h2>
           <p className="text-gray-600 mb-8">
-            Everything in {displayCode(top.code)}
-            {tiers.length > 1 && <>, the top {f.label} tier. Lower tiers include the capabilities marked on their cards.</>}
-            {tiers.length === 1 && '.'}
+            {tiers.length > 1
+              ? `Every capability across the ${f.label} editions. Each card above shows which edition includes what.`
+              : `Everything in ${displayCode(tiers[0].code)}.`}
           </p>
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
             {all.map((c) => (
@@ -104,7 +102,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
 
       <CTABanner
         heading={`Is ${f.label} the right fit?`}
-        description="A short assessment shows where you are today and which tier closes the gaps that matter."
+        description="A short assessment shows where you are today and which edition closes the gaps that matter."
         primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />

@@ -10,6 +10,7 @@ import {
   familyBySlug,
   displayCode,
   includedCapabilities,
+  newInEdition,
   packageHref,
   POWERED_BY,
   type FamilySlug,
@@ -72,7 +73,7 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                 filter === f ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
               }`}
             >
-              {f === 'All' ? 'All tiers' : familyBySlug(f).label}
+              {f === 'All' ? 'All editions' : familyBySlug(f).label}
             </button>
           ))}
         </div>
@@ -80,8 +81,11 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
         {shown.map((pkg) => {
-          const tier = packages.indexOf(pkg);
+          const siblings = packages.filter((p) => p.family === pkg.family);
+          const edition = siblings.indexOf(pkg);
+          const prev = siblings[edition - 1];
           const included = includedCapabilities(pkg.code);
+          const added = newInEdition(pkg.code);
           const isOpen = open === pkg.code;
           return (
             <article
@@ -95,9 +99,11 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded ${familyStyle[pkg.family]}`}>
                   {familyBySlug(pkg.family).label}
                 </span>
-                <span className="text-xs text-gray-400">
-                  Tier {tier + 1} of {packages.length}
-                </span>
+                {siblings.length > 1 && (
+                  <span className="text-xs text-gray-400">
+                    Edition {edition + 1} of {siblings.length}
+                  </span>
+                )}
               </div>
               <h3 className="text-2xl font-bold text-gray-900">{displayCode(pkg.code)}</h3>
               <p className="text-sm text-gray-500">{pkg.name.replace(/^Detect, Defend & Respond/, 'ΔDR')}</p>
@@ -106,7 +112,7 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
 
               <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Included capabilities">
                 {included.map((c) => {
-                  const isNew = pkg.adds.includes(c);
+                  const isNew = added.includes(c);
                   return (
                     <li
                       key={c}
@@ -120,9 +126,9 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                   );
                 })}
               </ul>
-              {tier > 0 && (
+              {prev && added.length > 0 && (
                 <p className="mt-2 text-xs text-gray-500">
-                  Includes everything in {displayCode(packages[tier - 1].code)}, plus the highlighted capabilities.
+                  Highlighted: new compared with {displayCode(prev.code)}.
                 </p>
               )}
 

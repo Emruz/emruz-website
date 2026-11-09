@@ -6,7 +6,7 @@ import { capabilities, type CapabilityCode } from '@/content/packages';
 export const metadata = {
   title: 'Compare managed security: EDR, MDR, XDR and ΔDR',
   description:
-    'Managed security packages from endpoint protection to full detect, defend and respond coverage with compliance reporting. Each tier builds on the one before.',
+    'Managed security packages from endpoint protection to full detect, defend and respond coverage with compliance reporting, in eleven editions.',
 };
 
 export default function ComparePage() {
@@ -21,7 +21,7 @@ export default function ComparePage() {
           { label: 'Compare managed security' },
         ]}
         title="Compare managed security"
-        summary="EDR, MDR, XDR and ΔDR in nine tiers. Each tier includes everything in the one before, so you can start where you are and grow."
+        summary="EDR, MDR, XDR and ΔDR in eleven editions. Start where you are and grow; each card shows exactly what's included."
         primaryCta={{ label: 'Help me choose', href: '/assessments' }}
         secondaryCta={{ label: 'Talk to us', href: '/contact?topic=packages' }}
         sections={[
@@ -64,7 +64,7 @@ export default function ComparePage() {
       </section>
 
       <CTABanner
-        heading="Not sure which tier fits?"
+        heading="Not sure which edition fits?"
         description="A short assessment shows where you are today and which package closes the gaps that matter."
         primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}

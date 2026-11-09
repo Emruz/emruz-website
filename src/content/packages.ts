@@ -1,8 +1,8 @@
 /**
  * Managed security Service Package Portfolio.
  *
- * Tier structure modeled on a stacked "each tier includes the one before"
- * portfolio. Capability inclusion per tier is DRAFT and must be confirmed
+ * Product families (EDR, MDR, XDR, ΔDR), each in one or more editions. Each
+ * edition lists exactly what it includes; editions are not strictly cumulative. Capability inclusion per tier is DRAFT and must be confirmed
  * against the approved delivery mapping before launch (see
  * docs/content-verification.md). No pricing, SLAs or vendor names here.
  */
@@ -70,7 +70,7 @@ export const families: ProductFamily[] = [
     label: 'EDR',
     name: 'Endpoint Detection & Response',
     tagline: 'Modern protection on every device',
-    summary: 'Prevention plus detection, containment and rollback on laptops, desktops and servers.',
+    summary: 'Endpoint protection, detection and response, and threat hunting for laptops, desktops and servers, in three editions.',
     bestFor: 'Organizations starting a security program or replacing legacy antivirus.',
   },
   {
@@ -80,7 +80,7 @@ export const families: ProductFamily[] = [
     name: 'Managed Detection & Response',
     tagline: 'Experts watching around the clock',
     summary:
-      'A 24/7 security operations team monitors, investigates and responds for you, with incident response, exposure management and continuous pen testing included.',
+      'Endpoint detection and response with a 24/7 security operations team that monitors, investigates and responds for you, with incident response, exposure management and continuous pen testing included.',
     bestFor: 'Teams without their own 24/7 security operations center.',
   },
   {
@@ -90,7 +90,7 @@ export const families: ProductFamily[] = [
     name: 'Extended Detection & Response',
     tagline: 'Beyond the endpoint',
     summary:
-      'Everything in MDR plus email, collaboration and internet threat protection, threat hunting and data security posture, in three tiers.',
+      'Managed detection and response with email, collaboration and internet threat protection, threat hunting, and at Premier endpoint response and data security posture, in three editions.',
     bestFor: 'Organizations where phishing, web threats and sensitive data are the main risks.',
   },
   {
@@ -100,7 +100,7 @@ export const families: ProductFamily[] = [
     name: 'Detect, Defend & Respond',
     tagline: 'Active defense with identity and data at the center',
     summary:
-      'Everything in XDR plus identity and data risk and posture management, DNS and cloud file security, and compliance reporting, in four tiers.',
+      'Everything in XDR Premier plus identity and data risk and posture management, DNS and cloud file security, identity threat response and compliance reporting, in four editions.',
     bestFor: 'Enterprises and regulated organizations that need the complete portfolio.',
   },
 ];
@@ -124,22 +124,46 @@ export interface ServicePackage {
   tagline: string;
   summary: string;
   bestFor: string;
-  /** Capabilities added at this tier */
-  adds: CapabilityCode[];
+  /** Every capability in this edition (editions are not strictly cumulative) */
+  includes: CapabilityCode[];
   /** Outcomes the buyer gets */
   outcomes: string[];
 }
 
+// Capabilities shared by MDR and above
+const SOC_CORE: CapabilityCode[] = ['SIEM', 'SOC', 'ESPM', 'NSPM', 'CIR', 'CTEM', 'CPT'];
+const XDR_CORE: CapabilityCode[] = [...SOC_CORE, 'APP', 'ITP'];
+
 export const packages: ServicePackage[] = [
   {
-    code: 'EDR',
+    code: 'EDR-ST',
     family: 'EDR',
-    name: 'Endpoint Detection & Response',
-    tagline: 'Your first line of defense',
-    summary: 'Protects every device with prevention plus detection and rollback when something gets through.',
-    bestFor: 'Organizations starting their security program or replacing legacy antivirus.',
-    adds: ['EPP', 'EDR'],
-    outcomes: ['Modern protection on every endpoint', 'Visibility into what happened on a device', 'Fast containment of compromised machines'],
+    name: 'Endpoint Detection & Response, Standard',
+    tagline: 'Essential endpoint protection',
+    summary: 'Next-generation protection that stops known and unknown malware on every device.',
+    bestFor: 'Organizations replacing legacy antivirus.',
+    includes: ['EPP'],
+    outcomes: ['Modern malware protection on every endpoint', 'One console for all devices', 'Lightweight agent, no signature updates to manage'],
+  },
+  {
+    code: 'EDR-ES',
+    family: 'EDR',
+    name: 'Endpoint Detection & Response, Enterprise',
+    tagline: 'See and stop what gets through',
+    summary: 'Full endpoint detection and response: records activity so attacks can be detected, contained and rolled back.',
+    bestFor: 'Organizations that need visibility into what happened on a device, not just prevention.',
+    includes: ['EDR'],
+    outcomes: ['Visibility into what happened on a device', 'Fast containment of compromised machines', 'Rollback of malicious changes'],
+  },
+  {
+    code: 'EDR-PM',
+    family: 'EDR',
+    name: 'Endpoint Detection & Response, Premier',
+    tagline: 'Endpoint defense with expert hunting',
+    summary: 'Endpoint detection and response plus proactive threat hunting by experienced analysts.',
+    bestFor: 'Organizations with valuable endpoints and capable adversaries.',
+    includes: ['EDR', 'ATH'],
+    outcomes: ['Threats found before they trigger alerts', 'Containment and rollback on every endpoint', 'Hunt findings that harden your controls'],
   },
   {
     code: 'MDR',
@@ -148,7 +172,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Expert eyes on your environment',
     summary: 'Analysts watch your environment around the clock, investigate alerts and respond for you.',
     bestFor: 'Teams without a 24/7 SOC who need detection and response handled.',
-    adds: ['SIEM', 'SOC', 'ESPM', 'NSPM', 'CIR', 'CTEM', 'CPT'],
+    includes: ['EDR', ...SOC_CORE],
     outcomes: ['24/7 monitoring and response', 'Incident response included', 'Continuous view of your exposures'],
   },
   {
@@ -156,10 +180,10 @@ export const packages: ServicePackage[] = [
     family: 'XDR',
     name: 'Extended Detection & Response, Standard',
     tagline: 'Visibility beyond the endpoint',
-    summary: 'Adds email, collaboration and internet threat protection so attacks are stopped before they reach a device.',
+    summary: 'Managed detection and response with email, collaboration and internet threat protection, so attacks are stopped before they reach a device.',
     bestFor: 'Organizations where phishing and web threats are the main risk.',
-    adds: ['APP', 'ITP'],
-    outcomes: ['Phishing and impersonation blocked', 'Protection for users on and off network', 'One correlated view across endpoint, email and web'],
+    includes: [...XDR_CORE],
+    outcomes: ['Phishing and impersonation blocked', 'Protection for users on and off network', 'One correlated view across email, web and network'],
   },
   {
     code: 'XDR-ES',
@@ -168,18 +192,18 @@ export const packages: ServicePackage[] = [
     tagline: 'Hunt what tools miss',
     summary: 'Adds proactive threat hunting by experienced analysts across your environment.',
     bestFor: 'Enterprises with valuable targets and sophisticated adversaries.',
-    adds: ['ATH'],
+    includes: [...XDR_CORE, 'ATH'],
     outcomes: ['Proactive hunts, not just alerts', 'Earlier detection of stealthy attacks', 'Findings that harden your controls'],
   },
   {
     code: 'XDR-PM',
     family: 'XDR',
     name: 'Extended Detection & Response, Premier',
-    tagline: 'Know where your sensitive data is',
-    summary: 'Adds data security posture management to find sensitive data and where it is exposed.',
+    tagline: 'Endpoints and sensitive data covered',
+    summary: 'Adds endpoint detection and response and data security posture management to find sensitive data and where it is exposed.',
     bestFor: 'Organizations with regulated or high-value data.',
-    adds: ['DSPM'],
-    outcomes: ['Map of sensitive data across systems', 'Exposed data found and prioritized', 'Better answers for auditors and boards'],
+    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM'],
+    outcomes: ['Map of sensitive data across systems', 'Exposed data found and prioritized', 'Endpoint, email, web and data in one view'],
   },
   {
     code: 'DDR-ST',
@@ -188,7 +212,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Active defense for identity',
     summary: 'Moves from detection to active defense and adds identity security posture management.',
     bestFor: 'Organizations where identities are the new perimeter.',
-    adds: ['ISPM'],
+    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM'],
     outcomes: ['Risky accounts and permissions found', 'Threats blocked in real time', 'Identity hygiene tracked over time'],
   },
   {
@@ -198,7 +222,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Defense coordinated across the estate',
     summary: 'Adds DNS security posture so domains and DNS are protected from hijack and spoofing.',
     bestFor: 'Enterprises with many domains, brands or business units.',
-    adds: ['DNSSPM'],
+    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM'],
     outcomes: ['Domain and DNS risks monitored', 'Brand spoofing exposure reduced', 'Defense coordinated across infrastructure'],
   },
   {
@@ -208,7 +232,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Cloud files covered too',
     summary: 'Adds security for files stored and shared in cloud platforms.',
     bestFor: 'Organizations that collaborate heavily in cloud storage.',
-    adds: ['CFS'],
+    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM', 'CFS'],
     outcomes: ['Malicious files caught in cloud storage', 'Safer external sharing', 'Coverage where work actually happens'],
   },
   {
@@ -218,17 +242,30 @@ export const packages: ServicePackage[] = [
     tagline: 'Maximum protection with compliance built in',
     summary: 'Adds identity threat detection and response plus compliance reporting mapped to your frameworks.',
     bestFor: 'Regulated organizations that need protection and audit evidence together.',
-    adds: ['ITDR', 'CRPT'],
+    includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'ITDR', 'CRPT'],
     outcomes: ['Account takeover detected and stopped', 'Audit-ready evidence and reporting', 'The complete portfolio in one service'],
   },
 ];
 
-/** All capabilities included in a package, cumulative through the tiers. */
+/** Capabilities in a package, in glossary order. */
 export function includedCapabilities(code: string): CapabilityCode[] {
-  const out: CapabilityCode[] = [];
-  for (const p of packages) {
-    out.push(...p.adds);
-    if (p.code === code) break;
-  }
-  return out;
+  const pkg = packages.find((p) => p.code === code);
+  if (!pkg) return [];
+  const order = Object.keys(capabilities) as CapabilityCode[];
+  return order.filter((c) => pkg.includes.includes(c));
+}
+
+/** Capabilities this edition has that the previous edition in its family doesn't. */
+export function newInEdition(code: string): CapabilityCode[] {
+  const pkg = packages.find((p) => p.code === code);
+  if (!pkg) return [];
+  const sameFamily = packages.filter((p) => p.family === pkg.family);
+  const prev = sameFamily[sameFamily.indexOf(pkg) - 1];
+  return prev ? pkg.includes.filter((c) => !prev.includes.includes(c)) : [];
+}
+
+/** Every capability any edition of a family includes, in glossary order. */
+export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
+  const all = new Set(packages.filter((p) => p.family === slug).flatMap((p) => p.includes));
+  return (Object.keys(capabilities) as CapabilityCode[]).filter((c) => all.has(c));
 }

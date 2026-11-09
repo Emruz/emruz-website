@@ -41,7 +41,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Logo className="inline-block mb-4 text-3xl text-blue-400" />
+            <Logo className="inline-block mb-4 text-[2.8125rem] text-white" />
             <p className="text-gray-400 text-sm">
               Strategy and execution. Technical clarity without the overhead.
             </p>

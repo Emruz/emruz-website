@@ -11,7 +11,6 @@ export type CapabilityCode =
   | 'EPP'
   | 'EDR'
   | 'SIEM'
-  | 'SOC'
   | 'ESPM'
   | 'NSPM'
   | 'CIR'
@@ -30,8 +29,8 @@ export type CapabilityCode =
 export const capabilities: Record<CapabilityCode, { name: string; description: string }> = {
   EPP: { name: 'Endpoint Protection', description: 'Prevents known and unknown malware on laptops, desktops and servers.' },
   EDR: { name: 'Endpoint Detection & Response', description: 'Records endpoint activity to detect, contain and roll back attacks.' },
+  ATH: { name: 'Advanced Threat Hunting', description: 'Hypothesis-driven hunts for threats that evade automated detection.' },
   SIEM: { name: 'AI-driven SIEM', description: 'Central collection and correlation of security signals across your environment.' },
-  SOC: { name: '24/7 Security Operations', description: 'Analysts monitor, investigate and respond around the clock.' },
   ESPM: { name: 'Endpoint Security Posture', description: 'Finds misconfigured and unpatched endpoints before attackers do.' },
   NSPM: { name: 'Network Security Posture', description: 'Continuous review of network exposure and segmentation.' },
   CIR: { name: 'Continuous Incident Response', description: 'Incident response is part of the service, not a separate retainer.' },
@@ -39,13 +38,12 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   CPT: { name: 'Continuous Pen Testing', description: 'Ongoing attack simulation instead of a once-a-year test.' },
   APP: { name: 'Advanced Phishing Protection', description: 'Stops phishing, impersonation and malicious links across email and collaboration tools.' },
   ITP: { name: 'Internet Threat Protection', description: 'DNS-layer protection that blocks malicious destinations for users anywhere.' },
-  ATH: { name: 'Advanced Threat Hunting', description: 'Hypothesis-driven hunts for threats that evade automated detection.' },
   DSPM: { name: 'Data Security Posture', description: 'Discovers sensitive data and where it is exposed.' },
   ISPM: { name: 'Identity Security Posture', description: 'Finds risky accounts, permissions and identity misconfigurations.' },
   DNSSPM: { name: 'DNS Security Posture', description: 'Monitors domains and DNS configuration for hijack and spoofing risk.' },
   CFS: { name: 'Cloud File Security', description: 'Scans files in cloud storage and collaboration platforms for threats.' },
   ITDR: { name: 'Identity Threat Detection & Response', description: 'Detects and responds to account takeover and identity attacks.' },
-  CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use.' },
+  CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use, such as NIST CSF, ISO 27001, SOC 2 and CMMC.' },
 };
 
 export type FamilySlug = 'EDR' | 'MDR' | 'XDR' | 'DDR';
@@ -116,6 +114,8 @@ export const packageHref = (pkg: { code: string; family: FamilySlug }) =>
   `/products/${familyBySlug(pkg.family).path}#${pkg.code}`;
 
 export const POWERED_BY = 'Powered by WhiteDog Cyber';
+/** Shown on every edition instead of a SOC capability brick */
+export const SOC_LINE = 'Monitored and managed by our 24x7 SOC';
 
 export interface ServicePackage {
   code: string;
@@ -130,8 +130,8 @@ export interface ServicePackage {
   outcomes: string[];
 }
 
-// Capabilities shared by MDR and above
-const SOC_CORE: CapabilityCode[] = ['SIEM', 'SOC', 'ESPM', 'NSPM', 'CIR', 'CTEM', 'CPT'];
+// Capabilities shared by MDR and above (every edition is also run by the 24x7 SOC)
+const SOC_CORE: CapabilityCode[] = ['SIEM', 'ESPM', 'NSPM', 'CIR', 'CTEM', 'CPT'];
 const XDR_CORE: CapabilityCode[] = [...SOC_CORE, 'APP', 'ITP'];
 
 export const packages: ServicePackage[] = [
@@ -172,7 +172,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Expert eyes on your environment',
     summary: 'Analysts watch your environment around the clock, investigate alerts and respond for you.',
     bestFor: 'Teams without a 24/7 SOC who need detection and response handled.',
-    includes: ['EDR', ...SOC_CORE],
+    includes: ['EDR', 'ATH', ...SOC_CORE],
     outcomes: ['24/7 monitoring and response', 'Incident response included', 'Continuous view of your exposures'],
   },
   {
@@ -182,17 +182,17 @@ export const packages: ServicePackage[] = [
     tagline: 'Visibility beyond the endpoint',
     summary: 'Managed detection and response with email, collaboration and internet threat protection, so attacks are stopped before they reach a device.',
     bestFor: 'Organizations where phishing and web threats are the main risk.',
-    includes: [...XDR_CORE],
-    outcomes: ['Phishing and impersonation blocked', 'Protection for users on and off network', 'One correlated view across email, web and network'],
+    includes: ['EPP', ...XDR_CORE],
+    outcomes: ['Phishing and impersonation blocked', 'Protection for users on and off network', 'One correlated view across endpoint, email and web'],
   },
   {
     code: 'XDR-ES',
     family: 'XDR',
     name: 'Extended Detection & Response, Enterprise',
     tagline: 'Hunt what tools miss',
-    summary: 'Adds proactive threat hunting by experienced analysts across your environment.',
+    summary: 'Upgrades endpoint protection to full detection and response, and adds proactive threat hunting by experienced analysts.',
     bestFor: 'Enterprises with valuable targets and sophisticated adversaries.',
-    includes: [...XDR_CORE, 'ATH'],
+    includes: ['EDR', ...XDR_CORE, 'ATH'],
     outcomes: ['Proactive hunts, not just alerts', 'Earlier detection of stealthy attacks', 'Findings that harden your controls'],
   },
   {
@@ -200,7 +200,7 @@ export const packages: ServicePackage[] = [
     family: 'XDR',
     name: 'Extended Detection & Response, Premier',
     tagline: 'Endpoints and sensitive data covered',
-    summary: 'Adds endpoint detection and response and data security posture management to find sensitive data and where it is exposed.',
+    summary: 'Adds data security posture management to find sensitive data and where it is exposed.',
     bestFor: 'Organizations with regulated or high-value data.',
     includes: ['EDR', ...XDR_CORE, 'ATH', 'DSPM'],
     outcomes: ['Map of sensitive data across systems', 'Exposed data found and prioritized', 'Endpoint, email, web and data in one view'],

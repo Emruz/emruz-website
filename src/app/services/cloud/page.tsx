@@ -47,7 +47,7 @@ export default function Cloud() {
     {
       question: 'What about security in the cloud?',
       answer:
-        'Cloud security is integral to our strategy. We design controls aligned to NIST CSF, ensure compliance (SOC 2, ISO, etc.), and implement security best practices.',
+        'Cloud security is integral to our strategy. We design controls aligned to NIST CSF, ensure compliance (SOC 2, ISO 27001, CMMC, etc.), and implement security best practices.',
     },
   ];
 

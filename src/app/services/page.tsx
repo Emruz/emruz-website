@@ -191,7 +191,7 @@ export default function Services() {
             description="Every engagement grounded in industry-standard frameworks"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
                 title: 'NIST Cybersecurity Framework',
@@ -202,6 +202,11 @@ export default function Services() {
                 title: 'CIS Controls',
                 description:
                   'Technical controls and operational maturity aligned to CIS standards.',
+              },
+              {
+                title: 'CMMC',
+                description:
+                  'Cybersecurity Maturity Model Certification readiness for defense contractors, mapped to NIST SP 800-171.',
               },
               {
                 title: 'Industry-Specific Frameworks',

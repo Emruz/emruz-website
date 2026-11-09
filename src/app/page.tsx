@@ -177,12 +177,14 @@ export default function Home() {
               <p className="text-sm text-gray-600 font-semibold mb-2">
                 Framework-Grounded
               </p>
-              <div className="flex gap-4 items-center">
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 items-center">
                 <span className="font-bold text-gray-700">NIST CSF</span>
                 <span className="text-gray-300">•</span>
                 <span className="font-bold text-gray-700">CIS Controls</span>
                 <span className="text-gray-300">•</span>
                 <span className="font-bold text-gray-700">ISO 27001</span>
+                <span className="text-gray-300">•</span>
+                <span className="font-bold text-gray-700">CMMC</span>
               </div>
             </div>
           </div>

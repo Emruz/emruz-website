@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, ShieldCheck } from 'lucide-react';
 import {
   packages,
   capabilities,
@@ -13,6 +13,7 @@ import {
   newInEdition,
   packageHref,
   POWERED_BY,
+  SOC_LINE,
   type FamilySlug,
 } from '@/content/packages';
 
@@ -79,7 +80,8 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
+      {/* Every card the same height; while one is expanded, only its row grows */}
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 ${open ? '' : 'auto-rows-fr'}`}>
         {shown.map((pkg) => {
           const siblings = packages.filter((p) => p.family === pkg.family);
           const edition = siblings.indexOf(pkg);
@@ -91,10 +93,11 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
             <article
               key={pkg.code}
               id={`pkg-${pkg.code}`}
-              className={`scroll-mt-24 bg-white rounded-xl border p-5 transition-shadow ${
+              className={`scroll-mt-24 h-full flex flex-col bg-white rounded-xl border p-5 transition-shadow ${
                 isOpen ? 'border-indigo-400 shadow-lg' : 'border-gray-200 hover:shadow-md'
               }`}
             >
+              <div className="flex-grow">
               <div className="flex items-center justify-between mb-3">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded ${familyStyle[pkg.family]}`}>
                   {familyBySlug(pkg.family).label}
@@ -110,7 +113,10 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
               <p className="mt-3 font-semibold text-gray-900">{pkg.tagline}</p>
               <p className="mt-1 text-sm text-gray-600">{pkg.summary}</p>
 
-              <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Included capabilities">
+              <p className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-gray-700">
+                <ShieldCheck className="w-4 h-4 text-indigo-600" aria-hidden /> {SOC_LINE}
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Included capabilities">
                 {included.map((c) => {
                   const isNew = added.includes(c);
                   return (
@@ -131,6 +137,8 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                   Highlighted: new compared with {displayCode(prev.code)}.
                 </p>
               )}
+
+              </div>
 
               <div className="mt-4 flex items-end justify-between gap-3">
                 {preview ? (

@@ -26,7 +26,8 @@ Tick items off as they are done. Grouped by when they're needed.
 
 - [ ] Confirm which capabilities sit in each EDR / MDR / XDR / ΔDR tier (`src/content/packages.ts`).
 - [ ] Fill out the thin Data Science, AI and Security Ops pages.
-- [ ] Turn on form detection in Netlify so the contact form delivers.
+- [ ] Confirm contact@emruz.com receives contact form email (or set CONTACT_TO). Messages are also saved at /admin/messages.
+- [ ] Newsletter: sending to subscribers is not built yet. Export the CSV from /admin/insights or ask for a "send to subscribers" button.
 
 ## Housekeeping
 

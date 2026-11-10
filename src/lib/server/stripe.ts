@@ -1,4 +1,5 @@
 import 'server-only';
+import { MOTIV_DOWNLOAD_URL } from '@/content/products';
 import Stripe from 'stripe';
 import { db, logEvent } from './db';
 import { motiv, SITE_URL, type Plan } from './config';
@@ -44,6 +45,8 @@ async function welcomeEmail(email: string, subscriptionId: string, plan: Plan) {
   const text = `Thanks for buying Motiv Premium (${plan}).
 
 Your subscription ID: ${subscriptionId}
+
+Download Motiv: ${MOTIV_DOWNLOAD_URL}
 
 To unlock Premium, open Motiv > Settings > Premium and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email address and enter the code Motiv shows. You can also paste the subscription ID instead.
 

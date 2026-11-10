@@ -20,7 +20,7 @@ export default async function ThanksPage() {
           <CheckCircle2 className="w-8 h-8 text-green-600 mb-4" />
           <ol className="list-decimal pl-5 space-y-2 text-gray-700 max-w-2xl">
             <li>
-              <a href={MOTIV_DOWNLOAD_URL} className="text-blue-700 font-semibold">Download Motiv</a> for your Mac or PC
+              <a href={MOTIV_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-semibold">Download Motiv</a> for your Mac or PC
               and install it, if you have not already.
             </li>
             <li>Open Motiv, then Settings &gt; Premium.</li>

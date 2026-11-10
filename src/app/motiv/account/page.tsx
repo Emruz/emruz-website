@@ -110,7 +110,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           )}
           <p className="mt-6 text-sm text-gray-500">
-            <a href={MOTIV_DOWNLOAD_URL} className="text-blue-700 font-semibold">Download Motiv</a> for macOS or Windows. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
+            <a href={MOTIV_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-semibold">Download Motiv</a> for macOS or Windows. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
           </p>
         </Container>
       </section>

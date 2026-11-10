@@ -87,12 +87,12 @@ export default function Header() {
                     <div className="w-[26rem] bg-white rounded-xl border border-gray-200 shadow-xl p-2">
                       <ul>
                         {group.children.map((item) => (
-                          <li key={item.href}>
+                          <li key={item.href} className={item.divider ? 'mt-1 pt-1 border-t border-gray-200' : ''}>
                             <Link
                               href={item.href}
-                              className={`block rounded-lg px-3 py-2 hover:bg-gray-50 ${isActive(item.href) ? 'bg-blue-50' : ''}`}
+                              className={`block rounded-lg px-3 py-2 hover:bg-gray-50 ${item.indent ? 'ml-5 py-1.5' : ''} ${isActive(item.href) ? 'bg-blue-50' : ''}`}
                             >
-                              <span className="block font-semibold text-gray-900">{item.label}</span>
+                              <span className={`block font-semibold text-gray-900 ${item.indent ? 'text-[15px]' : ''}`}>{item.label}</span>
                               {item.description && (
                                 <span className="block text-sm text-gray-500">{item.description}</span>
                               )}
@@ -166,8 +166,8 @@ export default function Header() {
                     {mobileGroup === group.label && (
                       <ul className="pb-3 pl-3 space-y-2">
                         {group.children.map((item) => (
-                          <li key={item.href}>
-                            <Link href={item.href} className="block text-gray-700">
+                          <li key={item.href} className={`${item.divider ? 'pt-2 border-t border-gray-100' : ''} ${item.indent ? 'pl-4' : ''}`}>
+                            <Link href={item.href} className={`block ${item.divider ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
                               {item.label}
                             </Link>
                           </li>

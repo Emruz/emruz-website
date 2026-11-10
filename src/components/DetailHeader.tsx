@@ -21,6 +21,10 @@ interface DetailHeaderProps {
  * one-line summary, so moving from a section page to a detail page is
  * visually obvious and content starts right away.
  */
+/** Links off the site open in a new tab */
+const external = (href: string) =>
+  /^https?:/.test(href) ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+
 export default function DetailHeader({
   breadcrumbs,
   title,
@@ -61,6 +65,7 @@ export default function DetailHeader({
               {primaryCta && (
                 <Link
                   href={primaryCta.href}
+                  {...external(primaryCta.href)}
                   className="bg-blue-600 text-white px-5 py-2.5 rounded-md font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap"
                 >
                   {primaryCta.label}
@@ -69,6 +74,7 @@ export default function DetailHeader({
               {secondaryCta && (
                 <Link
                   href={secondaryCta.href}
+                  {...external(secondaryCta.href)}
                   className="btn-outline px-5 py-2.5 rounded-md font-semibold border border-gray-300 text-gray-800 hover:bg-gray-50 transition-colors whitespace-nowrap"
                 >
                   {secondaryCta.label}

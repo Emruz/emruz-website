@@ -56,26 +56,6 @@
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --white: #0f1419;
-    --light-gray: #1a1f2e;
-    --light-gray-alt: #202936;
-    --gray-200: #2a3140;
-    --gray-400: #5b6572;
-    --gray-600: #8b8b8b;
-    --gray-800: #cccccc;
-    --dark-gray: #e8eaf0;
-    --black: #ffffff;
-
-    --text-primary: #e8e8e8;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #8b8b8b;
-
-    --brand-primary: #4a9fd8;
-    --border-light: #5b6572;
-  }
-}
 
 @theme inline {
   --font-sans: "Outfit", "Geist", sans-serif;
@@ -84,6 +64,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* The site is designed light only; keep browsers from darkening it */
+  color-scheme: light;
 }
 
 body {

@@ -30,17 +30,16 @@ export default function ContactForm() {
     });
   };
 
-  // Submits to Netlify Forms. The static form definition Netlify detects
-  // at deploy time lives in public/__forms.html.
+  // Submits to /api/contact, which saves the message and emails it to us.
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {
-      const body = new URLSearchParams({ 'form-name': 'contact', ...formData });
-      const res = await fetch('/__forms.html', {
+      const website = (e.currentTarget.elements.namedItem('website') as HTMLInputElement | null)?.value || '';
+      const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, website }),
       });
       if (!res.ok) throw new Error(String(res.status));
       setStatus('sent');
@@ -132,6 +131,11 @@ export default function ContactForm() {
                 </div>
 
                 <form name="contact" onSubmit={handleSubmit} className="space-y-4">
+                  {/* Spam trap: hidden from people, filled in by bots */}
+                  <div aria-hidden="true" className="hidden">
+                    <label htmlFor="website">Website</label>
+                    <input id="website" name="website" tabIndex={-1} autoComplete="off" />
+                  </div>
                   <div>
                     <label
                       htmlFor="name"

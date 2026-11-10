@@ -11,10 +11,10 @@
     "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {
-    "@netlify/database": "^2.0.3",
     "arctic": "^3.7.0",
     "jose": "^6.2.16",
     "lucide-react": "^1.23.0",
+    "marked": "^15.0.12",
     "next": "16.2.10",
     "postgres": "^4.1.0",
     "react": "19.2.4",

@@ -4,7 +4,7 @@ import { IS_PROD } from './config';
 // Sends transactional email through Resend (RESEND_API_KEY, EMAIL_FROM).
 // Without a key in development the message is printed to the server log.
 
-export async function sendEmail(to: string, subject: string, text: string) {
+export async function sendEmail(to: string, subject: string, text: string, opts: { replyTo?: string } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     if (IS_PROD) throw new Error('RESEND_API_KEY is not set');
@@ -19,7 +19,7 @@ export async function sendEmail(to: string, subject: string, text: string) {
       to: [to],
       subject,
       text,
-      reply_to: process.env.EMAIL_REPLY_TO || 'contact@emruz.com',
+      reply_to: opts.replyTo || process.env.EMAIL_REPLY_TO || 'contact@emruz.com',
     }),
   });
   if (!res.ok) throw new Error(`Email send failed: ${res.status} ${await res.text()}`);

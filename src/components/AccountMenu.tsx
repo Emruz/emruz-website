@@ -64,6 +64,8 @@ export function accountLinks(me: Me) {
   const admin = me.isAdmin
     ? [
         { label: 'Motiv admin', href: '/admin/motiv' },
+        { label: 'Insights admin', href: '/admin/insights' },
+        { label: 'Messages', href: '/admin/messages' },
         { label: 'Switch user', href: '/admin/users' },
       ]
     : [];

@@ -16,7 +16,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
-import PackagePortfolio from '@/components/PackagePortfolio';
 
 export default function Home() {
   // Capability cards data
@@ -169,6 +168,25 @@ export default function Home() {
         }}
       />
 
+      {/* Motiv */}
+      <section className="py-10 md:py-12">
+        <Container>
+          <Link
+            href="/motiv"
+            className="group flex flex-col md:flex-row md:items-center gap-6 rounded-2xl p-6 md:p-8 bg-gradient-to-br from-[#4F46E5] via-[#6D5AE6] to-[#7C3AED] text-white"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/motiv/motiv-logo.svg" alt="" width={64} height={64} className="w-16 h-16 flex-shrink-0 drop-shadow-lg" />
+            <div className="flex-grow">
+              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-100">New from Emruz · Coming soon</p>
+              <h2 className="text-2xl md:text-3xl font-bold mt-1">Motiv, the private AI meeting assistant</h2>
+              <p className="text-indigo-100 mt-1">Meetings recorded, transcribed and understood on your own computer. Your audio never leaves it.</p>
+            </div>
+            <span className="font-semibold whitespace-nowrap group-hover:translate-x-1 transition-transform">Meet Motiv →</span>
+          </Link>
+        </Container>
+      </section>
+
       {/* Trust Strip - Framework Logos */}
       <section className="bg-gray-50 py-8 md:py-12 border-y border-gray-200">
         <Container>
@@ -254,37 +272,28 @@ export default function Home() {
         </Container>
       </section>
 
-      {/* Package portfolio preview */}
-      <section className="py-16 md:py-20 bg-gray-50 border-y border-gray-200">
-        <Container>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-6">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Managed security products</h2>
-              <p className="text-lg text-gray-600 mt-2">EDR, MDR, XDR and ΔDR, from endpoint protection to full detect, defend and respond.</p>
-            </div>
-            <Link href="/products/compare" className="text-indigo-700 font-semibold hover:text-indigo-900 whitespace-nowrap">
-              Compare all packages →
-            </Link>
-          </div>
-          <PackagePortfolio preview />
-        </Container>
-      </section>
-
-      {/* Products */}
-      <section className="py-12 md:py-16">
+      {/* Managed security */}
+      <section className="py-12 md:py-16 bg-gray-50 border-y border-gray-200">
         <Container>
           <Link
-            href="/motiv"
-            className="group flex flex-col md:flex-row md:items-center gap-6 rounded-2xl p-6 md:p-8 bg-gradient-to-br from-[#4F46E5] via-[#6D5AE6] to-[#7C3AED] text-white"
+            href="/products/compare"
+            className="group flex flex-col md:flex-row md:items-center gap-6 rounded-2xl p-6 md:p-8 bg-white border border-gray-200 hover:shadow-lg transition-shadow"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/motiv/motiv-logo.svg" alt="" width={64} height={64} className="w-16 h-16 flex-shrink-0 drop-shadow-lg" />
+            <span className="w-16 h-16 flex-shrink-0 rounded-2xl bg-slate-900 text-white flex items-center justify-center">
+              <Shield className="w-8 h-8" aria-hidden />
+            </span>
             <div className="flex-grow">
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-100">New from Emruz · Coming soon</p>
-              <h2 className="text-2xl md:text-3xl font-bold mt-1">Motiv, the private AI meeting assistant</h2>
-              <p className="text-indigo-100 mt-1">Meetings recorded, transcribed and understood on your own computer. Your audio never leaves it.</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">EDR · MDR · XDR · ΔDR</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">Managed security</h2>
+              <p className="text-gray-600 mt-1">
+                Monitored and managed by our 24x7 SOC, from endpoint protection to full detect, defend and respond. Eleven
+                editions, so you pay for the protection you need.
+              </p>
+              <p className="text-[11px] text-gray-400 mt-2">Powered by WhiteDog Cyber</p>
             </div>
-            <span className="font-semibold whitespace-nowrap group-hover:translate-x-1 transition-transform">Meet Motiv →</span>
+            <span className="font-semibold text-indigo-700 whitespace-nowrap group-hover:translate-x-1 transition-transform">
+              Compare editions →
+            </span>
           </Link>
         </Container>
       </section>

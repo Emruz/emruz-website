@@ -1,6 +1,8 @@
 import { PageHeader, SectionIntro, Container, Card, CTABanner } from '@/components';
 import Link from 'next/link';
 import { ArrowRight, Calendar } from 'lucide-react';
+import { monthYear, publishedInsights } from '@/lib/server/insights';
+import { subscribeAction } from '@/app/newsletter/actions';
 
 export const metadata = {
   title: 'Insights',
@@ -8,57 +10,18 @@ export const metadata = {
     'Security, cloud, and AI insights from our team. Frameworks, trends, and practical guidance for organizations.',
 };
 
-export default function Insights() {
-  const insights = [
-    {
-      title: 'NIST Cybersecurity Framework: A Practical Guide',
-      excerpt:
-        'Understanding NIST CSF, how it applies to your organization, and why framework-based thinking matters for compliance and strategy.',
-      date: 'July 2024',
-      category: 'Frameworks',
-      slug: 'nist-csf-guide',
-    },
-    {
-      title: 'Cloud Security Architecture: Design Principles That Matter',
-      excerpt:
-        'Five design principles that should guide your cloud security strategy. From zero-trust to compliance-first thinking.',
-      date: 'June 2024',
-      category: 'Cloud',
-      slug: 'cloud-security-architecture',
-    },
-    {
-      title: 'Building a vCISO Program: When and How',
-      excerpt:
-        'When organizations need fractional CISO leadership, how to structure it for success, and what to measure.',
-      date: 'May 2024',
-      category: 'Leadership',
-      slug: 'vciso-program-guide',
-    },
-    {
-      title: 'AI Governance: The Framework Every Organization Needs',
-      excerpt:
-        'AI opportunity + governance risk = need for clear frameworks. What AI governance looks like in practice.',
-      date: 'April 2024',
-      category: 'AI',
-      slug: 'ai-governance-framework',
-    },
-    {
-      title: 'From Assessment to Roadmap: Making Diagnostic Work Useful',
-      excerpt:
-        'How to turn security assessments into actionable roadmaps that actually move the needle.',
-      date: 'March 2024',
-      category: 'Strategy',
-      slug: 'assessment-to-roadmap',
-    },
-    {
-      title: 'Security Operations at Scale: SOC Design for Enterprise',
-      excerpt:
-        'Designing security operations that scale without breaking. Architecture, tooling, and team structure.',
-      date: 'February 2024',
-      category: 'Operations',
-      slug: 'soc-design-enterprise',
-    },
-  ];
+export const dynamic = 'force-dynamic';
+
+const notices: Record<string, string> = {
+  check: 'Almost done. Check your email for a link to confirm.',
+  invalid: 'Please enter a valid email address.',
+  limited: 'Too many attempts. Please try again later.',
+  error: 'Something went wrong. Please try again later.',
+};
+
+export default async function Insights({ searchParams }: { searchParams: Promise<{ newsletter?: string }> }) {
+  const notice = notices[(await searchParams).newsletter || ''];
+  const insights = await publishedInsights();
 
   return (
     <>
@@ -67,7 +30,7 @@ export default function Insights() {
         eyebrow="Insights"
         title="Insights"
         description="Security, cloud, and AI thinking from our team. Frameworks, trends, and practical guidance for organizations serious about outcomes."
-        cta={{ label: 'Subscribe for Updates', href: '/contact' }}
+        cta={{ label: 'Subscribe for Updates', href: '#subscribe' }}
       />
 
       {/* Insights Grid */}
@@ -77,8 +40,8 @@ export default function Insights() {
           <SectionIntro heading="Latest Insights" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {insights.map((insight, i) => (
-              <Card key={i} hoverable className="border-0 shadow-lg flex flex-col">
+            {insights.map((insight) => (
+              <Card key={insight.slug} hoverable className="border-0 shadow-lg flex flex-col">
                 {/* Category Badge */}
                 <div className="mb-4">
                   <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
@@ -99,7 +62,7 @@ export default function Insights() {
                 {/* Date */}
                 <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
                   <Calendar className="w-4 h-4" />
-                  {insight.date}
+                  {monthYear(insight.published_on)}
                 </div>
 
                 {/* Read More Link */}
@@ -116,7 +79,7 @@ export default function Insights() {
       </section>
 
       {/* Newsletter */}
-      <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
+      <section id="subscribe" className="scroll-mt-20 bg-gradient-to-br from-blue-50 to-purple-50 py-12 md:py-16">
         <Container>
           <SectionIntro
             heading="Stay Updated"
@@ -125,7 +88,7 @@ export default function Insights() {
 
           <div className="max-w-2xl mx-auto">
             <Card className="border-0 shadow-lg p-8">
-              <form className="space-y-4">
+              <form action={subscribeAction} className="space-y-4">
                 <div>
                   <label
                     htmlFor="email"
@@ -136,6 +99,9 @@ export default function Insights() {
                   <input
                     type="email"
                     id="email"
+                    name="email"
+                    required
+                    autoComplete="email"
                     placeholder="your@email.com"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
                   />
@@ -148,8 +114,14 @@ export default function Insights() {
                   Subscribe
                 </button>
 
+                {notice && (
+                  <p role="status" className="text-sm font-semibold text-blue-800 text-center">
+                    {notice}
+                  </p>
+                )}
+
                 <p className="text-xs text-gray-600 text-center">
-                  We send monthly insights. Unsubscribe anytime. No spam.
+                  We email when we publish something worth reading. Unsubscribe any time.
                 </p>
               </form>
             </Card>

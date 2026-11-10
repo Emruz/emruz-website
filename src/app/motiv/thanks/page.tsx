@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
+import { MOTIV_DOWNLOAD_URL } from '@/content/products';
 import { currentAccount } from '@/lib/server/session';
 
 export const metadata = { title: 'Thanks for buying Motiv', robots: { index: false } };
@@ -18,6 +19,10 @@ export default async function ThanksPage() {
         <Container>
           <CheckCircle2 className="w-8 h-8 text-green-600 mb-4" />
           <ol className="list-decimal pl-5 space-y-2 text-gray-700 max-w-2xl">
+            <li>
+              <a href={MOTIV_DOWNLOAD_URL} className="text-blue-700 font-semibold">Download Motiv</a> for your Mac or PC
+              and install it, if you have not already.
+            </li>
             <li>Open Motiv, then Settings &gt; Premium.</li>
             <li>Choose <strong>Register this computer</strong>.</li>
             <li>

@@ -1,3 +1,6 @@
+/** Release page; asset names vary by version and architecture */
+export const MOTIV_DOWNLOAD_URL = 'https://github.com/Emruz/motiv-releases/releases/';
+
 export interface Product {
   slug: string;
   name: string;

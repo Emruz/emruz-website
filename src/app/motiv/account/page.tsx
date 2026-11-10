@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MOTIV_DOWNLOAD_URL } from '@/content/products';
 import { Laptop } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
@@ -109,7 +110,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           )}
           <p className="mt-6 text-sm text-gray-500">
-            Downloads will be listed here when Motiv is released. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
+            <a href={MOTIV_DOWNLOAD_URL} className="text-blue-700 font-semibold">Download Motiv</a> for macOS or Windows. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
           </p>
         </Container>
       </section>

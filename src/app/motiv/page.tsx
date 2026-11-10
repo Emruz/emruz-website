@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Check, Lock, Cpu, EyeOff, CalendarCheck } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
-import { motivFree, motivPremium, motivPrivacy } from '@/content/products';
+import { MOTIV_DOWNLOAD_URL, motivFree, motivPremium, motivPrivacy } from '@/content/products';
 import { motiv } from '@/lib/server/config';
 
 export const metadata = {
@@ -31,7 +31,7 @@ export default function MotivPage() {
         title="Motiv"
         summary="Your meetings, recorded, transcribed and understood, without sending your audio anywhere."
         primaryCta={salesOpen ? { label: 'Get Premium', href: '#plans' } : { label: 'Get notified at launch', href: '/contact?topic=motiv' }}
-        secondaryCta={{ label: 'Your account', href: '/motiv/account' }}
+        secondaryCta={salesOpen ? { label: 'Download', href: MOTIV_DOWNLOAD_URL } : { label: 'Your account', href: '/motiv/account' }}
         sections={[
           { label: 'Overview', href: '#overview' },
           { label: 'Privacy', href: '#privacy' },

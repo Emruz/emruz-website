@@ -68,7 +68,6 @@ export default function Crosswalk({
           <details
             key={r.framework.key}
             id={`fw-${r.framework.key}`}
-            open={focus.includes(r.framework.key)}
             className="group rounded-lg border border-gray-200 scroll-mt-24"
           >
             <summary className="flex items-center justify-between gap-3 cursor-pointer list-none p-4">

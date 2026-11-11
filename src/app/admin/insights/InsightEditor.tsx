@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { marked } from 'marked';
+import { renderMarkdown } from '@/lib/markdown';
 
 export interface EditorValues {
   original: string;
@@ -30,7 +30,7 @@ export default function InsightEditor({
 }) {
   const [body, setBody] = useState(values.body);
   const [tab, setTab] = useState<'write' | 'preview'>('write');
-  const html = useMemo(() => (tab === 'preview' ? (marked.parse(body, { async: false, gfm: true }) as string) : ''), [tab, body]);
+  const html = useMemo(() => (tab === 'preview' ? renderMarkdown(body) : ''), [tab, body]);
 
   return (
     <form action={action} className="space-y-5">

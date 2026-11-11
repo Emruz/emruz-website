@@ -174,7 +174,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Endpoint defense with expert hunting',
     summary: 'Endpoint detection and response plus proactive threat hunting by experienced analysts.',
     bestFor: 'Organizations with valuable endpoints and capable adversaries.',
-    includes: ['EDR', 'ATH'],
+    includes: ['EDR', 'ATH', 'AVM'],
     outcomes: ['Threats found before they trigger alerts', 'Containment and rollback on every endpoint', 'Hunt findings that harden your controls'],
   },
   {

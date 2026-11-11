@@ -4,7 +4,8 @@ import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib
 import { controls, inScope, maturity, recommend, targetIG } from '@/content/cis-assessment';
 import { displayCode } from '@/content/packages';
 import { frameworks } from '@/content/crosswalk';
-import { WorkbenchNav, card, fmtDate } from '../ui';
+import { WorkbenchNav, btn, card, fmtDate } from '../ui';
+import { Plus } from 'lucide-react';
 import AssignSelect from '../AssignSelect';
 import { markSelfDeleted, restoreSelf, toggleSelfFollowUp } from '../actions';
 import { selfAssessments, type SelfRow } from './data';
@@ -45,7 +46,8 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
           <WorkbenchNav current="self" isAdmin={role === 'admin'} />
-          <div className="flex flex-wrap gap-2 text-sm mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex flex-wrap gap-2 text-sm">
             {filters
               .filter((f) => all || f.key !== 'unassigned')
               .map((f) => (
@@ -57,6 +59,10 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                   {f.label} <span className="opacity-60">{rows.filter((r) => f.test(r)).length}</span>
                 </Link>
               ))}
+          </div>
+          <Link href="/workbench/self/new" className={btn}>
+            <Plus className="w-4 h-4" /> Guided self-assessment
+          </Link>
           </div>
 
           <div className={`${card} overflow-x-auto`}>
@@ -82,7 +88,16 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                     <tr key={r.id} className="border-b border-gray-100 last:border-0 align-top hover:bg-gray-50">
                       <td className="p-3">
                         <Link href={`/workbench/self/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.company}</Link>
-                        <p className="text-gray-700">{r.full_name}{r.job_title && `, ${r.job_title}`}</p>
+                        <p className="text-gray-700">
+                          {r.performed_by_label ? (
+                            <>
+                              <span className="font-semibold">{r.performed_by_label}</span> on behalf of <span className="font-semibold">{r.full_name}</span>
+                            </>
+                          ) : (
+                            r.full_name
+                          )}
+                          {r.job_title && `, ${r.job_title}`}
+                        </p>
                         <p className="text-xs text-gray-500">{r.email}{r.phone && ` · ${r.phone}`}</p>
                       </td>
                       <td className="p-3 whitespace-nowrap">

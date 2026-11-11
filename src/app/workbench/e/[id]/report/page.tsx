@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getEngagement, getEvidence, getRatings, getReports, requireStaff } from '@/lib/server/workbench';
+import { getEngagement, getEvidence, getRatings, getReports, requireEngagementAccess } from '@/lib/server/workbench';
 import { flagsFor, flagInfo, type Flag } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
 import { generateReport, saveSummary } from '../../../actions';
@@ -7,7 +7,7 @@ import { ReportBadge, FlagBadge, btn, btnGhost, card, input, fmtTime } from '../
 
 export default async function ReportTab({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireStaff(`/workbench/e/${id}/report`);
+  await requireEngagementAccess(id, `/workbench/e/${id}/report`);
   const [e, ratings, evidence, reports] = await Promise.all([getEngagement(id), getRatings(id), getEvidence(id), getReports(id)]);
   const linked = new Map<string, number>();
   for (const ev of evidence) for (const s of ev.subcategories) linked.set(s, (linked.get(s) ?? 0) + 1);

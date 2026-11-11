@@ -87,7 +87,7 @@ export default function Home() {
     {
       title: 'Framework-First Methodology',
       description:
-        'Every engagement grounded in NIST CSF, CIS Controls, or equivalent. We speak the language of compliance, auditors, and boards.',
+        'Every engagement grounded in industry frameworks (regulatory or self-imposed). We speak the language of compliance, auditors, and boards.',
       icon: CheckCircle2,
     },
     {
@@ -148,7 +148,7 @@ export default function Home() {
     {
       question: 'What makes you different from other consultancies?',
       answer:
-        'We combine strategic clarity with execution capability. Most consultancies advise; most vendors execute. We do both. We\'re grounded in frameworks (NIST, CIS, CSF) and focused on outcomes.',
+        'We combine strategic clarity with execution capability. Most consultancies advise; most vendors execute. We do both. We\'re grounded in frameworks and focused on outcomes.',
     },
   ];
 

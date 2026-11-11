@@ -19,6 +19,7 @@ import {
   getReport,
   logActivity,
   portalUrl,
+  seesAll,
   staffRole,
   type ReportContent,
 } from '@/lib/server/workbench';
@@ -53,6 +54,7 @@ async function staffOn(engagementId: unknown) {
   if (!isUuid(engagementId)) throw new Error('Not found');
   const e = await getEngagement(engagementId);
   if (!e) throw new Error('Not found');
+  if (!seesAll(ctx.role) && e.lead_account_id !== ctx.account.id) throw new Error('Not found');
   return { ...ctx, e };
 }
 
@@ -105,33 +107,27 @@ export async function removeContact(form: FormData) {
 
 /* ---------- Engagements ---------- */
 
-export async function createEngagement(form: FormData) {
-  const { account } = await staff();
-  let clientId = form.get('client_id');
-  const newClient = str(form.get('new_client'), 160);
-  if (newClient) {
-    const [c] = await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
-    clientId = c.id;
-  }
-  if (!isUuid(clientId)) redirect('/workbench/new?error=client');
-  const title = str(form.get('title'), 200) || 'NIST CSF 2.0 Assessment';
-  const ig = (Number(form.get('target_ig')) || 2) as IG;
-  const lead = form.get('lead');
-  const selfId = form.get('self_assessment_id');
-
+/** Create an engagement with a rating row per CSF subcategory, pre-filled from a self-assessment if given. */
+async function newEngagement(o: {
+  clientId: string;
+  title: string;
+  lead: string;
+  ig: IG;
+  start: string | null;
+  due: string | null;
+  selfId: string | null;
+  actor: { id: string; email: string };
+}) {
   const [e] = await db()<{ id: string }[]>`
     insert into engagements (client_id, title, lead_account_id, target_ig, start_date, due_date, created_by, self_assessment_id)
-    values (${clientId}, ${title}, ${isUuid(lead) ? lead : account.id}, ${[1, 2, 3].includes(ig) ? ig : 2},
-            ${date(form.get('start_date'))}, ${date(form.get('due_date'))}, ${account.id}, ${isUuid(selfId) ? selfId : null})
+    values (${o.clientId}, ${o.title}, ${o.lead}, ${o.ig}, ${o.start}, ${o.due}, ${o.actor.id}, ${o.selfId})
     returning id`;
-
-  // Every subcategory starts with the default target for the IG
-  const target = defaultTarget(ig);
+  const target = defaultTarget(o.ig);
   let prefill: Record<string, number> = {};
-  if (isUuid(selfId)) {
+  if (o.selfId) {
     const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: IG | null }[]>`
-      select answers, profile, target_ig from assessments where id = ${selfId} and status = 'completed'`;
-    if (s) prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? ig);
+      select answers, profile, target_ig from assessments where id = ${o.selfId} and status = 'completed'`;
+    if (s) prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
   }
   const rows = csfSubcategories.map((s) => ({
     engagement_id: e.id,
@@ -141,8 +137,92 @@ export async function createEngagement(form: FormData) {
     prefilled: s.id in prefill,
   }));
   await db()`insert into engagement_ratings ${db()(rows, 'engagement_id', 'subcategory', 'target_level', 'current_level', 'prefilled')}`;
-  await logActivity(e.id, account.email, 'created', { prefilled: Object.keys(prefill).length });
-  redirect(ePath(e.id));
+  await logActivity(e.id, o.actor.email, 'created', { prefilled: Object.keys(prefill).length });
+  return e.id;
+}
+
+export async function createEngagement(form: FormData) {
+  const { account } = await staff();
+  let clientId = form.get('client_id');
+  const newClient = str(form.get('new_client'), 160);
+  if (newClient) {
+    const [c] = await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
+    clientId = c.id;
+  }
+  if (!isUuid(clientId)) redirect('/workbench/new?error=client');
+  const ig = (Number(form.get('target_ig')) || 2) as IG;
+  const lead = form.get('lead');
+  const selfId = form.get('self_assessment_id');
+  const id = await newEngagement({
+    clientId,
+    title: str(form.get('title'), 200) || 'NIST CSF 2.0 Assessment',
+    lead: isUuid(lead) ? lead : account.id,
+    ig: [1, 2, 3].includes(ig) ? ig : 2,
+    start: date(form.get('start_date')),
+    due: date(form.get('due_date')),
+    selfId: isUuid(selfId) ? selfId : null,
+    actor: account,
+  });
+  redirect(ePath(id));
+}
+
+/* ---------- Self-assessments ---------- */
+
+async function selfOn(id: unknown) {
+  const ctx = await staff();
+  if (!isUuid(id)) throw new Error('Not found');
+  const [a] = await db()<{ id: string; account_id: string; assigned_to: string | null; status: string; target_ig: IG | null; followed_up_at: Date | null }[]>`
+    select id, account_id, assigned_to, status, target_ig, followed_up_at from assessments where id = ${id}`;
+  if (!a || (!seesAll(ctx.role) && a.assigned_to !== ctx.account.id)) throw new Error('Not found');
+  return { ...ctx, a };
+}
+
+export async function assignSelf(form: FormData) {
+  const { role, a } = await selfOn(form.get('id'));
+  if (!seesAll(role)) throw new Error('Not authorized');
+  const to = form.get('assigned_to');
+  await db()`update assessments set assigned_to = ${isUuid(to) ? to : null} where id = ${a.id}`;
+  revalidatePath('/workbench/self');
+  revalidatePath(`/workbench/self/${a.id}`);
+}
+
+export async function toggleSelfFollowUp(form: FormData) {
+  const { account, a } = await selfOn(form.get('id'));
+  await db()`
+    update assessments set
+      followed_up_at = ${a.followed_up_at ? null : new Date()},
+      followed_up_by = ${a.followed_up_at ? null : account.email}
+    where id = ${a.id}`;
+  revalidatePath('/workbench/self');
+  revalidatePath(`/workbench/self/${a.id}`);
+}
+
+/** Turn a completed self-assessment into an engagement: client, portal contact and pre-filled ratings. */
+export async function engagementFromSelf(form: FormData) {
+  const { account, a } = await selfOn(form.get('id'));
+  if (a.status !== 'completed') redirect(`/workbench/self/${a.id}?error=incomplete`);
+  const [existing] = await db()<{ id: string }[]>`select id from engagements where self_assessment_id = ${a.id} limit 1`;
+  if (existing) redirect(ePath(existing.id));
+  const [reg] = await db()<{ company: string; job_title: string | null }[]>`
+    select company, job_title from assessment_registrations where account_id = ${a.account_id}`;
+  const company = reg?.company?.trim() || 'New client';
+  let [client] = await db()<{ id: string }[]>`select id from clients where lower(name) = lower(${company}) limit 1`;
+  if (!client) [client] = await db()<{ id: string }[]>`insert into clients (name) values (${company}) returning id`;
+  await db()`
+    insert into client_contacts (client_id, account_id, title, is_primary) values (${client.id}, ${a.account_id}, ${reg?.job_title ?? null}, true)
+    on conflict (client_id, account_id) do nothing`;
+  const id = await newEngagement({
+    clientId: client.id,
+    title: 'NIST CSF 2.0 Assessment',
+    lead: a.assigned_to ?? account.id,
+    ig: a.target_ig ?? 2,
+    start: null,
+    due: null,
+    selfId: a.id,
+    actor: account,
+  });
+  if (!a.followed_up_at) await db()`update assessments set followed_up_at = now(), followed_up_by = ${account.email} where id = ${a.id}`;
+  redirect(ePath(id));
 }
 
 export async function updateEngagement(form: FormData) {

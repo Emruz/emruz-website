@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
-import { requireStaff } from '@/lib/server/workbench';
+import { requireStaff, seesAll } from '@/lib/server/workbench';
 import { engagementStatuses, statusLabel, type EngagementStatus, type ReportStatus, EVIDENCE_REQUIRED_AT } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
 import { StatusBadge, ReportBadge, WorkbenchNav, Meter, fmtDate, btn, card } from './ui';
@@ -45,11 +45,12 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
     left join accounts a on a.id = e.lead_account_id
     left join lateral (select status, version from reports where engagement_id = e.id order by version desc limit 1) lr on true
     where (${status}::text is null or e.status = ${status})
-      and (${!mine} or e.lead_account_id = ${account.id})
+      and (${!mine && seesAll(role)} or e.lead_account_id = ${account.id})
     order by (e.status = 'closed'), e.due_date nulls last, e.updated_at desc
     limit 300`;
 
-  const counts = await db()<{ status: EngagementStatus; n: number }[]>`select status, count(*)::int as n from engagements group by status`;
+  const counts = await db()<{ status: EngagementStatus; n: number }[]>`
+    select status, count(*)::int as n from engagements where ${seesAll(role)} or lead_account_id = ${account.id} group by status`;
   const n = (s: EngagementStatus) => counts.find((c) => c.status === s)?.n ?? 0;
   const q = (p: Record<string, string | null>) => {
     const u = new URLSearchParams();
@@ -79,9 +80,9 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
                   {statusLabel[s]} <span className="opacity-60">{n(s)}</span>
                 </Link>
               ))}
-              <Link href={q({ mine: mine ? null : '1' })} className={`px-3 py-1.5 rounded-full border ${mine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300'}`}>
+              {seesAll(role) && <Link href={q({ mine: mine ? null : '1' })} className={`px-3 py-1.5 rounded-full border ${mine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300'}`}>
                 Mine
-              </Link>
+              </Link>}
             </div>
             <Link href="/workbench/new" className={btn}>
               <Plus className="w-4 h-4" /> New engagement

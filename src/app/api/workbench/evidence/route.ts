@@ -3,7 +3,7 @@ import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
-import { getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
+import { canAccessEngagement, getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
 import { subcategoryById } from '@/content/csf';
 import { MAX_UPLOAD_BYTES } from '@/content/workbench';
 
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
   if (!isUuid(engagementId)) return bad('Not found', 404);
   const e = await getEngagement(engagementId);
   if (!e) return bad('Not found', 404);
-  const staff = !!(await staffRole(account));
+  const role = await staffRole(account);
+  const staff = !!role && (await canAccessEngagement(account.id, role, e.id));
   const client = !staff && (await isClientContact(account.id, e.id));
   if (!staff && !client) return bad('Not found', 404);
 

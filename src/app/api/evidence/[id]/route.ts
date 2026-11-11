@@ -1,7 +1,7 @@
 import { db } from '@/lib/server/db';
 import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
-import { getEvidenceFile, isClientContact, staffRole } from '@/lib/server/workbench';
+import { canAccessEngagement, getEvidenceFile, isClientContact, staffRole } from '@/lib/server/workbench';
 
 const INLINE = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 
@@ -14,7 +14,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     { engagement_id: string; kind: string; url: string | null; blob_key: string | null; filename: string | null; content_type: string | null }[]
   >`select engagement_id, kind, url, blob_key, filename, content_type from evidence where id = ${id}`;
   if (!ev) return new Response('Not found', { status: 404 });
-  const allowed = !!(await staffRole(account)) || (await isClientContact(account.id, ev.engagement_id));
+  const role = await staffRole(account);
+  const allowed =
+    (!!role && (await canAccessEngagement(account.id, role, ev.engagement_id))) || (await isClientContact(account.id, ev.engagement_id));
   if (!allowed) return new Response('Not found', { status: 404 });
 
   if (ev.kind === 'link' && ev.url) return Response.redirect(ev.url, 302);

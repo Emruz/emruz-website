@@ -125,7 +125,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:contact@emruz.com"
+                  href="mailto:info@emruz.com"
                   className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
                 >
                   <Mail className="w-4 h-4" />

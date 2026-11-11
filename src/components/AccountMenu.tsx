@@ -72,7 +72,6 @@ export function accountLinks(me: Me) {
         { label: 'Motiv admin', href: '/admin/motiv' },
         { label: 'Insights admin', href: '/admin/insights' },
         { label: 'Messages', href: '/admin/messages' },
-        { label: 'Assessments', href: '/admin/assessments' },
         { label: 'Switch user', href: '/admin/users' },
         ] : []),
       ]

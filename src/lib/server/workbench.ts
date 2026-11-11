@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { db } from './db';
 import { isAdmin, requireAccount, type Account } from './session';
 import { sendEmail } from './email';
+import { isUuid } from './api';
 import { SITE_URL } from './config';
 import type { EngagementStatus, Rating, ReportStatus } from '@/content/workbench';
 
@@ -27,6 +28,25 @@ export async function requireStaff(returnTo: string) {
 
 /** Leads and admins can approve reports and manage staff. */
 export const canReview = (role: string | null) => role === 'admin' || role === 'lead';
+
+/** Admins and leads see every engagement and self-assessment; assessors only those assigned to them. */
+export const seesAll = (role: string | null) => role === 'admin' || role === 'lead';
+
+/** Staff access to one engagement. */
+export async function canAccessEngagement(accountId: string, role: string | null, engagementId: string) {
+  if (!role) return false;
+  if (seesAll(role)) return true;
+  const [r] = await db()`select 1 from engagements where id = ${engagementId} and lead_account_id = ${accountId}`;
+  return !!r;
+}
+
+/** For engagement pages: staff assigned to it, or admins and leads. */
+export async function requireEngagementAccess(engagementId: string, returnTo: string) {
+  const ctx = await requireStaff(returnTo);
+  if (!isUuid(engagementId)) notFound();
+  if (!(await canAccessEngagement(ctx.account.id, ctx.role, engagementId))) notFound();
+  return ctx;
+}
 
 /** Client contacts of the engagement's client. */
 export async function isClientContact(accountId: string, engagementId: string) {

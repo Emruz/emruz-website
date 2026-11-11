@@ -3,7 +3,7 @@ import DetailHeader from './DetailHeader';
 import Container from './Container';
 
 export const LEGAL_PARTY = 'Shahin Pirooz, doing business as Emruz';
-export const LEGAL_CONTACT = 'contact@emruz.com';
+export const LEGAL_CONTACT = 'info@emruz.com';
 export const COPYRIGHT_YEAR = 2026;
 export const WHITEDOG_LEGAL_URL = 'https://www.whitedogcyber.com/legal';
 

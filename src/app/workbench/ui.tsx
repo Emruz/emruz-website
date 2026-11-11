@@ -38,9 +38,10 @@ export const btnGhost = 'inline-flex items-center justify-center gap-2 px-4 py-2
 export const input = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
 export const label = 'block text-sm font-semibold text-gray-900 mb-1';
 
-export function WorkbenchNav({ current, isAdmin }: { current: 'engagements' | 'clients' | 'staff'; isAdmin: boolean }) {
+export function WorkbenchNav({ current, isAdmin }: { current: 'engagements' | 'self' | 'clients' | 'staff'; isAdmin: boolean }) {
   const items = [
     { key: 'engagements', label: 'Engagements', href: '/workbench' },
+    { key: 'self', label: 'Self-assessments', href: '/workbench/self' },
     { key: 'clients', label: 'Clients', href: '/workbench/clients' },
     ...(isAdmin ? [{ key: 'staff', label: 'Staff', href: '/workbench/staff' }] : []),
   ];

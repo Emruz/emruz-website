@@ -81,9 +81,9 @@ export async function currentAssessment(accountId: string): Promise<AssessmentRo
 /** Score, store and email the report. */
 export async function completeAssessment(a: AssessmentRow, account: { id: string; email: string }, reg: Registration) {
   const ig = targetIG(a.profile);
-  const score = overallScore(a.answers, ig);
-  const ig1 = overallScore(a.answers, 1);
-  const rec = recommend(a.answers, ig);
+  const score = overallScore(a.answers, ig, a.profile);
+  const ig1 = overallScore(a.answers, 1, a.profile);
+  const rec = recommend(a.answers, ig, a.profile);
   const gaps = rec.gaps.slice(0, 5).map((g) => ({ control: g.control.id, score: g.score }));
 
   await db()`
@@ -113,9 +113,12 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
           '',
         ]
       : []),
+    ...(rec.addOns.length
+      ? [`Add-on services for the remaining gaps: ${rec.addOns.map((x) => `${x.code} (${x.name})`).join('; ')}`, '']
+      : []),
     a.profile.frameworks?.length ? 'Framework readiness (indicative, not a compliance finding; * marks your focus):' : 'Framework readiness (indicative, not a compliance finding):',
     ...frameworks.map((f) => {
-      const r = frameworkResult(f.key, a.answers, ig);
+      const r = frameworkResult(f.key, a.answers, ig, a.profile);
       return `- ${f.name}: ${r.score}% (${r.counts.gap} gaps)${a.profile.frameworks?.includes(f.key) ? ' *' : ''}`;
     }),
     '',
@@ -146,6 +149,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
         '',
         `Score ${score}% at ${igInfo[ig].name.split(':')[0]}, IG1 ${ig1}%`,
         rec.pkg ? `Suggested: ${displayCode(rec.pkg.code)}` : '',
+        rec.addOns.length ? `Add-ons: ${rec.addOns.map((x) => x.code).join(', ')}` : '',
         a.profile.frameworks?.length
           ? `Frameworks: ${a.profile.frameworks.map((k) => frameworks.find((f) => f.key === k)!.short).join(', ')}`
           : '',
@@ -169,9 +173,9 @@ export function scoresFor(a: AssessmentRow) {
   const ig = (a.target_ig ?? targetIG(a.profile)) as IG;
   return {
     ig,
-    score: overallScore(a.answers, ig),
-    ig1: overallScore(a.answers, 1),
-    byControl: controls.map((c) => ({ control: c, score: controlScore(c, a.answers, ig) })),
-    rec: recommend(a.answers, ig),
+    score: overallScore(a.answers, ig, a.profile),
+    ig1: overallScore(a.answers, 1, a.profile),
+    byControl: controls.map((c) => ({ control: c, score: controlScore(c, a.answers, ig, a.profile) })),
+    rec: recommend(a.answers, ig, a.profile),
   };
 }

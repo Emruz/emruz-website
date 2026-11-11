@@ -25,7 +25,10 @@ export type CapabilityCode =
   | 'DNSSPM'
   | 'CFS'
   | 'ITDR'
-  | 'CRPT';
+  | 'CRPT'
+  | 'MDE'
+  | 'PSA'
+  | 'DSB';
 
 export const capabilities: Record<CapabilityCode, { name: string; description: string }> = {
   EPP: { name: 'Endpoint Protection', description: 'Prevents known and unknown malware on laptops, desktops and servers.' },
@@ -45,6 +48,9 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   DNSSPM: { name: 'DNS Security Posture', description: 'Monitors domains and DNS configuration for hijack and spoofing risk.' },
   CFS: { name: 'Cloud File Security', description: 'Scans files in cloud storage and collaboration platforms for threats.' },
   ITDR: { name: 'Identity Threat Detection & Response', description: 'Detects and responds to account takeover and identity attacks.' },
+  MDE: { name: 'Managed Data Encryption', description: 'Policy-driven AES-256 file-level encryption of sensitive data, deployed and managed for you. Add-on.' },
+  PSA: { name: 'Phishing Simulation & Security Awareness', description: 'Monthly end-user training with advanced phishing and threat simulations. Add-on.' },
+  DSB: { name: 'Distributed SaaS Backup', description: 'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with granular restore. Add-on.' },
   CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use, such as NIST CSF, ISO 27001, SOC 2 and CMMC.' },
 };
 
@@ -271,3 +277,68 @@ export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
   const all = new Set(packages.filter((p) => p.family === slug).flatMap((p) => p.includes));
   return (Object.keys(capabilities) as CapabilityCode[]).filter((c) => all.has(c));
 }
+
+/* ---------- Add-on services ---------- */
+
+export type AddOnFamily = 'PSA' | 'DRM' | 'DSB';
+
+export interface AddOn {
+  code: string;
+  /** WhiteDog product code */
+  sku: string;
+  family: AddOnFamily;
+  name: string;
+  summary: string;
+  includes: CapabilityCode[];
+  features: string[];
+}
+
+/** Services that can be added to any edition to close specific gaps. */
+export const addOns: AddOn[] = [
+  {
+    code: 'PSA',
+    sku: 'WD-PSA-CP-02',
+    family: 'PSA',
+    name: 'Phishing Simulation & Security Awareness Training',
+    summary: 'Keeps people alert with monthly training and realistic phishing and threat simulations.',
+    includes: ['PSA'],
+    features: ['Monthly end-user training', 'Advanced phishing simulation', 'Advanced threat simulation', 'AI-optimized training and targeting'],
+  },
+  {
+    code: 'DRM-CP',
+    sku: 'WD-DRM-CP-01',
+    family: 'DRM',
+    name: 'Data Risk Management, Complete',
+    summary: 'Finds and classifies sensitive data everywhere it lives, values the risk, and encrypts it automatically.',
+    includes: ['DSPM', 'MDE'],
+    features: [
+      'Data security posture management: discovery, classification (PII, PCI, PHI), continuous risk monitoring',
+      'Endpoints, file servers, NAS, Microsoft 365 and Google Workspace',
+      'Risk valuation using the FAIR framework',
+      'Managed AES-256 file-level encryption',
+    ],
+  },
+  {
+    code: 'MDE-PM',
+    sku: 'WD-MDE-PM-01',
+    family: 'DRM',
+    name: 'Managed Data Encryption, Premium',
+    summary: 'Automated, policy-driven encryption of sensitive data with a seamless experience for users.',
+    includes: ['MDE'],
+    features: ['Automated encryption of sensitive data', 'Policy-driven deployment', 'AES-256 file-level encryption', 'Seamless decryption'],
+  },
+  {
+    code: 'DSB',
+    sku: 'WD-DSB-365-01 / WD-DSB-GWS-01',
+    family: 'DSB',
+    name: 'Distributed SaaS Backup & Recovery',
+    summary: 'Daily backup of Microsoft 365 or Google Workspace to an independent location, with search and granular restore.',
+    includes: ['DSB'],
+    features: [
+      'Automated daily backup to an independent location',
+      'Microsoft 365: mailboxes, archives, OneDrive, SharePoint, Teams, Groups',
+      'Google Workspace: Gmail, Drive, Shared Drives, Sites, Calendar',
+      'Granular restore with multiple target options',
+    ],
+  },
+];

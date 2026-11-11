@@ -10,6 +10,13 @@ const COOKIE = 'emruz_session';
 const ADMIN_COOKIE = 'emruz_admin_session';
 const SESSION_DAYS = 30;
 const SWITCH_HOURS = 8;
+/** Sliding idle timeout for ordinary sessions. */
+const IDLE_DAYS = 7;
+/** Admin sessions: absolute lifetime and idle timeout. */
+const ADMIN_SESSION_HOURS = 12;
+const ADMIN_IDLE_MINUTES = 30;
+/** Step-up: admin actions and view-as need a sign-in within this window. */
+const STEP_UP_MINUTES = 15;
 
 export interface Account {
   id: string;
@@ -17,6 +24,8 @@ export interface Account {
   name: string | null;
   /** Emails on this account's identities that the provider or an email link verified (lowercase) */
   verifiedEmails: string[];
+  /** When this session's owner last signed in (not refreshed by activity) */
+  authenticatedAt: Date;
   /** Set when an admin is viewing the site as this account */
   impersonatedBy: { id: string; email: string } | null;
 }
@@ -38,30 +47,75 @@ async function newSession(accountId: string, hours: number, impersonatedBy: stri
 }
 
 export async function createSession(accountId: string) {
+  const jar = await cookies();
+  // A fresh sign-in replaces any session this browser already had (e.g. step-up)
+  const old = jar.get(COOKIE)?.value;
+  if (old) await db()`delete from sessions where token_hash = ${sha256(old)} and impersonated_by is null`;
   const token = await newSession(accountId, SESSION_DAYS * 24);
-  (await cookies()).set(COOKIE, token, cookieOptions(SESSION_DAYS * 24 * 3600));
+  jar.set(COOKIE, token, cookieOptions(SESSION_DAYS * 24 * 3600));
 }
 
 export async function currentAccount(): Promise<Account | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const [row] = await db()<
-    { id: string; email: string; name: string | null; verified_emails: string[]; admin_id: string | null; admin_email: string | null }[]
+    {
+      id: string;
+      email: string;
+      name: string | null;
+      verified_emails: string[];
+      admin_id: string | null;
+      admin_email: string | null;
+      created_at: Date;
+      last_seen_at: Date;
+      authenticated_at: Date;
+    }[]
   >`
     select a.id, a.email, a.name, adm.id as admin_id, adm.email as admin_email,
+      s.created_at, s.last_seen_at, s.authenticated_at,
       coalesce((select array_agg(distinct lower(i.email)) from identities i
                 where i.account_id = a.id and i.email_verified and i.email is not null), '{}') as verified_emails
     from sessions s join accounts a on a.id = s.account_id
     left join accounts adm on adm.id = s.impersonated_by
-    where s.token_hash = ${sha256(token)} and s.expires_at > now()`;
+    where s.token_hash = ${sha256(token)} and s.expires_at > now()
+      and s.last_seen_at > now() - make_interval(days => ${IDLE_DAYS})`;
   if (!row) return null;
-  return {
+  const hash = sha256(token);
+  const now = Date.now();
+  const account: Account = {
     id: row.id,
     email: row.email,
     name: row.name,
     verifiedEmails: row.verified_emails ?? [],
+    authenticatedAt: new Date(row.authenticated_at),
     impersonatedBy: row.admin_id ? { id: row.admin_id, email: row.admin_email! } : null,
   };
+  // Admin sessions are shorter: fixed lifetime and a short idle timeout
+  if (
+    isAdmin(account) &&
+    (now - new Date(row.created_at).getTime() > ADMIN_SESSION_HOURS * 3600_000 ||
+      now - new Date(row.last_seen_at).getTime() > ADMIN_IDLE_MINUTES * 60_000)
+  ) {
+    await db()`delete from sessions where token_hash = ${hash}`;
+    return null;
+  }
+  // Slide the idle window; write at most once a minute
+  if (now - new Date(row.last_seen_at).getTime() > 60_000) {
+    await db()`update sessions set last_seen_at = now() where token_hash = ${hash}`;
+  }
+  return account;
+}
+
+/**
+ * Step-up for sensitive admin actions: the admin must have signed in within the
+ * last few minutes. Otherwise they are sent to sign in again and returned to `returnTo`.
+ */
+export function needsStepUp(a: Account): boolean {
+  return Date.now() - a.authenticatedAt.getTime() > STEP_UP_MINUTES * 60_000;
+}
+
+export function requireRecentSignIn(a: Account, returnTo: string) {
+  if (needsStepUp(a)) redirect(`/signin?reauth=1&next=${encodeURIComponent(returnTo)}`);
 }
 
 /** For pages: send signed-out visitors to /signin and back here afterwards. */

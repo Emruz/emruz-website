@@ -8,11 +8,12 @@ import { db, logEvent } from '@/lib/server/db';
 import { sendEmail } from '@/lib/server/email';
 import { newSubscriptionId } from '@/lib/server/lease';
 import { deactivateDevice, type SubscriptionRow } from '@/lib/server/licensing';
-import { currentAccount, isAdmin } from '@/lib/server/session';
+import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
 async function admin() {
   const a = await currentAccount();
   if (!isAdmin(a)) notFound();
+  requireRecentSignIn(a!, '/admin/motiv');
   return `admin:${a!.email}`;
 }
 

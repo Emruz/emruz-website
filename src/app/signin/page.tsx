@@ -16,10 +16,11 @@ const errors: Record<string, string> = {
   claim: 'Sign in to the account that asked to add that email, then open the link again.',
 };
 
-export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; reauth?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
-  if (await currentAccount()) redirect(next);
+  const reauth = sp.reauth === '1';
+  if (!reauth && !sp.error && (await currentAccount())) redirect(next);
   const error = sp.error ? errors[sp.error] ?? sp.error : null;
 
   return (
@@ -32,6 +33,11 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       <section className="py-10 md:py-12">
         <Container>
           <div className="max-w-md">
+            {reauth && !error && (
+              <div role="status" className="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg text-sm">
+                For your security, sign in again to continue.
+              </div>
+            )}
             {error && (
               <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg text-sm">
                 {error}

@@ -14,7 +14,7 @@ import type { EngagementStatus, Rating, ReportStatus } from '@/content/workbench
 export async function staffRole(a: Account | null): Promise<'admin' | 'lead' | 'assessor' | null> {
   if (!a || a.impersonatedBy) return null;
   if (isAdmin(a)) return 'admin';
-  const [r] = await db()<{ role: 'lead' | 'assessor' }[]>`select role from staff where account_id = ${a.id}`;
+  const [r] = await db()<{ role: 'lead' | 'assessor' }[]>`select role from staff where account_id = ${a.id} and active`;
   return r?.role ?? null;
 }
 
@@ -201,9 +201,30 @@ export async function clientContacts(clientId: string) {
     where cc.client_id = ${clientId} order by cc.is_primary desc, a.email`;
 }
 
-export async function staffList() {
-  return db()<{ account_id: string; email: string; name: string | null; role: string }[]>`
-    select s.account_id, a.email, a.name, s.role from staff s join accounts a on a.id = s.account_id order by a.email`;
+export interface StaffMember {
+  account_id: string;
+  email: string;
+  name: string | null;
+  role: 'lead' | 'assessor';
+  title: string | null;
+  phone: string | null;
+  notes: string | null;
+  active: boolean;
+  added_by: string | null;
+  added_at: Date;
+  engagements: number;
+  self_assessments: number;
+}
+
+/** Active staff, for pickers. Pass all: true for the staff admin page. */
+export async function staffList(opts: { all?: boolean } = {}) {
+  return db()<StaffMember[]>`
+    select s.account_id, a.email, a.name, s.role, s.title, s.phone, s.notes, s.active, s.added_by, s.added_at,
+           (select count(*)::int from engagements e where e.lead_account_id = s.account_id and e.deleted_at is null and e.status <> 'closed') as engagements,
+           (select count(*)::int from assessments x where x.assigned_to = s.account_id and x.deleted_at is null) as self_assessments
+    from staff s join accounts a on a.id = s.account_id
+    where ${!!opts.all} or s.active
+    order by s.active desc, coalesce(a.name, a.email)`;
 }
 
 /* ---------- Activity ---------- */

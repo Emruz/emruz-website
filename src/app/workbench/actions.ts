@@ -491,25 +491,68 @@ export async function sendReport(form: FormData) {
 
 /* ---------- Staff ---------- */
 
+async function adminOnly() {
+  const ctx = await staff();
+  if (ctx.role !== 'admin') throw new Error('Admins only');
+  return ctx;
+}
+
 export async function addStaff(form: FormData) {
-  const { account, role } = await staff();
-  if (role !== 'admin') throw new Error('Admins only');
+  const { account } = await adminOnly();
   const email = str(form.get('email'), 254).toLowerCase();
+  const name = str(form.get('name'), 120);
   const r = str(form.get('role'), 20) === 'lead' ? 'lead' : 'assessor';
   if (!EMAIL_RE.test(email)) redirect('/workbench/staff?error=email');
-  const id = await accountForEmail(email);
+  const id = await accountForEmail(email, name || null);
+  if (name) await db()`update accounts set name = ${name} where id = ${id}`;
   await db()`
-    insert into staff (account_id, role, added_by) values (${id}, ${r}, ${account.email})
-    on conflict (account_id) do update set role = excluded.role`;
+    insert into staff (account_id, role, title, phone, added_by) values (${id}, ${r}, ${str(form.get('title'), 120) || null}, ${str(form.get('phone'), 40) || null}, ${account.email})
+    on conflict (account_id) do update set role = excluded.role, title = coalesce(excluded.title, staff.title),
+      phone = coalesce(excluded.phone, staff.phone), active = true, updated_at = now()`;
+  if (form.get('invite') === 'on') {
+    await sendEmail(
+      email,
+      'You have access to the Emruz assessment workbench',
+      `Hello${name ? ` ${name.split(' ')[0]}` : ''},\n\n${account.name || account.email} has given you access to the Emruz assessment workbench as ${r === 'lead' ? 'a lead' : 'an assessor'}.\n\nSign in with this email address: ${SITE_URL}/signin?next=/workbench\n\nEmruz`,
+    ).catch((e) => console.error('staff invite failed', e));
+  }
   revalidatePath('/workbench/staff');
+  redirect(`/workbench/staff/${id}?added=1`);
+}
+
+export async function updateStaff(form: FormData) {
+  await adminOnly();
+  const id = form.get('account_id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const name = str(form.get('name'), 120);
+  const r = str(form.get('role'), 20) === 'lead' ? 'lead' : 'assessor';
+  await db()`update accounts set name = ${name || null} where id = ${id}`;
+  await db()`
+    update staff set role = ${r}, title = ${str(form.get('title'), 120) || null}, phone = ${str(form.get('phone'), 40) || null},
+      notes = ${str(form.get('notes'), 2000) || null}, updated_at = now()
+    where account_id = ${id}`;
+  revalidatePath('/workbench/staff');
+  revalidatePath(`/workbench/staff/${id}`);
+  redirect(`/workbench/staff/${id}?saved=1`);
+}
+
+/** Deactivate keeps the person on record (and their history) but removes workbench access. */
+export async function setStaffActive(form: FormData) {
+  const { account } = await adminOnly();
+  const id = form.get('account_id');
+  if (!isUuid(id) || id === account.id) throw new Error('Not allowed');
+  const active = form.get('active') === 'true';
+  await db()`update staff set active = ${active}, updated_at = now() where account_id = ${id}`;
+  revalidatePath('/workbench/staff');
+  revalidatePath(`/workbench/staff/${id}`);
 }
 
 export async function removeStaff(form: FormData) {
-  const { role } = await staff();
-  if (role !== 'admin') throw new Error('Admins only');
+  await adminOnly();
   const id = form.get('account_id');
   if (isUuid(id)) await db()`delete from staff where account_id = ${id}`;
   revalidatePath('/workbench/staff');
+  redirect('/workbench/staff');
 }
 
 /* ---------- Deletion (30-day recovery window) ---------- */

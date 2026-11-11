@@ -4,12 +4,12 @@ import { rateLimit } from './db';
 import { fail, type ApiResult } from './licensing';
 import { SITE_URL } from './config';
 
-export function clientIp(req: Request): string {
-  return (
-    req.headers.get('x-nf-client-connection-ip') ||
-    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-    'unknown'
-  );
+export function clientIp(req: Request | { headers: Headers }): string {
+  return ipFromHeaders(req.headers);
+}
+
+export function ipFromHeaders(h: Headers): string {
+  return h.get('x-nf-client-connection-ip') || h.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
 }
 
 export function json(r: ApiResult) {

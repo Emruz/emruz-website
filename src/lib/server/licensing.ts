@@ -225,6 +225,24 @@ interface PairingRow {
   subscription_id: string | null;
   expires_at: Date;
   last_polled_at: Date | null;
+  attempts: number;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Failed attempts against one pairing code before it is locked. */
+export const PAIRING_MAX_ATTEMPTS = 5;
+
+/** Count a failed attempt against a pending code; lock it (expire it) at the limit. Returns true when locked. */
+export async function recordPairingFailure(deviceCodeHash: string): Promise<boolean> {
+  const [r] = await db()<{ attempts: number }[]>`
+    update pairings set attempts = attempts + 1,
+      expires_at = case when attempts + 1 >= ${PAIRING_MAX_ATTEMPTS} then now() else expires_at end
+    where device_code_hash = ${deviceCodeHash} and status = 'pending'
+    returning attempts`;
+  const locked = !!r && r.attempts >= PAIRING_MAX_ATTEMPTS;
+  if (locked) await logEvent('pairing_locked', { attempts: r.attempts });
+  return locked;
 }
 
 export async function pollPairing(deviceCode: unknown, deviceId: string): Promise<ApiResult> {
@@ -270,11 +288,16 @@ export async function approvePairing(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const p = await findPendingPairing(userCode);
   if (!p) return { ok: false, error: 'That code was not found or has expired. Get a new code in Motiv.' };
-  const [s] = await db()<SubscriptionRow[]>`
-    select * from subscriptions where id = ${subscriptionUuid} and account_id = ${accountId}`;
-  if (!s) return { ok: false, error: 'Choose one of your subscriptions.' };
+  const failed = async (error: string) => {
+    const locked = await recordPairingFailure(p.device_code_hash);
+    return { ok: false as const, error: locked ? 'Too many failed attempts. This code is locked. Get a new code in Motiv.' : error };
+  };
+  const [s] = UUID_RE.test(subscriptionUuid)
+    ? await db()<SubscriptionRow[]>`select * from subscriptions where id = ${subscriptionUuid} and account_id = ${accountId}`
+    : [];
+  if (!s) return failed('Choose one of your subscriptions.');
   const problem = entitlementProblem(s);
-  if (problem) return { ok: false, error: messages[problem] ?? 'That subscription cannot be used.' };
+  if (problem) return failed(messages[problem] ?? 'That subscription cannot be used.');
   const [existing] = await db()<{ deactivated_at: Date | null }[]>`
     select deactivated_at from devices where subscription_id = ${s.id} and device_id = ${p.device_id}`;
   if (!(existing && !existing.deactivated_at) && (await activeSeatCount(s.id, p.device_id)) >= s.seats) {

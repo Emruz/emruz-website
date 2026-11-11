@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import {
@@ -90,15 +91,20 @@ export default function ResultsView({
                   <th />
                   <th />
                   {rec.pkg && (
-                    <th className="bg-slate-900/75 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-24">
+                    <th className="bg-slate-900/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">With</span>
                       <span className="block font-extrabold text-base whitespace-nowrap">{displayCode(rec.pkg.code)}</span>
                     </th>
                   )}
                   {extras.length > 0 && (
-                    <th className="bg-indigo-800/75 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-28">
+                    <th className="bg-indigo-800/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">{rec.pkg ? 'Plus' : 'With'}</span>
-                      <span className="block font-extrabold text-xs leading-tight">{extras.map((a, i) => <span key={a.code} className="whitespace-nowrap">{i > 0 && ' + '}{a.code}</span>)}</span>
+                      <span className="block font-extrabold text-xs leading-tight">{extras.map((a, i) => (
+                        <Fragment key={a.code}>
+                          {i > 0 && ' + '}
+                          <span className="whitespace-nowrap">{a.code}</span>
+                        </Fragment>
+                      ))}</span>
                     </th>
                   )}
                 </tr>
@@ -129,7 +135,7 @@ export default function ResultsView({
                       {s === null ? (na ? 'Not applicable' : 'Not in scope') : `${s}%`}
                     </td>
                     {rec.pkg && (
-                      <td className={`bg-slate-900/75 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-slate-900/80 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
                           <span className="text-white/80">–</span>
                         ) : (
@@ -138,7 +144,7 @@ export default function ResultsView({
                       </td>
                     )}
                     {extras.length > 0 && (
-                      <td className={`bg-indigo-800/75 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-indigo-800/80 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
                           <span className="text-white/80">–</span>
                         ) : (

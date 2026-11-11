@@ -157,7 +157,7 @@ export default function Home() {
       {/* Hero Section */}
       <Hero
         headline="Strategy and execution. Technical clarity without the overhead."
-        subheadline="Emruz helps organizations understand their security, cloud, and AI landscape, and how to evolve it. Through frameworks like NIST and CIS. Through outcomes we can measure."
+        subheadline="Emruz helps organizations understand their security, cloud, and AI landscape, and how to evolve it. Through industry frameworks. Through outcomes we can measure."
         primaryCta={{
           label: 'Schedule an Assessment',
           href: '/assessments',

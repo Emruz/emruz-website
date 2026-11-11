@@ -519,7 +519,9 @@ export async function markSelfDeleted(form: FormData) {
   const { account, role, a } = await selfOn(form.get('id'));
   if (role !== 'admin' && a.assigned_to !== account.id) throw new Error('Not authorized');
   await db()`update assessments set deleted_at = now(), deleted_by = ${account.email} where id = ${a.id} and deleted_at is null`;
-  redirect('/workbench/self?f=deleted');
+  // Stay on the current view; the record just drops out of it
+  revalidatePath('/workbench/self');
+  revalidatePath(`/workbench/self/${a.id}`);
 }
 
 export async function restoreSelf(form: FormData) {
@@ -527,7 +529,7 @@ export async function restoreSelf(form: FormData) {
   if (role !== 'admin' && a.assigned_to !== account.id) throw new Error('Not authorized');
   await db()`update assessments set deleted_at = null, deleted_by = null where id = ${a.id}`;
   revalidatePath('/workbench/self');
-  redirect(`/workbench/self/${a.id}`);
+  revalidatePath(`/workbench/self/${a.id}`);
 }
 
 /** Mark an engagement for deletion: admins, or its lead assessor. */

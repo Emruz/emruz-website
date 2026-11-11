@@ -27,6 +27,13 @@ export default function Footer() {
       { label: 'Motiv', href: '/motiv' },
       { label: 'All products', href: '/products' },
     ],
+    addOns: [
+      { label: 'SPM', href: '/products/spm' },
+      { label: 'ZTI', href: '/products/zti' },
+      { label: 'PSA', href: '/products/psa' },
+      { label: 'DRM', href: '/products/drm' },
+      { label: 'DSB', href: '/products/dsb' },
+    ],
     resources: [
       { label: 'Assessments', href: '/assessments' },
       { label: 'Insights', href: '/insights' },
@@ -42,7 +49,7 @@ export default function Footer() {
     <footer className="bg-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Footer Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Logo className="inline-block mb-4 text-[2.8125rem] text-white" />
@@ -85,21 +92,36 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Products */}
-          <div>
+          {/* Products: managed security and add-ons */}
+          <div className="col-span-2">
             <h3 className="font-semibold mb-4">Products</h3>
-            <ul className="space-y-2">
-              {sections.products.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="grid grid-cols-2 gap-8">
+              <ul className="space-y-2">
+                {sections.products.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <ul className="space-y-2">
+                <li className="text-xs uppercase tracking-wider text-gray-500">Add-ons</li>
+                {sections.addOns.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="text-gray-400 hover:text-white transition-colors text-sm"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Resources */}

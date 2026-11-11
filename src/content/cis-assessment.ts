@@ -23,6 +23,8 @@ export interface Question {
   needs?: Needs;
   /** Managed capabilities that fully deliver this question when included in a package */
   closes?: CapabilityCode[];
+  /** Capabilities that cover most of it: the answer rises to at least Mostly */
+  raises?: CapabilityCode[];
 }
 
 export interface Control {
@@ -46,21 +48,21 @@ export const controls: Control[] = [
     id: 1,
     title: 'Inventory and Control of Enterprise Assets',
     summary: 'Know every device that connects to your environment, so you can protect it.',
-    capabilities: ['ESPM', 'CTEM'],
+    capabilities: ['NSPM', 'CTEM'],
     questions: [
-      { id: '1a', ig: 1, closes: ['ESPM', 'CTEM'], text: 'We keep an accurate, current inventory of every device that connects to our environment, including remote and cloud devices.' },
-      { id: '1b', ig: 1, closes: ['ESPM'], text: 'Unknown or unauthorized devices are found and removed or quarantined within a week.' },
-      { id: '1c', ig: 2, closes: ['ESPM', 'CTEM'], text: 'Asset discovery runs automatically and keeps the inventory up to date.' },
+      { id: '1a', ig: 1, closes: ['NSPM', 'CTEM'], text: 'We keep an accurate, current inventory of every device that connects to our environment, including remote and cloud devices.' },
+      { id: '1b', ig: 1, closes: ['NSPM'], text: 'Unknown or unauthorized devices are found and removed or quarantined within a week.' },
+      { id: '1c', ig: 2, closes: ['NSPM', 'CTEM'], text: 'Asset discovery runs automatically and keeps the inventory up to date.' },
     ],
   },
   {
     id: 2,
     title: 'Inventory and Control of Software Assets',
     summary: 'Only authorized, supported software is installed and allowed to run.',
-    capabilities: ['ESPM', 'EDR'],
+    capabilities: ['EDR'],
     questions: [
-      { id: '2a', ig: 1, closes: ['ESPM'], text: 'We keep an inventory of authorized software and review it at least twice a year.' },
-      { id: '2b', ig: 1, closes: ['ESPM', 'EDR'], text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
+      { id: '2a', ig: 1, closes: ['EDR'], text: 'We keep an inventory of authorized software and review it at least twice a year.' },
+      { id: '2b', ig: 1, closes: ['EDR'], text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
       { id: '2c', ig: 2, closes: ['EDR'], text: 'Allowlisting stops unauthorized software, libraries and scripts from running.' },
     ],
   },
@@ -80,11 +82,11 @@ export const controls: Control[] = [
     id: 4,
     title: 'Secure Configuration of Enterprise Assets and Software',
     summary: 'Systems start from a hardened baseline and stay that way.',
-    capabilities: ['ESPM', 'NSPM'],
+    capabilities: ['NSPM'],
     questions: [
-      { id: '4a', ig: 1, closes: ['ESPM', 'NSPM'], text: 'We have documented secure configuration standards for endpoints, servers, network devices and cloud services.' },
-      { id: '4b', ig: 1, closes: ['ESPM'], text: 'Default accounts and passwords are changed or disabled, and devices lock automatically when idle.' },
-      { id: '4c', ig: 2, closes: ['ESPM', 'NSPM'], text: 'Configuration drift is detected and corrected automatically.' },
+      { id: '4a', ig: 1, raises: ['NSPM'], text: 'We have documented secure configuration standards for endpoints, servers, network devices and cloud services.' },
+      { id: '4b', ig: 1, text: 'Default accounts and passwords are changed or disabled, and devices lock automatically when idle.' },
+      { id: '4c', ig: 2, closes: ['NSPM'], text: 'Configuration drift is detected and corrected automatically.' },
     ],
   },
   {
@@ -113,10 +115,10 @@ export const controls: Control[] = [
     id: 7,
     title: 'Continuous Vulnerability Management',
     summary: 'Find and fix weaknesses before attackers use them.',
-    capabilities: ['CTEM', 'ESPM'],
+    capabilities: ['CTEM', 'VM', 'AVM', 'ESPM', 'NSPM'],
     questions: [
-      { id: '7a', ig: 1, text: 'Operating systems and applications are patched automatically, at least monthly.' },
-      { id: '7b', ig: 2, closes: ['CTEM', 'ESPM'], text: 'Internal assets are scanned for vulnerabilities at least quarterly and external assets at least monthly.' },
+      { id: '7a', ig: 1, closes: ['VM'], raises: ['AVM'], text: 'Operating systems and applications are patched automatically, at least monthly.' },
+      { id: '7b', ig: 2, closes: ['CTEM', 'ESPM', 'NSPM', 'VM'], raises: ['AVM'], text: 'Internal assets are scanned for vulnerabilities at least quarterly and external assets at least monthly.' },
       { id: '7c', ig: 2, closes: ['CTEM'], text: 'Findings are prioritized by risk and fixed within defined timeframes.' },
     ],
   },
@@ -135,9 +137,9 @@ export const controls: Control[] = [
     id: 9,
     title: 'Email and Web Browser Protections',
     summary: 'Block the most common ways attackers reach your people.',
-    capabilities: ['APP', 'ITP'],
+    capabilities: ['APP', 'ITP', 'AVM'],
     questions: [
-      { id: '9a', ig: 1, closes: ['ESPM'], text: 'Only supported, up-to-date browsers and email clients are allowed.' },
+      { id: '9a', ig: 1, closes: ['VM', 'AVM'], text: 'Only supported, up-to-date browsers and email clients are allowed.' },
       { id: '9b', ig: 1, closes: ['ITP'], text: 'DNS filtering blocks access to known malicious sites for all users, wherever they work.' },
       { id: '9c', ig: 2, closes: ['APP'], text: 'Email is protected with DMARC, and attachments and links are scanned or sandboxed.' },
     ],
@@ -172,7 +174,7 @@ export const controls: Control[] = [
     capabilities: ['NSPM'],
     questions: [
       { id: '12a', ig: 1, closes: ['NSPM'], needs: 'network', text: 'Firewalls, routers and switches run supported, up-to-date firmware.' },
-      { id: '12b', ig: 2, closes: ['NSPM'], needs: 'network', text: 'The network is segmented, and admin interfaces are reachable only from management networks.' },
+      { id: '12b', ig: 2, raises: ['NSPM'], needs: 'network', text: 'The network is segmented, and admin interfaces are reachable only from management networks.' },
       { id: '12c', ig: 2, text: 'Remote access uses VPN or zero-trust access with MFA, and the network architecture is documented.' },
     ],
   },
@@ -449,6 +451,11 @@ export function recommend(answers: Answers, ig: IG, p: Profile = {}): Recommenda
   if (helps(dsb)) chosen.push(dsb);
   const zti = addOns.find((a) => a.code === 'ZTI')!;
   if (helps(zti)) chosen.unshift(zti);
+  // Posture management: network first (internal assets), external when external scanning is the gap
+  const nwk = addOns.find((a) => a.code === 'SPM-NWK')!;
+  const ext = addOns.find((a) => a.code === 'SPM-EXT')!;
+  if (helps(nwk)) chosen.unshift(nwk);
+  else if (helps(ext)) chosen.unshift(ext);
 
   return { gaps, needed, pkg, covered, addOns: chosen, services: [...services.values()] };
 }
@@ -500,6 +507,7 @@ export function withPackage(answers: Answers, ...services: ({ includes: Capabili
   for (const c of controls) {
     for (const q of c.questions) {
       if (q.closes?.some((cap) => caps.has(cap))) out[q.id] = 4;
+      else if (q.raises?.some((cap) => caps.has(cap))) out[q.id] = Math.max(out[q.id] ?? 0, 3);
     }
   }
   return out;

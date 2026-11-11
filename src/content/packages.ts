@@ -28,7 +28,9 @@ export type CapabilityCode =
   | 'CRPT'
   | 'MDE'
   | 'PSA'
-  | 'DSB';
+  | 'DSB'
+  | 'AVM'
+  | 'VM';
 
 export const capabilities: Record<CapabilityCode, { name: string; description: string }> = {
   EPP: { name: 'Endpoint Protection', description: 'Prevents known and unknown malware on laptops, desktops and servers.' },
@@ -36,9 +38,11 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   BTH: { name: 'Basic Threat Hunting', description: 'Regular hunts across your environment for common attacker techniques.' },
   ATH: { name: 'Advanced Threat Hunting', description: 'Hypothesis-driven hunts for threats that evade automated detection.' },
   SIEM: { name: 'AI-driven SIEM', description: 'Central collection and correlation of security signals across your environment.' },
-  ESPM: { name: 'Endpoint Security Posture', description: 'Finds misconfigured and unpatched endpoints before attackers do.' },
-  NSPM: { name: 'Network Security Posture', description: 'Continuous review of network exposure and segmentation.' },
+  ESPM: { name: 'External Security Posture', description: 'Continuously discovers and tests internet-facing assets: open ports, vulnerabilities, technology stack and dark web exposure.' },
+  NSPM: { name: 'Network Security Posture', description: 'Continuously discovers and tests assets on your internal network: open ports, vulnerabilities and remediation priorities.' },
   CIR: { name: 'Continuous Incident Response', description: 'Incident response is part of the service, not a separate retainer.' },
+  AVM: { name: 'Application Vulnerability Management', description: 'Finds vulnerable third-party applications on every endpoint through the EDR agent.' },
+  VM: { name: 'Vulnerability Management', description: 'Finds vulnerable operating systems and third-party applications on every endpoint through the EDR agent.' },
   CTEM: { name: 'Exposure Management', description: 'Continuous internal, external and dark web exposure management.' },
   CPT: { name: 'Continuous Pen Testing', description: 'Ongoing attack simulation instead of a once-a-year test.' },
   APP: { name: 'Advanced Phishing Protection', description: 'Stops phishing, impersonation and malicious links across email and collaboration tools.' },
@@ -180,7 +184,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Expert eyes on your environment',
     summary: 'Analysts watch your environment around the clock, investigate alerts and respond for you.',
     bestFor: 'Teams without a 24/7 SOC who need detection and response handled.',
-    includes: ['EDR', 'ATH', ...SOC_CORE],
+    includes: ['EDR', 'ATH', 'AVM', ...SOC_CORE],
     outcomes: ['24/7 monitoring and response', 'Incident response included', 'Continuous view of your exposures'],
   },
   {
@@ -200,7 +204,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Full endpoint detection and response',
     summary: 'Upgrades endpoint protection to full detection and response, alongside email, collaboration and internet threat protection.',
     bestFor: 'Organizations that need to investigate and contain attacks on endpoints, not just block them.',
-    includes: ['EDR', ...XDR_CORE],
+    includes: ['EDR', 'AVM', ...XDR_CORE],
     outcomes: ['Containment and rollback on every endpoint', 'Phishing and web threats blocked', 'One correlated view across endpoint, email and web'],
   },
   {
@@ -210,7 +214,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Add threat hunting',
     summary: 'Adds basic threat hunting: regular hunts across your environment for common attacker techniques.',
     bestFor: 'Organizations that want full endpoint response alongside email and web protection.',
-    includes: ['EDR', 'BTH', ...XDR_CORE],
+    includes: ['EDR', 'BTH', 'AVM', ...XDR_CORE],
     outcomes: ['Threats found before they trigger alerts', 'Containment and rollback on every endpoint', 'Phishing and web threats blocked'],
   },
   {
@@ -220,7 +224,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Active defense with data and compliance in view',
     summary: 'Moves from detection to active defense, and adds data security posture management and compliance reporting.',
     bestFor: 'Organizations with sensitive data and audit obligations.',
-    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'CRPT'],
+    includes: ['EDR', 'ATH', 'VM', ...XDR_CORE, 'DSPM', 'CRPT'],
     outcomes: ['Sensitive data found and exposure prioritized', 'Audit-ready evidence and reporting', 'Threats blocked in real time'],
   },
   {
@@ -230,7 +234,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Identity and DNS covered',
     summary: 'Adds identity security posture management and DNS security posture, protecting accounts, domains and DNS.',
     bestFor: 'Enterprises where identities and domains are prime targets.',
-    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CRPT'],
+    includes: ['EDR', 'ATH', 'VM', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CRPT'],
     outcomes: ['Risky accounts and permissions found', 'Domain and DNS risks monitored', 'Brand spoofing exposure reduced'],
   },
   {
@@ -240,7 +244,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Cloud files covered too',
     summary: 'Adds security for files stored and shared in cloud platforms.',
     bestFor: 'Organizations that collaborate heavily in cloud storage.',
-    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'CRPT'],
+    includes: ['EDR', 'ATH', 'VM', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'CRPT'],
     outcomes: ['Malicious files caught in cloud storage', 'Safer external sharing', 'Coverage where work actually happens'],
   },
   {
@@ -250,7 +254,7 @@ export const packages: ServicePackage[] = [
     tagline: 'Maximum protection, identity attacks stopped',
     summary: 'Adds identity threat detection and response to stop account takeover as it happens.',
     bestFor: 'Regulated organizations that need the complete portfolio.',
-    includes: ['EDR', 'ATH', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'ITDR', 'CRPT'],
+    includes: ['EDR', 'ATH', 'VM', ...XDR_CORE, 'DSPM', 'ISPM', 'DNSSPM', 'CFS', 'ITDR', 'CRPT'],
     outcomes: ['Account takeover detected and stopped', 'Audit-ready evidence and reporting', 'The complete portfolio in one service'],
   },
 ];
@@ -280,7 +284,7 @@ export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
 
 /* ---------- Add-on services ---------- */
 
-export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI';
+export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI' | 'SPM';
 
 export interface AddOn {
   code: string;
@@ -308,6 +312,35 @@ export const addOns: AddOn[] = [
       'Detection of credential theft, privilege escalation, Kerberoasting and lateral movement',
       'Active deception for identity reconnaissance',
       'Automated response: disable accounts, force password resets, block sessions, isolate endpoints',
+    ],
+  },
+  {
+    code: 'SPM-EXT',
+    sku: 'WD-SPM-EXT-01',
+    family: 'SPM',
+    name: 'External Security Posture Management',
+    summary: 'Finds and tests everything you expose to the internet, continuously, with dark web monitoring.',
+    includes: ['ESPM', 'CTEM', 'CPT'],
+    features: [
+      'Continuous threat exposure management for internet-facing assets',
+      'Automated asset discovery, open port detection and technology stack identification',
+      'Vulnerability scanning and exploitation, with continuous automated pen testing',
+      'Web asset screenshots and dark web monitoring',
+      'Remediation recommendations',
+    ],
+  },
+  {
+    code: 'SPM-NWK',
+    sku: 'WD-SPM-NWK-01',
+    family: 'SPM',
+    name: 'Network Security Posture Management',
+    summary: 'Finds and tests every asset on your internal network, continuously.',
+    includes: ['NSPM', 'CTEM', 'CPT'],
+    features: [
+      'Continuous threat exposure management for the internal network',
+      'Automated asset discovery, open port detection and technology stack identification',
+      'Vulnerability scanning and exploitation, with continuous automated pen testing',
+      'Remediation recommendations',
     ],
   },
   {
@@ -376,6 +409,40 @@ export interface AddOnLine {
 }
 
 export const addOnLines: AddOnLine[] = [
+  {
+    slug: 'SPM',
+    path: 'spm',
+    label: 'SPM',
+    name: 'Security Posture Management',
+    tagline: 'See your environment the way an attacker does',
+    summary:
+      'Continuous threat exposure management for your internet-facing assets, your internal network, or both: automated discovery, vulnerability scanning and exploitation, and continuous automated pen testing.',
+    bestFor: 'Organizations that need to know what they expose and which weaknesses are exploitable, without waiting for an annual pen test.',
+    outcomes: [
+      'An always-current inventory of internet-facing and internal assets',
+      'Exploitable weaknesses found and prioritized continuously',
+      'Clear remediation recommendations for your team',
+    ],
+    columns: [
+      { code: 'SPM-EXT', label: 'External' },
+      { code: 'SPM-NWK', label: 'Network' },
+    ],
+    groups: [
+      {
+        title: 'Continuous threat exposure management',
+        rows: [
+          { label: 'Automated asset discovery', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Vulnerability scanning and exploitation', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Open port detection', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Continuous automated pen testing', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Technology stack identification', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Remediation recommendations', in: ['SPM-EXT', 'SPM-NWK'] },
+          { label: 'Web asset screenshots', in: ['SPM-EXT'] },
+          { label: 'Dark web monitoring', in: ['SPM-EXT'] },
+        ],
+      },
+    ],
+  },
   {
     slug: 'ZTI',
     path: 'zti',

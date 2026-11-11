@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { isUuid } from '@/lib/server/api';
-import { clientContacts, requireStaff } from '@/lib/server/workbench';
+import { canManageContacts, clientContacts, requireStaff } from '@/lib/server/workbench';
 import type { EngagementStatus } from '@/content/workbench';
 import { addContact, removeContact } from '../../actions';
 import { StatusBadge, btn, card, input, label, fmtDate } from '../../ui';
@@ -12,11 +12,12 @@ export const metadata = { title: 'Client', robots: { index: false } };
 
 export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
   const { id } = await params;
-  await requireStaff(`/workbench/clients/${id}`);
+  const { account, role } = await requireStaff(`/workbench/clients/${id}`);
   if (!isUuid(id)) notFound();
   const [c] = await db()<{ id: string; name: string; industry: string | null; website: string | null }[]>`select * from clients where id = ${id}`;
   if (!c) notFound();
   const sp = await searchParams;
+  const canManage = await canManageContacts(account.id, role, id);
   const [contacts, engagements] = await Promise.all([
     clientContacts(id),
     db()<{ id: string; title: string; status: EngagementStatus; due_date: string | null }[]>`
@@ -44,11 +45,13 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                         <p className="font-semibold text-gray-900">{p.name || p.email} {p.is_primary && <span className="text-xs text-blue-700 font-semibold ml-1">Primary</span>}</p>
                         <p className="text-sm text-gray-600">{p.email}{p.title && ` · ${p.title}`}</p>
                       </div>
-                      <form action={removeContact}>
-                        <input type="hidden" name="client_id" value={c.id} />
-                        <input type="hidden" name="account_id" value={p.account_id} />
-                        <button className="text-sm text-gray-500 hover:text-red-700">Remove</button>
-                      </form>
+                      {canManage && (
+                        <form action={removeContact}>
+                          <input type="hidden" name="client_id" value={c.id} />
+                          <input type="hidden" name="account_id" value={p.account_id} />
+                          <button className="text-sm text-gray-500 hover:text-red-700">Remove</button>
+                        </form>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -66,9 +69,14 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                 </ul>
               </div>
             </div>
+            {canManage ? (
             <form action={addContact} className={`${card} p-5 space-y-3 h-fit`}>
               <h2 className="font-bold text-gray-900">Add contact</h2>
-              {sp.error && <p className="text-sm text-red-700">Enter a valid email.</p>}
+              {sp.error && (
+                <p className="text-sm text-red-700">
+                  {sp.error === 'staff' ? 'That email belongs to Emruz staff. Staff cannot be client contacts.' : 'Enter a valid email.'}
+                </p>
+              )}
               <input type="hidden" name="client_id" value={c.id} />
               <div><label className={label} htmlFor="email">Email</label><input id="email" name="email" type="email" required className={input} /></div>
               <div><label className={label} htmlFor="name">Name</label><input id="name" name="name" className={input} /></div>
@@ -77,6 +85,9 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
               <label className="flex gap-2 text-sm"><input type="checkbox" name="invite" defaultChecked /> Email a portal invitation</label>
               <button className={btn}>Add contact</button>
             </form>
+            ) : (
+              <p className={`${card} p-5 text-sm text-gray-600 h-fit`}>Only admins, leads, or the lead on one of this client&apos;s engagements can change portal contacts.</p>
+            )}
           </div>
         </Container>
       </section>

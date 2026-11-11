@@ -10,6 +10,7 @@ import { EMAIL_RE } from '@/lib/server/newsletter';
 import { SITE_URL } from '@/lib/server/config';
 import { sendEmail } from '@/lib/server/email';
 import {
+  canManageContacts,
   canReview,
   deleteEvidenceFile,
   emailClientContacts,
@@ -17,6 +18,7 @@ import {
   getEvidence,
   getRatings,
   getReport,
+  isStaffEmail,
   logActivity,
   portalUrl,
   seesAll,
@@ -74,12 +76,19 @@ export async function createClient(form: FormData) {
   redirect(`/workbench/clients/${c.id}`);
 }
 
-export async function addContact(form: FormData) {
-  const { account } = await staff();
-  const clientId = form.get('client_id');
-  const email = str(form.get('email'), 254).toLowerCase();
+/** Contacts get portal access, so only admins, leads, or the lead on one of the client's engagements may change them. */
+async function contactManager(clientId: unknown) {
+  const ctx = await staff();
   if (!isUuid(clientId)) throw new Error('Not found');
+  if (!(await canManageContacts(ctx.account.id, ctx.role, clientId))) throw new Error('Not authorized');
+  return { ...ctx, clientId };
+}
+
+export async function addContact(form: FormData) {
+  const { account, clientId } = await contactManager(form.get('client_id'));
+  const email = str(form.get('email'), 254).toLowerCase();
   if (!EMAIL_RE.test(email)) redirect(`/workbench/clients/${clientId}?error=email`);
+  if (await isStaffEmail(email)) redirect(`/workbench/clients/${clientId}?error=staff`);
   const accountId = await accountForEmail(email, str(form.get('name'), 120) || null);
   const name = str(form.get('name'), 120);
   if (name) await db()`update accounts set name = coalesce(name, ${name}) where id = ${accountId}`;
@@ -87,6 +96,7 @@ export async function addContact(form: FormData) {
     insert into client_contacts (client_id, account_id, title, is_primary)
     values (${clientId}, ${accountId}, ${str(form.get('title'), 120) || null}, ${form.get('is_primary') === 'on'})
     on conflict (client_id, account_id) do update set title = excluded.title, is_primary = excluded.is_primary`;
+  await logEvent('client_contact_added', { clientId, contact: accountId }, { accountId: account.id, actor: account.email });
   if (form.get('invite') === 'on') {
     const [c] = await db()<{ name: string }[]>`select name from clients where id = ${clientId}`;
     await sendEmail(
@@ -99,11 +109,11 @@ export async function addContact(form: FormData) {
 }
 
 export async function removeContact(form: FormData) {
-  await staff();
-  const clientId = form.get('client_id');
+  const { account, clientId } = await contactManager(form.get('client_id'));
   const accountId = form.get('account_id');
-  if (!isUuid(clientId) || !isUuid(accountId)) return;
-  await db()`delete from client_contacts where client_id = ${clientId} and account_id = ${accountId}`;
+  if (!isUuid(accountId)) return;
+  const removed = await db()`delete from client_contacts where client_id = ${clientId} and account_id = ${accountId} returning account_id`;
+  if (removed.length) await logEvent('client_contact_removed', { clientId, contact: accountId }, { accountId: account.id, actor: account.email });
   revalidatePath(`/workbench/clients/${clientId}`);
 }
 

@@ -6,7 +6,7 @@ import { db } from './db';
 import { isAdmin, requireAccount, type Account } from './session';
 import { sendEmail } from './email';
 import { isUuid } from './api';
-import { SITE_URL } from './config';
+import { SITE_URL, adminEmails } from './config';
 import type { EngagementStatus, Rating, ReportStatus } from '@/content/workbench';
 
 /* ---------- Access ---------- */
@@ -56,6 +56,28 @@ export async function canAccessEngagement(accountId: string, role: string | null
   if (!role) return false;
   if (seesAll(role)) return true;
   const [r] = await db()`select 1 from engagements where id = ${engagementId} and lead_account_id = ${accountId}`;
+  return !!r;
+}
+
+/** Who may add or remove portal contacts for a client: admins and leads, or the lead on an engagement for that client. */
+export async function canManageContacts(accountId: string, role: string | null, clientId: string) {
+  if (!role) return false;
+  if (seesAll(role)) return true;
+  const [r] = await db()`
+    select 1 from engagements where client_id = ${clientId} and lead_account_id = ${accountId} and deleted_at is null limit 1`;
+  return !!r;
+}
+
+/** True when the email belongs to an active staff member or an admin; they must not become client contacts. */
+export async function isStaffEmail(email: string) {
+  if (adminEmails().includes(email.toLowerCase())) return true;
+  const [r] = await db()`
+    select 1 from staff s
+    where s.active and s.account_id in (
+      select id from accounts where lower(email) = ${email.toLowerCase()}
+      union
+      select account_id from identities where lower(email) = ${email.toLowerCase()}
+    ) limit 1`;
   return !!r;
 }
 

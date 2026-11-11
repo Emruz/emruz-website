@@ -93,31 +93,33 @@ export default function Footer() {
           </div>
 
           {/* Products: managed security and add-ons */}
-          <div className="col-span-2">
-            <h3 className="font-semibold mb-4">Products</h3>
-            <div className="grid grid-cols-2 gap-8">
+          <div className="col-span-2 grid grid-cols-2 gap-8">
+            <div>
+              <h3 className="font-semibold mb-4">Products</h3>
               <ul className="space-y-2">
                 {sections.products.map((item) => (
                   <li key={item.href}>
                     <Link
-                      href={item.href}
-                      className="text-gray-400 hover:text-white transition-colors text-sm"
-                    >
-                      {item.label}
-                    </Link>
+                    href={item.href}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                    {item.label}
+                  </Link>
                   </li>
                 ))}
               </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Add-ons</h3>
               <ul className="space-y-2">
-                <li className="text-xs uppercase tracking-wider text-gray-500">Add-ons</li>
                 {sections.addOns.map((item) => (
                   <li key={item.href}>
                     <Link
-                      href={item.href}
-                      className="text-gray-400 hover:text-white transition-colors text-sm"
-                    >
-                      {item.label}
-                    </Link>
+                    href={item.href}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                    {item.label}
+                  </Link>
                   </li>
                 ))}
               </ul>

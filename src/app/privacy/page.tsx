@@ -11,11 +11,11 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy policy"
       summary="What we collect on emruz.com, why, who helps us run it, and the choices you have."
-      updated="9 November 2026"
+      updated="10 November 2026"
       path="/privacy"
     >
       <p>
-        This policy covers emruz.com, including the contact form, your Emruz account, Motiv purchases and the
+        This policy covers emruz.com, including the contact form, the Insights newsletter, your Emruz account, Motiv purchases and the
         licensing service Motiv uses to keep Premium on. It is published by {LEGAL_PARTY} (&quot;Emruz&quot;,
         &quot;we&quot;, &quot;us&quot;). The Motiv desktop app has its own{' '}
         <Link href="/motiv/privacy">Motiv privacy policy</Link>, which explains what happens on your computer.
@@ -23,14 +23,23 @@ export default function PrivacyPage() {
       <p>
         <strong>The short version:</strong> we collect only what we need to answer you, run your account and sell
         Motiv. We don&apos;t use analytics or advertising trackers, and we don&apos;t sell or share personal
-        information for advertising.
+        information for advertising. Every page, font and image on emruz.com is served from emruz.com itself, so
+        simply visiting the site doesn&apos;t send information about you to anyone else.
       </p>
 
       <h2>What we collect</h2>
       <h3>When you contact us</h3>
       <p>
         The contact form collects your name, email address, company (optional), the topic and your message. We use
-        it only to reply to you and to follow up on your request.
+        it only to reply to you and to follow up on your request. Your message is stored in our database and emailed
+        to us.
+      </p>
+
+      <h3>When you subscribe to Insights</h3>
+      <p>
+        We collect your email address, when you signed up, when you confirmed and, if it happens, when you
+        unsubscribed. We send one email asking you to confirm, and add you only after you do. Every newsletter
+        email has a link to unsubscribe.
       </p>
 
       <h3>When you create an account or sign in</h3>
@@ -74,7 +83,13 @@ export default function PrivacyPage() {
       <p>
         Like most websites, our hosting provider records technical details of requests, such as IP address, browser
         and the page requested, to deliver the site and protect it from abuse. We use IP addresses briefly to limit
-        repeated requests (for example, too many sign-in attempts).
+        repeated requests (for example, too many sign-in attempts), and keep the IP address sent with a contact
+        form message to help stop spam.
+      </p>
+      <p>
+        We don&apos;t load fonts, scripts, images or other content from other companies&apos; servers, such as Google
+        Fonts or content delivery networks. Other services are reached only when you choose them: signing in with
+        Microsoft, Google or Apple, paying through Stripe checkout, or following a link to another site.
       </p>
 
       <h2>How we use it</h2>
@@ -84,6 +99,7 @@ export default function PrivacyPage() {
         <li>To confirm that a computer is entitled to Motiv Premium and to enforce the number of computers per subscription.</li>
         <li>To send emails you need: sign-in links, purchase confirmations and important account notices.</li>
         <li>To answer questions and give support.</li>
+        <li>To send the Insights newsletter, only if you subscribed and confirmed.</li>
         <li>To detect and prevent fraud and abuse, and to meet legal and tax obligations.</li>
       </ul>
       <p>
@@ -102,9 +118,9 @@ export default function PrivacyPage() {
           </tr>
         </thead>
         <tbody>
-          <tr><td>Netlify</td><td>Hosts the website, the contact form and the database</td></tr>
+          <tr><td>Netlify</td><td>Hosts the website and the database, including contact form messages and newsletter subscriptions</td></tr>
           <tr><td>Stripe</td><td>Payments, tax calculation, invoices and the billing portal</td></tr>
-          <tr><td>Resend</td><td>Sends sign-in and purchase emails</td></tr>
+          <tr><td>Resend</td><td>Sends sign-in, purchase and newsletter emails, and delivers contact form messages to us</td></tr>
           <tr><td>Microsoft, Google, Apple</td><td>Sign-in, only if you choose that option</td></tr>
         </tbody>
       </table>
@@ -148,6 +164,7 @@ export default function PrivacyPage() {
       <h2>How long we keep it</h2>
       <ul>
         <li>Contact form messages: as long as needed to handle your request and any follow-up.</li>
+        <li>Newsletter subscriptions: until you unsubscribe or ask us to delete them; unconfirmed sign-ups are not used.</li>
         <li>Account and sign-in details: while your account is open.</li>
         <li>
           Purchase and billing records: for as long as tax and accounting law requires, usually up to seven years,

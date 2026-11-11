@@ -447,6 +447,8 @@ export function recommend(answers: Answers, ig: IG, p: Profile = {}): Recommenda
   else if (helps(mde)) chosen.push(mde);
   const dsb = addOns.find((a) => a.code === 'DSB')!;
   if (helps(dsb)) chosen.push(dsb);
+  const zti = addOns.find((a) => a.code === 'ZTI')!;
+  if (helps(zti)) chosen.unshift(zti);
 
   return { gaps, needed, pkg, covered, addOns: chosen, services: [...services.values()] };
 }

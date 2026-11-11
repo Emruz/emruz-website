@@ -280,7 +280,7 @@ export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
 
 /* ---------- Add-on services ---------- */
 
-export type AddOnFamily = 'PSA' | 'DRM' | 'DSB';
+export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI';
 
 export interface AddOn {
   code: string;
@@ -295,6 +295,21 @@ export interface AddOn {
 
 /** Services that can be added to any edition to close specific gaps. */
 export const addOns: AddOn[] = [
+  {
+    code: 'ZTI',
+    sku: 'WD-ZTI-CP-01',
+    family: 'ZTI',
+    name: 'Zero Trust Identity',
+    summary: 'Hardens Entra ID and Active Directory, watches for credential theft and identity attacks, and responds automatically.',
+    includes: ['ISPM', 'ITDR'],
+    features: [
+      'Identity posture: Entra ID, Active Directory, privileged accounts, stale and risky accounts',
+      'Dark-web credential exposure monitoring',
+      'Detection of credential theft, privilege escalation, Kerberoasting and lateral movement',
+      'Active deception for identity reconnaissance',
+      'Automated response: disable accounts, force password resets, block sessions, isolate endpoints',
+    ],
+  },
   {
     code: 'PSA',
     sku: 'WD-PSA-CP-02',
@@ -361,6 +376,66 @@ export interface AddOnLine {
 }
 
 export const addOnLines: AddOnLine[] = [
+  {
+    slug: 'ZTI',
+    path: 'zti',
+    label: 'ZTI',
+    name: 'Zero Trust Identity',
+    tagline: 'Identity is the new perimeter. Protect it.',
+    summary:
+      'Continuous identity posture management for Entra ID and Active Directory, deception and threat detection for identity attacks, and automated response that shuts compromised accounts down fast.',
+    bestFor: 'Organizations running Active Directory or Entra ID where stolen credentials and excessive privileges are the easiest way in.',
+    outcomes: [
+      'Risky accounts, excessive permissions and attack paths found and fixed',
+      'Identity attacks detected as they happen, including Kerberoasting and lateral movement',
+      'Compromised accounts disabled and sessions blocked automatically',
+    ],
+    columns: [{ code: 'ZTI', label: 'Complete' }],
+    groups: [
+      {
+        title: 'Security posture management',
+        rows: [
+          { label: 'Entra ID and cloud identity provider posture assessment', in: ['ZTI'] },
+          { label: 'Dark-web credential exposure monitoring', in: ['ZTI'] },
+          { label: 'Continuous identity posture assessment', in: ['ZTI'] },
+          { label: 'Active Directory configuration assessment', in: ['ZTI'] },
+          { label: 'Misconfiguration detection and prioritization', in: ['ZTI'] },
+          { label: 'Identity exposure and attack-path reduction', in: ['ZTI'] },
+          { label: 'Privileged-account hygiene assessment', in: ['ZTI'] },
+          { label: 'Excessive permissions and delegation analysis', in: ['ZTI'] },
+          { label: 'Stale, inactive or risky account discovery', in: ['ZTI'] },
+          { label: 'Identity asset and privilege discovery', in: ['ZTI'] },
+        ],
+      },
+      {
+        title: 'Active Directory posture and deception',
+        rows: [
+          { label: 'Active Directory change monitoring', in: ['ZTI'] },
+          { label: 'AD reconnaissance detection', in: ['ZTI'] },
+          { label: 'Credential theft detection', in: ['ZTI'] },
+          { label: 'Credential abuse and account compromise detection', in: ['ZTI'] },
+          { label: 'Privilege-escalation detection', in: ['ZTI'] },
+          { label: 'Kerberoasting and AD attack technique detection', in: ['ZTI'] },
+          { label: 'Lateral-movement detection', in: ['ZTI'] },
+          { label: 'Real-time identity threat detection', in: ['ZTI'] },
+          { label: 'Identity-focused behavioral analytics', in: ['ZTI'] },
+          { label: 'Identity threat investigation and evidence', in: ['ZTI'] },
+          { label: 'Active deception for identity reconnaissance', in: ['ZTI'] },
+        ],
+      },
+      {
+        title: 'Identity detection and response',
+        rows: [
+          { label: 'Suspicious authentication and logon detection', in: ['ZTI'] },
+          { label: 'Endpoint and identity telemetry correlation', in: ['ZTI'] },
+          { label: 'Automated incident response workflows', in: ['ZTI'] },
+          { label: 'Disable compromised identities and force password resets', in: ['ZTI'] },
+          { label: 'Session blocking and conditional access response', in: ['ZTI'] },
+          { label: 'Endpoint isolation tied to identity incidents', in: ['ZTI'] },
+        ],
+      },
+    ],
+  },
   {
     slug: 'PSA',
     path: 'psa',

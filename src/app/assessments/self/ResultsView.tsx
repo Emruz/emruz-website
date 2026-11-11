@@ -56,28 +56,51 @@ export default function ResultsView({
 
   return (
     <div className="space-y-6">
-      {/* Score */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 grid md:grid-cols-3 gap-6 items-center">
-        <div>
-          <p className="text-sm text-gray-500">Overall maturity</p>
-          <p className="text-5xl font-bold text-gray-900">{score}%</p>
-          <p className={`font-semibold ${m.color}`}>{m.label}</p>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Score */}
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 md:p-8 grid md:grid-cols-3 gap-6 items-center">
+          <div>
+            <p className="text-sm text-gray-500">Overall maturity</p>
+            <p className="text-5xl font-bold text-gray-900">{score}%</p>
+            <p className={`font-semibold ${m.color}`}>{m.label}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Measured against</p>
+            <p className="font-semibold text-gray-900">{igInfo[ig].name}</p>
+            <p className="text-sm text-gray-600">{igInfo[ig].description}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Essential cyber hygiene (IG1)</p>
+            <p className="text-2xl font-bold text-gray-900">{ig1}%</p>
+            <p className="text-sm text-gray-600">{ig1 >= 90 ? 'Strong foundation.' : 'Start here. These basics stop most common attacks.'}</p>
+          </div>
+          {unsure > 0 && (
+            <p className="md:col-span-3 text-sm text-gray-600 border-t border-gray-100 pt-4">
+              You answered &ldquo;Not sure&rdquo; {unsure} {unsure === 1 ? 'time' : 'times'}. Those count as not in place. Confirming them may raise your score.
+            </p>
+          )}
         </div>
-        <div>
-          <p className="text-sm text-gray-500">Measured against</p>
-          <p className="font-semibold text-gray-900">{igInfo[ig].name}</p>
-          <p className="text-sm text-gray-600">{igInfo[ig].description}</p>
+
+        {/* Biggest gaps */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">Biggest gaps</h2>
+          {rec.gaps.length === 0 ? (
+            <p className="text-gray-700 flex gap-2">
+              <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" /> Every control in scope scores {GAP_THRESHOLD}% or more.
+            </p>
+          ) : (
+            <ol className="space-y-2 text-sm">
+              {rec.gaps.slice(0, 5).map((g) => (
+                <li key={g.control.id} className="flex justify-between gap-3">
+                  <span className="text-gray-800">
+                    CIS {g.control.id}: {g.control.title}
+                  </span>
+                  <span className={`font-semibold ${maturity(g.score).color}`}>{g.score}%</span>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
-        <div>
-          <p className="text-sm text-gray-500">Essential cyber hygiene (IG1)</p>
-          <p className="text-2xl font-bold text-gray-900">{ig1}%</p>
-          <p className="text-sm text-gray-600">{ig1 >= 90 ? 'Strong foundation.' : 'Start here. These basics stop most common attacks.'}</p>
-        </div>
-        {unsure > 0 && (
-          <p className="md:col-span-3 text-sm text-gray-600 border-t border-gray-100 pt-4">
-            You answered &ldquo;Not sure&rdquo; {unsure} {unsure === 1 ? 'time' : 'times'}. Those count as not in place. Confirming them may raise your score.
-          </p>
-        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -169,26 +192,6 @@ export default function ResultsView({
 
         {/* Recommendation */}
         <div className="space-y-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Biggest gaps</h2>
-            {rec.gaps.length === 0 ? (
-              <p className="text-gray-700 flex gap-2">
-                <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" /> Every control in scope scores {GAP_THRESHOLD}% or more.
-              </p>
-            ) : (
-              <ol className="space-y-2 text-sm">
-                {rec.gaps.slice(0, 5).map((g) => (
-                  <li key={g.control.id} className="flex justify-between gap-3">
-                    <span className="text-gray-800">
-                      CIS {g.control.id}: {g.control.title}
-                    </span>
-                    <span className={`font-semibold ${maturity(g.score).color}`}>{g.score}%</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-
           {rec.pkg && (
             <div className="bg-slate-900 text-white rounded-xl p-6">
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-300 mb-1">Closes the most gaps</p>

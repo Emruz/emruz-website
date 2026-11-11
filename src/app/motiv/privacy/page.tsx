@@ -64,9 +64,19 @@ export default function MotivPrivacyPage() {
         <li>
           <strong>Microsoft 365 and Google calendars.</strong> If you connect them, Motiv reads your calendar events
           (titles, times, organizer, attendees and their responses, meeting links) and, if you turn it on, Microsoft
-          Teams attendance reports, directly from Microsoft or Google to your computer. Motiv only reads; it never
-          creates, changes or deletes calendar data. This data is used only to name recordings, show who was in a
-          meeting, and help the summary use correct names.
+          Teams attendance reports and the Teams transcripts of meetings you organized, directly from Microsoft or
+          Google to your computer. Motiv only reads; it never creates, changes or deletes calendar or meeting data.
+          This data is used only to name recordings, show who was in a meeting, name speakers, and help the summary
+          use correct names.
+        </li>
+        <li>
+          <strong>Transcript files you import.</strong> A .vtt or .srt file you choose is read on your computer to
+          name speakers, and is not sent anywhere.
+        </li>
+        <li>
+          <strong>Browser tabs (macOS).</strong> To notice a Google Meet call, while a browser is using the microphone
+          Motiv reads that browser&apos;s open tab addresses on your computer, with your permission. It looks only for
+          Meet addresses and does not store or send them.
         </li>
         <li>
           <strong>Email.</strong> &quot;Send by email&quot; opens your own email app with the summary; nothing is sent

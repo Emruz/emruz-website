@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Header, Footer } from "@/components";
 import "./globals.css";
 
@@ -50,11 +51,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+// The nonce-based CSP (src/proxy.ts) needs every page rendered per request.
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await connection();
   return (
     <html lang="en" className="h-full" data-scroll-behavior="smooth">
       <head>

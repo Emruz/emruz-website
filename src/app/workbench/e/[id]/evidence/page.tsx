@@ -1,5 +1,5 @@
 import { Link2, FileText } from 'lucide-react';
-import { getEvidence, getRequests, requireStaff } from '@/lib/server/workbench';
+import { getEvidence, getRequests, requireEngagementAccess } from '@/lib/server/workbench';
 import { csfSubcategories } from '@/content/csf';
 import EvidenceUpload from '@/components/assessment/EvidenceUpload';
 import { addEvidenceLink, createRequest, deleteEvidence, setRequestStatus } from '../../../actions';
@@ -9,7 +9,7 @@ const subs = csfSubcategories.map((s) => ({ id: s.id, text: s.text }));
 
 export default async function EvidencePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ sub?: string; error?: string }> }) {
   const { id } = await params;
-  await requireStaff(`/workbench/e/${id}/evidence`);
+  await requireEngagementAccess(id, `/workbench/e/${id}/evidence`);
   const sp = await searchParams;
   const sub = csfSubcategories.some((s) => s.id === sp.sub) ? sp.sub : undefined;
   const [evidence, requests] = await Promise.all([getEvidence(id), getRequests(id)]);

@@ -19,7 +19,7 @@ export async function sendEmail(to: string, subject: string, text: string, opts:
       to: [to],
       subject,
       text,
-      reply_to: opts.replyTo || process.env.EMAIL_REPLY_TO || 'contact@emruz.com',
+      reply_to: opts.replyTo || process.env.EMAIL_REPLY_TO || 'info@emruz.com',
     }),
   });
   if (!res.ok) throw new Error(`Email send failed: ${res.status} ${await res.text()}`);

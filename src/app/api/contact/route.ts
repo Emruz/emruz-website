@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
   try {
     await sendEmail(
-      process.env.CONTACT_TO || 'contact@emruz.com',
+      process.env.CONTACT_TO || 'info@emruz.com',
       `Website message${topic ? `: ${topic}` : ''} from ${name}`,
       `Name: ${name}\nEmail: ${email}\nCompany: ${company || '-'}\nTopic: ${topic || '-'}\n\n${message}\n`,
       { replyTo: email },

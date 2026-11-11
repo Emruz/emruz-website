@@ -1,9 +1,9 @@
-import { getEvidence, getRatings, requireStaff } from '@/lib/server/workbench';
+import { getEvidence, getRatings, requireEngagementAccess } from '@/lib/server/workbench';
 import AssessGrid from './AssessGrid';
 
 export default async function AssessPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ filter?: string; fn?: string }> }) {
   const { id } = await params;
-  await requireStaff(`/workbench/e/${id}/assess`);
+  await requireEngagementAccess(id, `/workbench/e/${id}/assess`);
   const sp = await searchParams;
   const [ratings, evidence] = await Promise.all([getRatings(id), getEvidence(id)]);
   return (

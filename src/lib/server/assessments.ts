@@ -139,7 +139,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
 
   try {
     await sendEmail(
-      process.env.CONTACT_TO || 'contact@emruz.com',
+      process.env.CONTACT_TO || 'info@emruz.com',
       `Self-assessment completed: ${reg.company} (${score}%)`,
       [
         `${reg.full_name}${reg.job_title ? `, ${reg.job_title}` : ''}`,
@@ -155,7 +155,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
           : '',
         ...gaps.map((g) => `Gap: CIS ${g.control} (${g.score}%)`),
         '',
-        `${SITE_URL}/admin/assessments`,
+        `${SITE_URL}/workbench/self/${a.id}`,
       ]
         .filter((l, i, arr) => l !== '' || arr[i - 1] !== '')
         .join('\n'),

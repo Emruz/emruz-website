@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { isUuid } from '@/lib/server/api';
-import { canReview, clientContacts, getEngagement, getReport, requireStaff } from '@/lib/server/workbench';
+import { canReview, clientContacts, getEngagement, getReport, requireEngagementAccess } from '@/lib/server/workbench';
 import { flagInfo, type Flag } from '@/content/workbench';
 import ReportDocument from '@/components/assessment/ReportDocument';
 import PrintButton from '@/app/assessments/self/PrintButton';
@@ -18,7 +18,7 @@ const errors: Record<string, string> = {
 
 export default async function ReportVersion({ params, searchParams }: { params: Promise<{ id: string; rid: string }>; searchParams: Promise<{ error?: string }> }) {
   const { id, rid } = await params;
-  const { account, role } = await requireStaff(`/workbench/e/${id}/report/${rid}`);
+  const { account, role } = await requireEngagementAccess(id, `/workbench/e/${id}/report/${rid}`);
   if (!isUuid(rid)) notFound();
   const [r, e] = await Promise.all([getReport(rid), getEngagement(id)]);
   if (!r || r.engagement_id !== id || !e) notFound();

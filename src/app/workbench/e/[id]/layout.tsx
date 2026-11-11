@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
-import { getEngagement, getEvidence, getRatings, getRequests, requireStaff } from '@/lib/server/workbench';
+import { getEngagement, getEvidence, getRatings, getRequests, requireEngagementAccess } from '@/lib/server/workbench';
 import { flagsFor, flagInfo } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
 import Tabs from './Tabs';
@@ -9,7 +9,7 @@ import { StatusBadge, fmtDate } from '../../ui';
 
 export default async function EngagementLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireStaff(`/workbench/e/${id}`);
+  await requireEngagementAccess(id, `/workbench/e/${id}`);
   if (!isUuid(id)) notFound();
   const e = await getEngagement(id);
   if (!e) notFound();

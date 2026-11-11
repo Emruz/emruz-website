@@ -76,10 +76,10 @@ export default function ContactForm() {
                     <div>
                       <h4 className="font-bold text-gray-900 mb-1">Email</h4>
                       <a
-                        href="mailto:contact@emruz.com"
+                        href="mailto:info@emruz.com"
                         className="text-blue-600 hover:text-blue-700"
                       >
-                        contact@emruz.com
+                        info@emruz.com
                       </a>
                     </div>
                   </div>
@@ -128,7 +128,7 @@ export default function ContactForm() {
                   {status === 'error' && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg">
                       Your message could not be sent. Please email{' '}
-                      <a href="mailto:contact@emruz.com" className="underline">contact@emruz.com</a> instead.
+                      <a href="mailto:info@emruz.com" className="underline">info@emruz.com</a> instead.
                     </div>
                   )}
                 </div>

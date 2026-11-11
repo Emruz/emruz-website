@@ -18,7 +18,7 @@ export default function About() {
     {
       title: 'Frameworks First',
       description:
-        'Every engagement grounded in industry-standard frameworks (NIST, CIS, CSF). No bespoke thinking.',
+        'Every engagement grounded in industry-standard frameworks. No bespoke thinking.',
     },
     {
       title: 'Assess Before Acting',
@@ -71,7 +71,7 @@ export default function About() {
             </p>
 
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              Emruz combines the strategic clarity of a top consultancy with the execution capability of a mature operations team. We start with frameworks (NIST CSF, CIS Controls, CSF) so organizations know we speak the language of compliance and boards. Then we deliver outcomes, not just recommendations.
+              Emruz combines the strategic clarity of a top consultancy with the execution capability of a mature operations team. We start with frameworks so organizations know we speak the language of compliance and boards. Then we deliver outcomes, not just recommendations.
             </p>
 
             <p className="text-lg text-gray-600 leading-relaxed">
@@ -136,7 +136,7 @@ export default function About() {
                   Security Expertise
                 </h4>
                 <p className="text-gray-600">
-                  Deep experience in security strategy, governance, compliance frameworks (NIST, CIS, ISO), and incident response across enterprise and mid-market organizations.
+                  Deep experience in security strategy, governance, compliance frameworks, and incident response across enterprise and mid-market organizations.
                 </p>
               </Card>
 
@@ -188,7 +188,7 @@ export default function About() {
                 Framework-Grounded
               </h3>
               <p className="text-gray-600 mb-4">
-                We design engagements around industry frameworks (NIST CSF, CIS Controls, CSF). This means your board and auditors recognize and trust our approach.
+                We design engagements around industry frameworks. This means your board and auditors recognize and trust our approach.
               </p>
               <p className="text-gray-600">
                 Frameworks give us a shared language and proven model for success.

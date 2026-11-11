@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/server/db';
-import { clientContacts, getEngagement, getEvidence, getRatings, getReports, getRequests, requireStaff, staffList } from '@/lib/server/workbench';
+import { clientContacts, getEngagement, getEvidence, getRatings, getReports, getRequests, requireEngagementAccess, staffList } from '@/lib/server/workbench';
 import { engagementStatuses, flagsFor, flagInfo, intakeCompleteness, rollup, statusLabel, tierFor } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
 import { updateEngagement } from '../../actions';
@@ -27,7 +27,7 @@ const eventText: Record<string, (d: Record<string, unknown>) => string> = {
 
 export default async function Overview({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { account } = await requireStaff(`/workbench/e/${id}`);
+  const { account } = await requireEngagementAccess(id, `/workbench/e/${id}`);
   const e = (await getEngagement(id))!;
   const [ratings, evidence, requests, reports, contacts, staff, events] = await Promise.all([
     getRatings(id),

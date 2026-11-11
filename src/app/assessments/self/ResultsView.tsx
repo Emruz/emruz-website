@@ -26,7 +26,10 @@ export default function ResultsView({
   profile,
   ig,
   actions,
+  staffView = false,
 }: {
+  /** Workbench view: hide the customer call to action */
+  staffView?: boolean;
   /** Buttons shown in the "second opinion" bar */
   actions?: React.ReactNode;
   answers: Answers;
@@ -253,6 +256,7 @@ export default function ResultsView({
         withAll={extras.length ? { codes: extras.map((a) => a.code), plus: !!rec.pkg, answers: projectedAll } : null}
       />
 
+      {!staffView && (
       <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">
         <div>
           <h3 className="font-bold text-gray-900">Want a second opinion?</h3>
@@ -265,6 +269,7 @@ export default function ResultsView({
           {actions}
         </div>
       </div>
+      )}
 
       <p className="text-xs text-gray-500">
         Profile: {profileSummary(profile)}. This self-assessment is

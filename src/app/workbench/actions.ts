@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/server/db';
+import { db, logEvent } from '@/lib/server/db';
 import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { accountForEmail } from '@/lib/server/accounts';
@@ -37,6 +37,8 @@ import {
   type EngagementStatus,
 } from '@/content/workbench';
 import { csfSubcategories, subcategoryById } from '@/content/csf';
+import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
+import { completeAssessment, getRegistration, type AssessmentRow } from '@/lib/server/assessments';
 import type { Answers, IG, Profile } from '@/content/cis-assessment';
 
 const str = (v: FormDataEntryValue | null, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -545,4 +547,64 @@ export async function restoreEngagement(form: FormData) {
   await logActivity(e.id, account.email, 'restored');
   revalidatePath('/workbench');
   revalidatePath(ePath(e.id));
+}
+
+/* ---------- Guided self-assessments ---------- */
+
+/** Start a self-assessment on a customer's behalf. The assessor confirms the customer's consent. */
+export async function createGuided(form: FormData) {
+  const { account } = await staff();
+  const email = str(form.get('email'), 254).toLowerCase();
+  const fullName = str(form.get('full_name'), 120);
+  const company = str(form.get('company'), 160);
+  if (!EMAIL_RE.test(email) || !fullName || !company) redirect('/workbench/self/new?error=fields');
+  if (form.get('consent') !== 'yes') redirect('/workbench/self/new?error=consent');
+  const customerId = await accountForEmail(email, fullName);
+  await db()`update accounts set name = coalesce(name, ${fullName}) where id = ${customerId}`;
+  const existing = await getRegistration(customerId);
+  if (!existing || existing.withdrawn_at) {
+    await db()`
+      insert into assessment_registrations (account_id, full_name, company, job_title, phone, consent_version, consent_text)
+      values (${customerId}, ${fullName}, ${company}, ${str(form.get('job_title'), 120) || null}, ${str(form.get('phone'), 40) || null},
+              ${`guided-${CONSENT_VERSION}`}, ${`${CONSENT_TEXT} (Given to ${account.email}, who recorded it on the customer's behalf.)`})
+      on conflict (account_id) do update set
+        full_name = excluded.full_name, company = excluded.company, job_title = excluded.job_title, phone = excluded.phone,
+        consent_version = excluded.consent_version, consent_text = excluded.consent_text, consented_at = now(), withdrawn_at = null`;
+  }
+  const [a] = await db()<{ id: string }[]>`
+    insert into assessments (account_id, performed_by, assigned_to) values (${customerId}, ${account.id}, ${account.id}) returning id`;
+  await logEvent('assessment_guided_started', { by: account.email }, { accountId: customerId });
+  redirect(`/workbench/self/${a.id}/take`);
+}
+
+async function guidedOn(id: string) {
+  const ctx = await staff();
+  if (!isUuid(id)) throw new Error('Not found');
+  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null`;
+  const row = a as AssessmentRow & { performed_by?: string | null; assigned_to?: string | null };
+  if (!a || a.status !== 'in_progress') throw new Error('Not found');
+  if (ctx.role !== 'admin' && row.performed_by !== ctx.account.id && row.assigned_to !== ctx.account.id) throw new Error('Not found');
+  return { ...ctx, a };
+}
+
+export async function guidedSave(id: string, data: { step: unknown; profile: unknown; answers: unknown }) {
+  const { a } = await guidedOn(id);
+  const step = Math.min(Math.max(0, Number(data.step) || 0), cisControls.length + 1);
+  await db()`
+    update assessments set step = ${step}, profile = ${db().json(cleanProfile(data.profile) as never)},
+      answers = ${db().json(cleanAnswers(data.answers) as never)}, updated_at = now()
+    where id = ${a.id}`;
+  return { ok: true };
+}
+
+export async function guidedFinish(id: string, data: { profile: unknown; answers: unknown }) {
+  const { a } = await guidedOn(id);
+  const profile = cleanProfile(data.profile);
+  const answers = cleanAnswers(data.answers);
+  if (!isComplete(profile, answers)) return { ok: false, error: 'Some questions are not answered yet.' };
+  await db()`update assessments set profile = ${db().json(profile as never)}, answers = ${db().json(answers as never)} where id = ${a.id}`;
+  const [customer] = await db()<{ id: string; email: string }[]>`select id, email from accounts where id = ${a.account_id}`;
+  const reg = (await getRegistration(a.account_id))!;
+  await completeAssessment({ ...a, profile, answers }, customer, reg);
+  redirect(`/workbench/self/${a.id}`);
 }

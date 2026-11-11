@@ -24,13 +24,19 @@ import { finish, saveProgress } from './actions';
 const LAST = controls.length;
 
 
+type SaveFn = (id: string, data: { step: unknown; profile: unknown; answers: unknown }) => Promise<{ ok: boolean }>;
+type FinishFn = (id: string, data: { profile: unknown; answers: unknown }) => Promise<{ ok: boolean; error?: string } | void>;
+
 interface Props {
   id: string;
   initial: { step: number; profile: Profile; answers: Answers };
   hasHistory: boolean;
+  /** Guided mode (workbench): staff save and finish on the customer's behalf */
+  save?: SaveFn;
+  done?: FinishFn;
 }
 
-export default function SelfAssessment({ id, initial, hasHistory }: Props) {
+export default function SelfAssessment({ id, initial, hasHistory, save = saveProgress, done: finishAction = finish }: Props) {
   const [step, setStep] = useState(Math.min(initial.step, LAST));
   const [profile, setProfile] = useState<Profile>(initial.profile);
   const [answers, setAnswers] = useState<Answers>(initial.answers);
@@ -48,12 +54,12 @@ export default function SelfAssessment({ id, initial, hasHistory }: Props) {
     }
     const t = setTimeout(() => {
       setSaveState('saving');
-      saveProgress(id, { step, profile, answers })
+      save(id, { step, profile, answers })
         .then((r) => setSaveState(r.ok ? 'saved' : 'error'))
         .catch(() => setSaveState('error'));
     }, 600);
     return () => clearTimeout(t);
-  }, [id, step, profile, answers]);
+  }, [id, step, profile, answers, save]);
 
   const ig: IG = targetIG(profile);
   const go = (n: number) => {
@@ -64,7 +70,7 @@ export default function SelfAssessment({ id, initial, hasHistory }: Props) {
   const done = () =>
     startFinish(async () => {
       setError(null);
-      const r = await finish(id, { profile, answers });
+      const r = await finishAction(id, { profile, answers });
       if (r && !r.ok) setError(r.error ?? 'Could not save. Please try again.');
     });
 

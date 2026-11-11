@@ -33,7 +33,7 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Workbench', href: '/workbench' }, { label: 'Self-assessments', href: '/workbench/self' }, { label: r.company }]}
         title={r.company}
-        summary={`Self-assessment by ${r.full_name}${r.job_title ? `, ${r.job_title}` : ''}. ${r.status === 'completed' ? `Completed ${fmtDate(r.completed_at)}.` : 'In progress.'}`}
+        summary={`${r.performed_by_label ? `Guided by ${r.performed_by_label} on behalf of ${r.full_name}` : `Self-assessment by ${r.full_name}`}${r.job_title ? `, ${r.job_title}` : ''}. ${r.status === 'completed' ? `Completed ${fmtDate(r.completed_at)}.` : 'In progress.'}`}
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
@@ -54,11 +54,12 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
           {sp.error === 'incomplete' && <p role="alert" className="mb-4 text-red-700 font-semibold">The assessment must be completed before starting an engagement.</p>}
           <div className={`${card} p-5 mb-6 grid md:grid-cols-4 gap-5 text-sm print:hidden`}>
             <div>
-              <p className="text-gray-500">Contact</p>
+              <p className="text-gray-500">Customer</p>
               <p className="font-semibold text-gray-900">{r.full_name}</p>
               <p><a href={`mailto:${r.email}`} className="text-blue-700">{r.email}</a></p>
               {r.phone && <p className="text-gray-700">{r.phone}</p>}
               <p className="text-xs text-gray-500 mt-1">Consent given {fmtTime(r.consented_at)}</p>
+              {r.performed_by_label && <p className="text-xs text-gray-500">Performed by {r.performed_by_label}</p>}
             </div>
             <div>
               <p className="text-gray-500">Profile</p>
@@ -106,8 +107,14 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
             <div className={`${card} p-6`}>
               <p className="font-semibold text-gray-900">Not finished yet</p>
               <p className="text-sm text-gray-600 mt-1">{answered} of {qs.length} questions answered. Last saved {fmtTime(r.updated_at)}.</p>
-              <p className="text-sm text-gray-600 mt-3">Results appear here when {r.full_name.split(' ')[0]} completes it.</p>
-              <Link href={`mailto:${r.email}`} className={`${btnGhost} mt-4`}>Email {r.full_name.split(' ')[0]}</Link>
+              {r.performed_by && (role === 'admin' || r.performed_by === account.id || r.assigned_to === account.id) && !r.deleted_at ? (
+                <Link href={`/workbench/self/${r.id}/take`} className={`${btn} mt-4`}>Continue guided assessment</Link>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mt-3">Results appear here when {r.full_name.split(' ')[0]} completes it.</p>
+                  <Link href={`mailto:${r.email}`} className={`${btnGhost} mt-4`}>Email {r.full_name.split(' ')[0]}</Link>
+                </>
+              )}
             </div>
           )}
         </Container>

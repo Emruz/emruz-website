@@ -90,13 +90,13 @@ export default function ResultsView({
                   <th />
                   <th />
                   {rec.pkg && (
-                    <th className="bg-slate-900 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-24">
+                    <th className="bg-slate-900/75 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-24">
                       <span className="block text-[10px] font-semibold uppercase tracking-widest text-indigo-300">With</span>
                       <span className="block font-bold whitespace-nowrap">{displayCode(rec.pkg.code)}</span>
                     </th>
                   )}
                   {extras.length > 0 && (
-                    <th className="bg-indigo-800 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-28">
+                    <th className="bg-indigo-800/75 text-white rounded-t-lg px-3 pt-3 pb-2 text-center align-bottom w-28">
                       <span className="block text-[10px] font-semibold uppercase tracking-widest text-indigo-200">{rec.pkg ? 'Plus' : 'With'}</span>
                       <span className="block font-bold text-xs leading-tight">{extras.map((a) => a.code).join(' + ')}</span>
                     </th>
@@ -129,20 +129,20 @@ export default function ResultsView({
                       {s === null ? (na ? 'Not applicable' : 'Not in scope') : `${s}%`}
                     </td>
                     {rec.pkg && (
-                      <td className={`bg-slate-900 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-slate-900/75 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
-                          <span className="text-slate-500">–</span>
+                          <span className="text-slate-200">–</span>
                         ) : (
-                          <span className={lifted ? 'font-bold text-emerald-300' : 'text-slate-400'}>→ {after}%</span>
+                          <span className={lifted ? 'font-bold text-emerald-200' : 'text-slate-100'}>→ {after}%</span>
                         )}
                       </td>
                     )}
                     {extras.length > 0 && (
-                      <td className={`bg-indigo-800 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-indigo-800/75 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
-                          <span className="text-indigo-300">–</span>
+                          <span className="text-indigo-200">–</span>
                         ) : (
-                          <span className={liftedAll ? 'font-bold text-emerald-300' : 'text-indigo-300'}>→ {afterAll}%</span>
+                          <span className={liftedAll ? 'font-bold text-emerald-200' : 'text-indigo-100'}>→ {afterAll}%</span>
                         )}
                       </td>
                     )}

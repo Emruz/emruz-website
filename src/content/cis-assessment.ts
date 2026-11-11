@@ -57,11 +57,11 @@ export const controls: Control[] = [
     id: 2,
     title: 'Inventory and Control of Software Assets',
     summary: 'Only authorized, supported software is installed and allowed to run.',
-    capabilities: ['ESPM'],
+    capabilities: ['ESPM', 'EDR'],
     questions: [
       { id: '2a', ig: 1, closes: ['ESPM'], text: 'We keep an inventory of authorized software and review it at least twice a year.' },
-      { id: '2b', ig: 1, closes: ['ESPM'], text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
-      { id: '2c', ig: 2, text: 'Allowlisting stops unauthorized software, libraries and scripts from running.' },
+      { id: '2b', ig: 1, closes: ['ESPM', 'EDR'], text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
+      { id: '2c', ig: 2, closes: ['EDR'], text: 'Allowlisting stops unauthorized software, libraries and scripts from running.' },
     ],
   },
   {

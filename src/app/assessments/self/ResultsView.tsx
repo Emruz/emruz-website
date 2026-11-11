@@ -16,7 +16,7 @@ import {
   type Profile,
   type IG,
 } from '@/content/cis-assessment';
-import { capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
+import { addOnHref, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
 import Crosswalk from './Crosswalk';
 
 /** Results of one assessment. No hooks, so it renders on the server. */
@@ -211,6 +211,7 @@ export default function ResultsView({
                   <li key={a.code}>
                     <p className="font-bold">{a.code} <span className="font-normal text-indigo-200 text-sm">· {a.name}</span></p>
                     <p className="text-sm text-indigo-100">{a.summary}</p>
+                    <Link href={addOnHref(a)} className="text-sm font-semibold text-indigo-200 hover:text-white print:hidden">Learn more →</Link>
                   </li>
                 ))}
               </ul>

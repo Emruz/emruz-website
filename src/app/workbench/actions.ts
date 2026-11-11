@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { db, logEvent } from '@/lib/server/db';
-import { currentAccount } from '@/lib/server/session';
+import { currentAccount, requireRecentSignIn } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { accountForEmail } from '@/lib/server/accounts';
 import { EMAIL_RE } from '@/lib/server/newsletter';
@@ -504,6 +504,7 @@ export async function sendReport(form: FormData) {
 async function adminOnly() {
   const ctx = await staff();
   if (ctx.role !== 'admin') throw new Error('Admins only');
+  requireRecentSignIn(ctx.account, '/workbench/staff');
   return ctx;
 }
 

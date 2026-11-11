@@ -1,7 +1,10 @@
 import { DetailHeader, Container } from '@/components';
 import SignInOptions from '@/components/account/SignInOptions';
 import { currentAccount } from '@/lib/server/session';
-import { activeRegistration, currentAssessment, getRegistration, listAssessments } from '@/lib/server/assessments';
+import { activeRegistration, currentAssessment, getRegistration, listAssessments, openAssessment } from '@/lib/server/assessments';
+import Link from 'next/link';
+import { maturity } from '@/content/cis-assessment';
+import { startNew } from './actions';
 import SelfAssessment from './client';
 import RegisterForm from './RegisterForm';
 import { CheckCircle2 } from 'lucide-react';
@@ -38,8 +41,36 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
   );
 
   if (account && registered) {
-    const a = await currentAssessment(account.id);
     const history = (await listAssessments(account.id)).filter((x) => x.status === 'completed');
+    // After finishing, show the latest result instead of silently starting a new draft
+    const open = await openAssessment(account.id);
+    if (!open && history.length) {
+      const last = history[0];
+      return (
+        <>
+          {header}
+          <section className="py-8 md:py-10 bg-gray-50">
+            <Container>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 max-w-2xl">
+                <h2 className="text-2xl font-bold text-gray-900">Your latest result</h2>
+                <p className="mt-2 text-gray-700">
+                  <span className={`text-3xl font-bold ${maturity(last.score ?? 0).color}`}>{last.score}%</span>{' '}
+                  <span className="text-gray-500">completed {new Date(last.completed_at!).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Los_Angeles' })}</span>
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href={`/assessments/self/report/${last.id}`} className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700">View report</Link>
+                  <form action={startNew}>
+                    <button className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50">Start a new assessment</button>
+                  </form>
+                  {history.length > 1 && <Link href="/assessments/self/history" className="px-5 py-2.5 rounded-lg font-semibold text-blue-700 hover:bg-blue-50">All results</Link>}
+                </div>
+              </div>
+            </Container>
+          </section>
+        </>
+      );
+    }
+    const a = open ?? (await currentAssessment(account.id));
     return (
       <>
         {header}

@@ -13,7 +13,7 @@ export default async function Portal() {
            (select count(*)::int from evidence_requests q where q.engagement_id = e.id and q.status = 'open') as open_requests,
            (select count(*)::int from reports r where r.engagement_id = e.id and r.status = 'sent') as reports
     from client_contacts cc join clients c on c.id = cc.client_id join engagements e on e.client_id = c.id
-    where cc.account_id = ${account.id}
+    where cc.account_id = ${account.id} and e.deleted_at is null
     order by e.created_at desc`;
   return (
     <>

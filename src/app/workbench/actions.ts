@@ -171,8 +171,8 @@ export async function createEngagement(form: FormData) {
 async function selfOn(id: unknown) {
   const ctx = await staff();
   if (!isUuid(id)) throw new Error('Not found');
-  const [a] = await db()<{ id: string; account_id: string; assigned_to: string | null; status: string; target_ig: IG | null; followed_up_at: Date | null }[]>`
-    select id, account_id, assigned_to, status, target_ig, followed_up_at from assessments where id = ${id}`;
+  const [a] = await db()<{ id: string; account_id: string; assigned_to: string | null; status: string; target_ig: IG | null; followed_up_at: Date | null; deleted_at: Date | null }[]>`
+    select id, account_id, assigned_to, status, target_ig, followed_up_at, deleted_at from assessments where id = ${id}`;
   if (!a || (!seesAll(ctx.role) && a.assigned_to !== ctx.account.id)) throw new Error('Not found');
   return { ...ctx, a };
 }
@@ -200,7 +200,7 @@ export async function toggleSelfFollowUp(form: FormData) {
 /** Turn a completed self-assessment into an engagement: client, portal contact and pre-filled ratings. */
 export async function engagementFromSelf(form: FormData) {
   const { account, a } = await selfOn(form.get('id'));
-  if (a.status !== 'completed') redirect(`/workbench/self/${a.id}?error=incomplete`);
+  if (a.status !== 'completed' || a.deleted_at) redirect(`/workbench/self/${a.id}?error=incomplete`);
   const [existing] = await db()<{ id: string }[]>`select id from engagements where self_assessment_id = ${a.id} limit 1`;
   if (existing) redirect(ePath(existing.id));
   const [reg] = await db()<{ company: string; job_title: string | null }[]>`
@@ -508,4 +508,41 @@ export async function removeStaff(form: FormData) {
   const id = form.get('account_id');
   if (isUuid(id)) await db()`delete from staff where account_id = ${id}`;
   revalidatePath('/workbench/staff');
+}
+
+/* ---------- Deletion (30-day recovery window) ---------- */
+
+/** Mark a self-assessment for deletion: admins, or the analyst it is assigned to. */
+export async function markSelfDeleted(form: FormData) {
+  const { account, role, a } = await selfOn(form.get('id'));
+  if (role !== 'admin' && a.assigned_to !== account.id) throw new Error('Not authorized');
+  await db()`update assessments set deleted_at = now(), deleted_by = ${account.email} where id = ${a.id} and deleted_at is null`;
+  redirect('/workbench/self?f=deleted');
+}
+
+export async function restoreSelf(form: FormData) {
+  const { account, role, a } = await selfOn(form.get('id'));
+  if (role !== 'admin' && a.assigned_to !== account.id) throw new Error('Not authorized');
+  await db()`update assessments set deleted_at = null, deleted_by = null where id = ${a.id}`;
+  revalidatePath('/workbench/self');
+  redirect(`/workbench/self/${a.id}`);
+}
+
+/** Mark an engagement for deletion: admins, or its lead assessor. */
+export async function markEngagementDeleted(form: FormData) {
+  const { account, role, e } = await staffOn(form.get('id'));
+  if (role !== 'admin' && e.lead_account_id !== account.id) throw new Error('Not authorized');
+  await db()`update engagements set deleted_at = now(), deleted_by = ${account.email} where id = ${e.id} and deleted_at is null`;
+  await logActivity(e.id, account.email, 'marked_deleted');
+  revalidatePath('/workbench');
+  revalidatePath(ePath(e.id));
+}
+
+export async function restoreEngagement(form: FormData) {
+  const { account, role, e } = await staffOn(form.get('id'));
+  if (role !== 'admin' && e.lead_account_id !== account.id) throw new Error('Not authorized');
+  await db()`update engagements set deleted_at = null, deleted_by = null where id = ${e.id}`;
+  await logActivity(e.id, account.email, 'restored');
+  revalidatePath('/workbench');
+  revalidatePath(ePath(e.id));
 }

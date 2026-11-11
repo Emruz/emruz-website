@@ -16,7 +16,7 @@ export default async function NewEngagement({ searchParams }: { searchParams: Pr
       select s.id, r.company, a.email, s.score, s.completed_at
       from assessments s join accounts a on a.id = s.account_id
       join assessment_registrations r on r.account_id = s.account_id and r.withdrawn_at is null
-      where s.status = 'completed' order by s.completed_at desc limit 200`,
+      where s.status = 'completed' and s.deleted_at is null order by s.completed_at desc limit 200`,
   ]);
   const leads = [{ account_id: account.id, email: account.email, name: account.name }, ...staff.filter((s) => s.account_id !== account.id)];
 

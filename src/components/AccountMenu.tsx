@@ -8,6 +8,8 @@ import { ChevronDown, LogIn } from 'lucide-react';
 export interface Me {
   account: { email: string; name: string | null } | null;
   isAdmin?: boolean;
+  isStaff?: boolean;
+  isClient?: boolean;
   impersonatedBy?: string | null;
 }
 
@@ -60,13 +62,19 @@ export function accountLinks(me: Me) {
     { label: 'Subscriptions', href: '/motiv/account#subscriptions' },
     { label: 'Register a computer', href: '/activate' },
     { label: 'Sign-in methods', href: '/motiv/account#signin' },
+    { label: 'Self-assessments', href: '/assessments/self/history' },
+    ...(me.isClient ? [{ label: 'Client portal', href: '/portal' }] : []),
   ];
-  const admin = me.isAdmin
+  const admin = me.isAdmin || me.isStaff
     ? [
+        { label: 'Assessment workbench', href: '/workbench' },
+        ...(me.isAdmin ? [
         { label: 'Motiv admin', href: '/admin/motiv' },
         { label: 'Insights admin', href: '/admin/insights' },
         { label: 'Messages', href: '/admin/messages' },
+        { label: 'Assessments', href: '/admin/assessments' },
         { label: 'Switch user', href: '/admin/users' },
+        ] : []),
       ]
     : [];
   return { links, admin };

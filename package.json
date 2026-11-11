@@ -11,6 +11,7 @@
     "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.13",
     "arctic": "^3.7.0",
     "jose": "^6.2.16",
     "lucide-react": "^1.23.0",

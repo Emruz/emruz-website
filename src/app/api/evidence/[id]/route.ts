@@ -2,8 +2,7 @@ import { db } from '@/lib/server/db';
 import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { canAccessEngagement, getEvidenceFile, isClientContact, staffRole } from '@/lib/server/workbench';
-
-const INLINE = new Set(['application/pdf', 'image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+import { INLINE_TYPES, detectType } from '@/lib/server/filetype';
 
 /** Open an evidence item: files are streamed, links redirect. Staff and the client's contacts only. */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -22,8 +21,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (ev.kind === 'link' && ev.url) return Response.redirect(ev.url, 302);
   const data = ev.blob_key ? await getEvidenceFile(ev.blob_key) : null;
   if (!data) return new Response('File not found', { status: 404 });
-  const type = ev.content_type && INLINE.has(ev.content_type) ? ev.content_type : 'application/octet-stream';
-  const disposition = INLINE.has(type) ? 'inline' : 'attachment';
+  // Inline only when the bytes really are a PDF or image; everything else downloads
+  const detected = await detectType(data);
+  const inline = !!detected && INLINE_TYPES.has(detected);
+  const type = inline ? detected : 'application/octet-stream';
+  const disposition = inline ? 'inline' : 'attachment';
   return new Response(data, {
     headers: {
       'content-type': type,

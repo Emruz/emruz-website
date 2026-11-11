@@ -6,6 +6,7 @@ import { SITE_URL } from '@/lib/server/config';
 import { canAccessEngagement, getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
 import { subcategoryById } from '@/content/csf';
 import { MAX_UPLOAD_BYTES } from '@/content/workbench';
+import { detectType } from '@/lib/server/filetype';
 
 const bad = (error: string, status = 400) => Response.json({ ok: false, error }, { status });
 
@@ -34,6 +35,9 @@ export async function POST(req: Request) {
   if (!(file instanceof File) || file.size === 0) return bad('Choose a file');
   if (file.size > MAX_UPLOAD_BYTES) return bad(`Files must be under ${MAX_UPLOAD_BYTES / 1024 / 1024} MB. Share a link for larger files.`);
 
+  const bytes = await file.arrayBuffer();
+  // Store the type detected from the content, not what the browser claimed
+  const contentType = (await detectType(bytes)) ?? 'application/octet-stream';
   const safeName = file.name.replace(/[^\w.\- ]+/g, '_').slice(-120) || 'file';
   const title = (typeof form.get('title') === 'string' && (form.get('title') as string).trim().slice(0, 200)) || safeName;
   const requestId = form.get('request_id');
@@ -41,12 +45,12 @@ export async function POST(req: Request) {
 
   const [ev] = await db()<{ id: string }[]>`
     insert into evidence (engagement_id, kind, title, filename, content_type, size_bytes, from_client, request_id, uploaded_by)
-    values (${e.id}, 'file', ${title}, ${safeName}, ${file.type || 'application/octet-stream'}, ${file.size}, ${client},
+    values (${e.id}, 'file', ${title}, ${safeName}, ${contentType}, ${file.size}, ${client},
             ${isUuid(requestId) ? requestId : null}, ${account.id})
     returning id`;
   const key = `${e.id}/${ev.id}`;
   try {
-    await putEvidenceFile(key, await file.arrayBuffer());
+    await putEvidenceFile(key, bytes);
   } catch (err) {
     await db()`delete from evidence where id = ${ev.id}`;
     console.error('evidence upload failed', err);

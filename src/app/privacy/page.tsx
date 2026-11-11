@@ -54,6 +54,24 @@ export default function PrivacyPage() {
         <li>A session cookie that keeps you signed in (see Cookies below).</li>
       </ul>
 
+      <h3>When you take the security self-assessment</h3>
+      <p>
+        The self-assessment is open to registered users. When you register we collect your name, company, and
+        optionally your job title and phone number, together with a record of your consent: the wording you agreed
+        to, when, and the IP address it came from. We store your answers, your organization profile (size, type of
+        data, who looks after security) and your results, so you can stop and come back and so we can follow up with
+        you about them. We email your results to you and notify our team when you finish.
+      </p>
+
+      <h3>When we perform an assessment for your organization</h3>
+      <p>
+        For assessment clients, we store the details you give us during intake, our ratings and notes, the evidence you
+        or our assessors upload or link (such as policies, screenshots and exports), evidence requests, and each version
+        of your report. Files are kept in private storage on our hosting provider and can only be opened by Emruz
+        assessors and the contacts your organization has named for the client portal. We use this only to perform the
+        engagement and deliver your report, under your agreement with us.
+      </p>
+
       <h3>When you buy Motiv</h3>
       <p>
         Payments are handled by Stripe. Your card details go directly to Stripe and never reach our servers. From
@@ -99,6 +117,7 @@ export default function PrivacyPage() {
         <li>To confirm that a computer is entitled to Motiv Premium and to enforce the number of computers per subscription.</li>
         <li>To send emails you need: sign-in links, purchase confirmations and important account notices.</li>
         <li>To answer questions and give support.</li>
+        <li>To send you your self-assessment results and contact you about them, with your consent.</li>
         <li>To send the Insights newsletter, only if you subscribed and confirmed.</li>
         <li>To detect and prevent fraud and abuse, and to meet legal and tax obligations.</li>
       </ul>
@@ -118,9 +137,9 @@ export default function PrivacyPage() {
           </tr>
         </thead>
         <tbody>
-          <tr><td>Netlify</td><td>Hosts the website and the database, including contact form messages and newsletter subscriptions</td></tr>
+          <tr><td>Netlify</td><td>Hosts the website, the database and private file storage, including contact form messages, newsletter subscriptions, self-assessments and assessment evidence</td></tr>
           <tr><td>Stripe</td><td>Payments, tax calculation, invoices and the billing portal</td></tr>
-          <tr><td>Resend</td><td>Sends sign-in, purchase and newsletter emails, and delivers contact form messages to us</td></tr>
+          <tr><td>Resend</td><td>Sends sign-in, purchase, newsletter and self-assessment emails, and delivers contact form messages to us</td></tr>
           <tr><td>Microsoft, Google, Apple</td><td>Sign-in, only if you choose that option</td></tr>
         </tbody>
       </table>
@@ -171,6 +190,12 @@ export default function PrivacyPage() {
           even after an account is closed.
         </li>
         <li>Registered computers: until you remove them or your account is closed.</li>
+        <li>Assessment engagements, evidence and reports: for the period set in your agreement with us, then deleted.</li>
+        <li>
+          Self-assessments and registration details: until you delete them, withdraw consent on your assessments
+          page, or close your account. Withdrawing consent deletes them; we keep only the date you consented and
+          withdrew.
+        </li>
         <li>Sign-in links, sign-in attempts and rate-limit records: hours to days.</li>
       </ul>
 
@@ -178,7 +203,8 @@ export default function PrivacyPage() {
       <p>
         You can see and manage your subscriptions, computers and sign-in methods on your{' '}
         <Link href="/motiv/account">account page</Link>, and change or cancel billing in the Stripe billing portal
-        linked from there. You can also ask us to:
+        linked from there. You can see, delete and withdraw consent for your self-assessments on your{' '}
+        <Link href="/assessments/self/history">assessments page</Link>. You can also ask us to:
       </p>
       <ul>
         <li>give you a copy of the personal information we hold about you;</li>

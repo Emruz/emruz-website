@@ -17,8 +17,11 @@ export default function ContactForm() {
   // Prefill the topic from ?topic= (e.g. a package code or "motiv")
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      const topic = new URLSearchParams(window.location.search).get('topic');
-      if (topic) setFormData((f) => ({ ...f, topic }));
+      const q = new URLSearchParams(window.location.search);
+      const topic = q.get('topic');
+      const message = q.get('message');
+      if (topic || message)
+        setFormData((f) => ({ ...f, topic: topic ?? f.topic, message: message ?? f.message }));
     });
     return () => cancelAnimationFrame(frame);
   }, []);

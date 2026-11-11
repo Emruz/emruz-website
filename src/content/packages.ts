@@ -32,7 +32,7 @@ export type CapabilityCode =
 
 export const capabilities: Record<CapabilityCode, { name: string; description: string }> = {
   EPP: { name: 'Endpoint Protection', description: 'Prevents known and unknown malware on laptops, desktops and servers.' },
-  EDR: { name: 'Endpoint Detection & Response', description: 'Records endpoint activity to detect, contain and roll back attacks.' },
+  EDR: { name: 'Endpoint Detection & Response', description: 'Records endpoint activity to detect, contain and roll back attacks, and allows or blocks applications on each system (allowlisting and blocklisting).' },
   BTH: { name: 'Basic Threat Hunting', description: 'Regular hunts across your environment for common attacker techniques.' },
   ATH: { name: 'Advanced Threat Hunting', description: 'Hypothesis-driven hunts for threats that evade automated detection.' },
   SIEM: { name: 'AI-driven SIEM', description: 'Central collection and correlation of security signals across your environment.' },
@@ -342,3 +342,140 @@ export const addOns: AddOn[] = [
     ],
   },
 ];
+
+/* ---------- Add-on product lines (pages under /products) ---------- */
+
+export interface AddOnLine {
+  slug: AddOnFamily;
+  /** URL segment under /products */
+  path: string;
+  label: string;
+  name: string;
+  tagline: string;
+  summary: string;
+  bestFor: string;
+  outcomes: string[];
+  /** Columns of the feature table: one per edition or platform */
+  columns: { code: string; label: string }[];
+  groups: { title: string; rows: { label: string; in: string[] }[] }[];
+}
+
+export const addOnLines: AddOnLine[] = [
+  {
+    slug: 'PSA',
+    path: 'psa',
+    label: 'PSA',
+    name: 'Phishing Simulation & Security Awareness Training',
+    tagline: 'Turn people into your first line of defense',
+    summary:
+      'Monthly security awareness training with advanced phishing and threat simulations, targeted to each person by AI, so your people recognize and report attacks.',
+    bestFor: 'Any organization where phishing and social engineering are a real risk, and anyone who needs training records for compliance or insurance.',
+    outcomes: ['Fewer people clicking on phishing', 'More attacks reported early', 'Training records for auditors and insurers'],
+    columns: [{ code: 'PSA', label: 'Complete' }],
+    groups: [
+      {
+        title: 'Security awareness training',
+        rows: [
+          { label: 'Monthly end-user training', in: ['PSA'] },
+          { label: 'Advanced phishing simulation', in: ['PSA'] },
+          { label: 'Advanced threat simulation', in: ['PSA'] },
+          { label: 'AI-optimized training and targeting', in: ['PSA'] },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'DRM',
+    path: 'drm',
+    label: 'DRM',
+    name: 'Data Risk Management',
+    tagline: 'Know where sensitive data lives, and keep it protected',
+    summary:
+      'Data security posture management that finds, classifies and values sensitive data across endpoints, file servers and cloud, plus managed encryption that protects it automatically.',
+    bestFor: 'Organizations holding PII, PCI or PHI that need to prove where it is, what it is worth and that it is encrypted.',
+    outcomes: ['An inventory of sensitive data and where it is exposed', 'Data risk expressed in dollars using FAIR', 'Sensitive files encrypted automatically'],
+    columns: [
+      { code: 'DRM-CP', label: 'Complete' },
+      { code: 'MDE-PM', label: 'Encryption only' },
+    ],
+    groups: [
+      {
+        title: 'Data security posture management',
+        rows: [
+          { label: 'Automated asset discovery', in: ['DRM-CP'] },
+          { label: 'Vulnerability scan and exploitation', in: ['DRM-CP'] },
+          { label: 'Continuous data risk monitoring', in: ['DRM-CP'] },
+          { label: 'Real-time tracking of file changes', in: ['DRM-CP'] },
+          { label: 'Windows and Mac endpoints', in: ['DRM-CP'] },
+          { label: 'File servers, NAS and terminal servers', in: ['DRM-CP'] },
+          { label: 'Microsoft 365 and Google Workspace', in: ['DRM-CP'] },
+          { label: 'Data classification (PII, PCI, PHI and more)', in: ['DRM-CP'] },
+          { label: 'Risk valuation using the FAIR framework', in: ['DRM-CP'] },
+        ],
+      },
+      {
+        title: 'Managed encryption',
+        rows: [
+          { label: 'Automated encryption of sensitive data', in: ['DRM-CP', 'MDE-PM'] },
+          { label: 'Policy-driven encryption deployment', in: ['DRM-CP', 'MDE-PM'] },
+          { label: 'AES-256 file-level encryption', in: ['DRM-CP', 'MDE-PM'] },
+          { label: 'Seamless decryption for authorized users', in: ['DRM-CP', 'MDE-PM'] },
+          { label: 'Encryption wizard', in: ['DRM-CP', 'MDE-PM'] },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'DSB',
+    path: 'dsb',
+    label: 'DSB',
+    name: 'Distributed SaaS Backup & Recovery',
+    tagline: 'Your cloud data, backed up somewhere else',
+    summary:
+      'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with search across users and data types and granular restore.',
+    bestFor: 'Organizations that rely on Microsoft 365 or Google Workspace and need to recover from ransomware, deletion or a departing employee.',
+    outcomes: ['A copy of SaaS data outside the provider', 'Restore a single item or a whole account', 'Backups that support GDPR, HIPAA and other obligations'],
+    columns: [
+      { code: 'DSB-365', label: 'Microsoft 365' },
+      { code: 'DSB-GWS', label: 'Google Workspace' },
+    ],
+    groups: [
+      {
+        title: 'Backup and recovery',
+        rows: [
+          { label: 'Automated daily backup to an independent location', in: ['DSB-365', 'DSB-GWS'] },
+          { label: 'Search across users and data types', in: ['DSB-365', 'DSB-GWS'] },
+          { label: 'Backup, search and restore in one solution', in: ['DSB-365', 'DSB-GWS'] },
+          { label: 'Granular restore with multiple target options', in: ['DSB-365', 'DSB-GWS'] },
+          { label: 'Supports GDPR, HIPAA and other compliance needs', in: ['DSB-365', 'DSB-GWS'] },
+        ],
+      },
+      {
+        title: 'Microsoft 365 coverage',
+        rows: [
+          { label: 'Mailboxes (all types)', in: ['DSB-365'] },
+          { label: 'In-place archives', in: ['DSB-365'] },
+          { label: 'Calendar, tasks and contacts', in: ['DSB-365'] },
+          { label: 'SharePoint sites, including lists and permissions', in: ['DSB-365'] },
+          { label: 'OneDrive', in: ['DSB-365'] },
+          { label: 'Groups (conversations, plans, files, sites, calendar)', in: ['DSB-365'] },
+          { label: 'Teams, including chat and wiki', in: ['DSB-365'] },
+        ],
+      },
+      {
+        title: 'Google Workspace coverage',
+        rows: [
+          { label: 'Gmail', in: ['DSB-GWS'] },
+          { label: 'Google Drive', in: ['DSB-GWS'] },
+          { label: 'Shared drives', in: ['DSB-GWS'] },
+          { label: 'Google Sites', in: ['DSB-GWS'] },
+          { label: 'Calendar', in: ['DSB-GWS'] },
+          { label: 'Tasks', in: ['DSB-GWS'] },
+        ],
+      },
+    ],
+  },
+];
+
+export const addOnLineByPath = (path: string) => addOnLines.find((l) => l.path === path);
+export const addOnHref = (a: { family: AddOnFamily }) => `/products/${addOnLines.find((l) => l.slug === a.family)!.path}`;

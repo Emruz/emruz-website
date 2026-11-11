@@ -1,5 +1,6 @@
 import 'server-only';
 import crypto from 'node:crypto';
+import type { TransactionSql } from 'postgres';
 import { db, logEvent } from './db';
 import { motiv } from './config';
 import {
@@ -116,10 +117,29 @@ export async function findSubscription(subscriptionIdInput: unknown): Promise<Su
   return row ?? null;
 }
 
-async function activeSeatCount(subId: string, exceptDevice: string): Promise<number> {
-  const [r] = await db()<{ n: number }[]>`
-    select count(*)::int as n from devices
-    where subscription_id = ${subId} and deactivated_at is null and device_id <> ${exceptDevice}`;
+type Tx = TransactionSql<Record<string, never>>;
+
+/**
+ * Lock the subscription row for the rest of the transaction, so concurrent
+ * activations of the same subscription count seats one at a time.
+ */
+async function lockSubscription(tx: Tx, subId: string) {
+  await tx`select id from subscriptions where id = ${subId} for update`;
+}
+
+/**
+ * Seats in use by other devices: active devices, plus pairings already approved
+ * for this subscription whose app has not collected its lease yet.
+ */
+async function activeSeatCount(tx: Tx, subId: string, exceptDevice: string): Promise<number> {
+  const [r] = await tx<{ n: number }[]>`
+    select count(distinct device_id)::int as n from (
+      select device_id from devices
+      where subscription_id = ${subId} and deactivated_at is null and device_id <> ${exceptDevice}
+      union all
+      select device_id from pairings
+      where subscription_id = ${subId} and status = 'approved' and expires_at > now() and device_id <> ${exceptDevice}
+    ) seats`;
   return r.n;
 }
 
@@ -149,26 +169,30 @@ export async function entitle(
   const problem = entitlementProblem(s);
   if (problem) return fail(problem);
 
-  const [existing] = await db()<{ deactivated_at: Date | null }[]>`
-    select deactivated_at from devices where subscription_id = ${s.id} and device_id = ${deviceId}`;
-  if (opts.requireRegistered && (!existing || existing.deactivated_at)) {
-    return fail('not_found', 'This computer is not registered to that subscription.');
-  }
-  const isActiveSeat = existing && !existing.deactivated_at;
-  if (!isActiveSeat && (await activeSeatCount(s.id, deviceId)) >= s.seats) {
+  // Seat count and device insert happen in one transaction with the subscription row locked
+  const outcome = await db().begin(async (tx) => {
+    await lockSubscription(tx, s.id);
+    const [existing] = await tx<{ deactivated_at: Date | null }[]>`
+      select deactivated_at from devices where subscription_id = ${s.id} and device_id = ${deviceId}`;
+    if (opts.requireRegistered && (!existing || existing.deactivated_at)) return 'not_registered' as const;
+    const isActiveSeat = !!existing && !existing.deactivated_at;
+    if (!isActiveSeat && (await activeSeatCount(tx, s.id, deviceId)) >= s.seats) return 'seat_limit' as const;
+    await tx`
+      insert into devices (subscription_id, device_id, device_name, os, app_version, last_checkin)
+      values (${s.id}, ${deviceId}, ${clean(info.device_name)}, ${clean(info.os, 40)}, ${clean(info.app_version, 40)}, now())
+      on conflict (subscription_id, device_id) do update set
+        device_name = coalesce(excluded.device_name, devices.device_name),
+        os = coalesce(excluded.os, devices.os),
+        app_version = coalesce(excluded.app_version, devices.app_version),
+        last_checkin = now(),
+        deactivated_at = null`;
+    return isActiveSeat ? ('existing' as const) : ('added' as const);
+  });
+  if (outcome === 'not_registered') return fail('not_found', 'This computer is not registered to that subscription.');
+  if (outcome === 'seat_limit') {
     return fail('seat_limit', `This subscription is in use on ${s.seats} computers. Remove one from your account to add this one.`);
   }
-
-  await db()`
-    insert into devices (subscription_id, device_id, device_name, os, app_version, last_checkin)
-    values (${s.id}, ${deviceId}, ${clean(info.device_name)}, ${clean(info.os, 40)}, ${clean(info.app_version, 40)}, now())
-    on conflict (subscription_id, device_id) do update set
-      device_name = coalesce(excluded.device_name, devices.device_name),
-      os = coalesce(excluded.os, devices.os),
-      app_version = coalesce(excluded.app_version, devices.app_version),
-      last_checkin = now(),
-      deactivated_at = null`;
-  if (!isActiveSeat) {
+  if (outcome === 'added') {
     await logEvent('device_activated', { device_id: deviceId, device_name: clean(info.device_name) }, { subscriptionId: s.id, actor: opts.actor ?? 'app' });
   }
   return { status: 200, body: { lease: issueLease(s, deviceId) } };
@@ -298,14 +322,23 @@ export async function approvePairing(
   if (!s) return failed('Choose one of your subscriptions.');
   const problem = entitlementProblem(s);
   if (problem) return failed(messages[problem] ?? 'That subscription cannot be used.');
-  const [existing] = await db()<{ deactivated_at: Date | null }[]>`
-    select deactivated_at from devices where subscription_id = ${s.id} and device_id = ${p.device_id}`;
-  if (!(existing && !existing.deactivated_at) && (await activeSeatCount(s.id, p.device_id)) >= s.seats) {
+  // Seat check and approval in one transaction with the subscription row locked;
+  // an approved pairing holds its seat until the app collects the lease.
+  const outcome = await db().begin(async (tx) => {
+    await lockSubscription(tx, s.id);
+    const [existing] = await tx<{ deactivated_at: Date | null }[]>`
+      select deactivated_at from devices where subscription_id = ${s.id} and device_id = ${p.device_id}`;
+    if (!(existing && !existing.deactivated_at) && (await activeSeatCount(tx, s.id, p.device_id)) >= s.seats) return 'seat_limit' as const;
+    const rows = await tx`
+      update pairings set status = 'approved', account_id = ${accountId}, subscription_id = ${s.id}
+      where device_code_hash = ${p.device_code_hash} and status = 'pending' and expires_at > now()
+      returning device_code_hash`;
+    return rows.length ? ('approved' as const) : ('gone' as const);
+  });
+  if (outcome === 'seat_limit') {
     return { ok: false, error: `This subscription is in use on ${s.seats} computers. Remove one on your account page, then approve again.` };
   }
-  await db()`
-    update pairings set status = 'approved', account_id = ${accountId}, subscription_id = ${s.id}
-    where device_code_hash = ${p.device_code_hash} and status = 'pending'`;
+  if (outcome === 'gone') return { ok: false, error: 'That code was not found or has expired. Get a new code in Motiv.' };
   await logEvent('pairing_approved', { device_id: p.device_id, device_name: p.device_name }, { subscriptionId: s.id, accountId });
   return { ok: true };
 }

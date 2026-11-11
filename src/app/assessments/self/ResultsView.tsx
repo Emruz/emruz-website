@@ -245,7 +245,13 @@ export default function ResultsView({
         </div>
       </div>
 
-      <Crosswalk answers={answers} ig={ig} profile={profile} />
+      <Crosswalk
+        answers={answers}
+        ig={ig}
+        profile={profile}
+        withPkg={rec.pkg ? { label: displayCode(rec.pkg.code), answers: projected } : null}
+        withAll={extras.length ? { codes: extras.map((a) => a.code), plus: !!rec.pkg, answers: projectedAll } : null}
+      />
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">
         <div>

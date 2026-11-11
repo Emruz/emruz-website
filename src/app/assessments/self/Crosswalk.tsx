@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { frameworks, frameworkResult, type FrameworkKey, type Status } from '@/content/crosswalk';
 import type { Answers, IG, Profile } from '@/content/cis-assessment';
@@ -10,10 +11,32 @@ const badge: Record<Status, string> = {
 const label: Record<Status, string> = { met: 'In place', partial: 'Partial', gap: 'Gap' };
 
 /** How the answers map to CMMC, ISO 27001, NIST CSF and SOC 2. Server-safe. */
-export default function Crosswalk({ answers, ig, profile }: { answers: Answers; ig: IG; profile: Profile }) {
+export default function Crosswalk({
+  answers,
+  ig,
+  profile,
+  withPkg,
+  withAll,
+}: {
+  answers: Answers;
+  ig: IG;
+  profile: Profile;
+  /** Suggested edition and the answers with it in place */
+  withPkg?: { label: string; answers: Answers } | null;
+  /** Edition plus add-ons */
+  withAll?: { codes: string[]; plus: boolean; answers: Answers } | null;
+}) {
   const focus: FrameworkKey[] = profile.frameworks ?? [];
   const ordered = [...frameworks].sort((a, b) => Number(focus.includes(b.key)) - Number(focus.includes(a.key)));
   const results = ordered.map((f) => frameworkResult(f.key, answers, ig, profile));
+  const scoreMap = (a: Answers | undefined, key: FrameworkKey) =>
+    a ? new Map(frameworkResult(key, a, ig, profile).items.map((i) => [i.id, i.score])) : null;
+  const cell = (before: number, after: number | undefined) =>
+    after === undefined ? (
+      <span className="text-white/80">–</span>
+    ) : (
+      <span className={after > before ? 'font-bold text-white bg-emerald-600 rounded px-1.5 py-0.5' : 'font-semibold text-white'}>→ {after}%</span>
+    );
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8">
@@ -59,30 +82,69 @@ export default function Crosswalk({ answers, ig, profile }: { answers: Answers; 
             </summary>
             <div className="px-4 pb-4">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-gray-500 border-b border-gray-200">
-                      <th className="py-2 pr-3 font-medium">ID</th>
-                      <th className="py-2 pr-3 font-medium">Requirement</th>
-                      <th className="py-2 pr-3 font-medium whitespace-nowrap">From CIS</th>
-                      <th className="py-2 font-medium text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {r.items.map((i) => (
-                      <tr key={i.id} className="border-b border-gray-100 last:border-0">
-                        <td className="py-2 pr-3 font-mono text-xs text-gray-700 whitespace-nowrap">{i.id}</td>
-                        <td className="py-2 pr-3 text-gray-800">{i.title}</td>
-                        <td className="py-2 pr-3 text-gray-500 whitespace-nowrap">{i.cis.join(', ')}</td>
-                        <td className="py-2 text-right whitespace-nowrap">
-                          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded border ${badge[i.status]}`}>
-                            {label[i.status]} {i.score}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {(() => {
+                  const m1 = scoreMap(withPkg?.answers, r.framework.key);
+                  const m2 = scoreMap(withAll?.answers, r.framework.key);
+                  const row = 'py-2 border-b border-gray-100';
+                  return (
+                    <table className="w-full text-sm border-separate border-spacing-0">
+                      <thead>
+                        <tr className="text-left text-gray-500">
+                          <th className="py-2 pr-3 font-medium align-bottom border-b border-gray-200">ID</th>
+                          <th className="py-2 pr-3 font-medium align-bottom border-b border-gray-200">Requirement</th>
+                          <th className="py-2 pr-3 font-medium whitespace-nowrap align-bottom border-b border-gray-200">From CIS</th>
+                          <th className="py-2 pr-3 font-medium text-right align-bottom border-b border-gray-200">Status</th>
+                          {withPkg && (
+                            <th className="bg-slate-900/80 text-white rounded-t-lg px-2 pt-2 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
+                              <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">With</span>
+                              <span className="block font-extrabold whitespace-nowrap">{withPkg.label}</span>
+                            </th>
+                          )}
+                          {withAll && (
+                            <th className="bg-indigo-800/80 text-white rounded-t-lg px-2 pt-2 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
+                              <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">{withAll.plus ? 'Plus' : 'With'}</span>
+                              <span className="block font-extrabold text-xs leading-tight">
+                                {withAll.codes.map((c, k) => (
+                                  <Fragment key={c}>
+                                    {k > 0 && ' + '}
+                                    <span className="whitespace-nowrap">{c}</span>
+                                  </Fragment>
+                                ))}
+                              </span>
+                            </th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {r.items.map((i, n) => {
+                          const last = n === r.items.length - 1;
+                          return (
+                            <tr key={i.id}>
+                              <td className={`${row} pr-3 font-mono text-xs text-gray-700 whitespace-nowrap`}>{i.id}</td>
+                              <td className={`${row} pr-3 text-gray-800`}>{i.title}</td>
+                              <td className={`${row} pr-3 text-gray-500 whitespace-nowrap`}>{i.cis.join(', ')}</td>
+                              <td className={`${row} pr-3 text-right whitespace-nowrap`}>
+                                <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded border ${badge[i.status]}`}>
+                                  {label[i.status]} {i.score}%
+                                </span>
+                              </td>
+                              {m1 && (
+                                <td className={`bg-slate-900/80 px-2 py-2 text-center whitespace-nowrap text-sm ${last ? 'rounded-b-lg' : ''}`}>
+                                  {cell(i.score, m1.get(i.id))}
+                                </td>
+                              )}
+                              {m2 && (
+                                <td className={`bg-indigo-800/80 px-2 py-2 text-center whitespace-nowrap text-sm ${last ? 'rounded-b-lg' : ''}`}>
+                                  {cell(m1?.get(i.id) ?? i.score, m2.get(i.id))}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  );
+                })()}
               </div>
               <p className="mt-3 text-xs text-gray-600">
                 <span className="font-semibold">Not covered by this assessment:</span> {r.framework.notCovered}

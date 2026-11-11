@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, CloudUpload, GraduationCap, Lock, Shield } from 'lucide-react';
+import { ArrowRight, CloudUpload, Fingerprint, GraduationCap, Lock, Shield } from 'lucide-react';
 import { PageHeader, Container } from '@/components';
 import { products } from '@/content/products';
 import { addOnLines, families, packages, POWERED_BY, SOC_LINE } from '@/content/packages';
@@ -7,7 +7,7 @@ import { addOnLines, families, packages, POWERED_BY, SOC_LINE } from '@/content/
 export const metadata = {
   title: 'Products',
   description:
-    'Motiv, a private AI meeting assistant built by Emruz, managed security (EDR, MDR, XDR and ΔDR) and add-on services for awareness training, data risk and SaaS backup.',
+    'Motiv, a private AI meeting assistant built by Emruz, managed security (EDR, MDR, XDR and ΔDR) and add-on services for identity, awareness training, data risk and SaaS backup.',
 };
 
 export default function ProductsPage() {
@@ -80,7 +80,7 @@ export default function ProductsPage() {
         <Container>
           <h2 className="text-2xl font-bold text-gray-900">Add-on services</h2>
           <p className="text-gray-600 mt-1 mb-6">Close specific gaps on top of any managed security edition, or use them on their own.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {addOnLines.map((l) => (
               <Link
                 key={l.slug}
@@ -88,8 +88,8 @@ export default function ProductsPage() {
                 className="group flex flex-col bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-12 h-12 rounded-xl bg-indigo-800 text-white flex items-center justify-center">
-                    {l.slug === 'PSA' ? <GraduationCap className="w-6 h-6" aria-hidden /> : l.slug === 'DRM' ? <Lock className="w-6 h-6" aria-hidden /> : <CloudUpload className="w-6 h-6" aria-hidden />}
+                  <span className="w-12 h-12 flex-shrink-0 rounded-xl bg-indigo-800 text-white flex items-center justify-center">
+                    {l.slug === 'ZTI' ? <Fingerprint className="w-6 h-6" aria-hidden /> : l.slug === 'PSA' ? <GraduationCap className="w-6 h-6" aria-hidden /> : l.slug === 'DRM' ? <Lock className="w-6 h-6" aria-hidden /> : <CloudUpload className="w-6 h-6" aria-hidden />}
                   </span>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{l.label}</h3>

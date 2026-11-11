@@ -44,6 +44,7 @@ export const mainNav: NavGroup[] = [
       { label: 'XDR', href: '/products/xdr', description: 'Extended detection & response, 3 editions', note: POWERED_BY, indent: true },
       { label: 'ΔDR', href: '/products/ddr', description: 'Detect, defend & respond, 4 editions', note: POWERED_BY, indent: true },
       { label: 'Add-on services', href: '/products#add-ons', description: 'Close specific gaps on any edition', divider: true },
+      { label: 'ZTI', href: '/products/zti', description: 'Identity posture, threat detection & response', note: POWERED_BY, indent: true },
       { label: 'PSA', href: '/products/psa', description: 'Phishing simulation & awareness training', note: POWERED_BY, indent: true },
       { label: 'DRM', href: '/products/drm', description: 'Data risk management & encryption', note: POWERED_BY, indent: true },
       { label: 'DSB', href: '/products/dsb', description: 'Microsoft 365 & Google Workspace backup', note: POWERED_BY, indent: true },

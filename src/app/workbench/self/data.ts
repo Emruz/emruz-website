@@ -24,6 +24,8 @@ export interface SelfRow {
   phone: string | null;
   consented_at: Date;
   engagement_id: string | null;
+  deleted_at: Date | null;
+  deleted_by: string | null;
 }
 
 /** Self-assessments of people whose consent is active. Analysts see only those assigned to them. */
@@ -31,7 +33,7 @@ export async function selfAssessments(opts: { accountId: string; all: boolean; i
   return db()<SelfRow[]>`
     select s.id, s.account_id, s.status, s.score, s.target_ig, s.recommended_package, s.profile, s.answers,
            s.assigned_to, coalesce(st.name, st.email) as assigned_label, s.followed_up_at, s.followed_up_by,
-           s.updated_at, s.completed_at, a.email, r.full_name, r.company, r.job_title, r.phone, r.consented_at,
+           s.updated_at, s.completed_at, s.deleted_at, s.deleted_by, a.email, r.full_name, r.company, r.job_title, r.phone, r.consented_at,
            (select e.id from engagements e where e.self_assessment_id = s.id order by e.created_at desc limit 1) as engagement_id
     from assessments s
     join assessment_registrations r on r.account_id = s.account_id and r.withdrawn_at is null

@@ -1,21 +1,23 @@
 import Link from 'next/link';
 import { DetailHeader, Container } from '@/components';
-import { requireStaff, seesAll, staffList } from '@/lib/server/workbench';
+import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { controls, inScope, maturity, recommend, targetIG } from '@/content/cis-assessment';
 import { displayCode } from '@/content/packages';
 import { frameworks } from '@/content/crosswalk';
 import { WorkbenchNav, card, fmtDate } from '../ui';
 import AssignSelect from '../AssignSelect';
-import { toggleSelfFollowUp } from '../actions';
+import { markSelfDeleted, restoreSelf, toggleSelfFollowUp } from '../actions';
 import { selfAssessments, type SelfRow } from './data';
 
 export const metadata = { title: 'Self-assessments', robots: { index: false } };
 
+const live = (r: SelfRow) => !r.deleted_at;
 const filters = [
-  { key: 'all', label: 'All', test: () => true },
-  { key: 'followup', label: 'Needs follow-up', test: (r: SelfRow) => r.status === 'completed' && !r.followed_up_at && !r.engagement_id },
-  { key: 'progress', label: 'In progress', test: (r: SelfRow) => r.status === 'in_progress' },
-  { key: 'unassigned', label: 'Unassigned', test: (r: SelfRow) => !r.assigned_to },
+  { key: 'all', label: 'All', test: live },
+  { key: 'followup', label: 'Needs follow-up', test: (r: SelfRow) => live(r) && r.status === 'completed' && !r.followed_up_at && !r.engagement_id },
+  { key: 'progress', label: 'In progress', test: (r: SelfRow) => live(r) && r.status === 'in_progress' },
+  { key: 'unassigned', label: 'Unassigned', test: (r: SelfRow) => live(r) && !r.assigned_to },
+  { key: 'deleted', label: 'Marked for deletion', test: (r: SelfRow) => !!r.deleted_at },
 ] as const;
 
 function progress(r: SelfRow) {
@@ -27,6 +29,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
   const { account, role } = await requireStaff('/workbench/self');
   const all = seesAll(role);
   const sp = await searchParams;
+  await purgeDeleted();
   const filter = filters.find((f) => f.key === sp.f) ?? filters[0];
   const [rows, staff] = await Promise.all([selfAssessments({ accountId: account.id, all }), all ? staffList() : Promise.resolve([])]);
   const people = [{ account_id: account.id, label: account.name || account.email }, ...staff.filter((s) => s.account_id !== account.id).map((s) => ({ account_id: s.account_id, label: s.name || s.email }))];
@@ -107,7 +110,18 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                         {all ? <AssignSelect id={r.id} value={r.assigned_to} staff={people} /> : <span className="text-gray-700">{r.assigned_label}</span>}
                       </td>
                       <td className="p-3 whitespace-nowrap">
-                        {r.engagement_id ? (
+                        {r.deleted_at ? (
+                          <div className="text-xs">
+                            <p className="text-red-700 font-semibold">Deletes {fmtDate(purgeDate(r.deleted_at))}</p>
+                            <p className="text-gray-500">by {r.deleted_by}</p>
+                            {(role === 'admin' || r.assigned_to === account.id) && (
+                              <form action={restoreSelf}>
+                                <input type="hidden" name="id" value={r.id} />
+                                <button className="font-semibold text-blue-700 mt-1">Restore</button>
+                              </form>
+                            )}
+                          </div>
+                        ) : r.engagement_id ? (
                           <Link href={`/workbench/e/${r.engagement_id}`} className="text-xs font-semibold text-emerald-700 hover:underline">Engagement started</Link>
                         ) : r.status === 'completed' ? (
                           <form action={toggleSelfFollowUp}>
@@ -120,6 +134,12 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                           </form>
                         ) : (
                           <span className="text-xs text-gray-400">–</span>
+                        )}
+                        {!r.deleted_at && (role === 'admin' || r.assigned_to === account.id) && (
+                          <form action={markSelfDeleted} className="mt-1">
+                            <input type="hidden" name="id" value={r.id} />
+                            <button className="text-xs text-gray-400 hover:text-red-700">Mark for deletion</button>
+                          </form>
                         )}
                       </td>
                     </tr>

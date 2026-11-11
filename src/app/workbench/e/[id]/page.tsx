@@ -3,7 +3,7 @@ import { db } from '@/lib/server/db';
 import { clientContacts, getEngagement, getEvidence, getRatings, getReports, getRequests, requireEngagementAccess, staffList } from '@/lib/server/workbench';
 import { engagementStatuses, flagsFor, flagInfo, intakeCompleteness, rollup, statusLabel, tierFor } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
-import { updateEngagement } from '../../actions';
+import { markEngagementDeleted, updateEngagement } from '../../actions';
 import { ReportBadge, Meter, btn, card, input, label, fmtTime } from '../../ui';
 
 const eventText: Record<string, (d: Record<string, unknown>) => string> = {
@@ -23,11 +23,13 @@ const eventText: Record<string, (d: Record<string, unknown>) => string> = {
   report_changes_requested: (d) => `Requested changes to v${d.version}${d.note ? `: ${d.note}` : ''}`,
   report_sent: (d) => `Sent v${d.version} to ${(d.to as string[]).join(', ')}`,
   client_link_added: (d) => `Client shared a link: ${d.title}`,
+  marked_deleted: () => 'Marked the engagement for deletion',
+  restored: () => 'Restored the engagement',
 };
 
 export default async function Overview({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { account } = await requireEngagementAccess(id, `/workbench/e/${id}`);
+  const { account, role } = await requireEngagementAccess(id, `/workbench/e/${id}`);
   const e = (await getEngagement(id))!;
   const [ratings, evidence, requests, reports, contacts, staff, events] = await Promise.all([
     getRatings(id),
@@ -152,6 +154,14 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
           </div>
           <button className={btn}>Save</button>
         </form>
+
+        {!e.deleted_at && (role === 'admin' || e.lead_account_id === account.id) && (
+          <form action={markEngagementDeleted} className="text-right">
+            <input type="hidden" name="id" value={id} />
+            <button className="text-sm text-gray-500 hover:text-red-700">Mark for deletion</button>
+            <p className="text-xs text-gray-400">Recoverable for 30 days</p>
+          </form>
+        )}
 
         <div className={`${card} p-5`}>
           <h2 className="font-bold text-gray-900 mb-2">Client contacts</h2>

@@ -29,6 +29,25 @@ export async function requireStaff(returnTo: string) {
 /** Leads and admins can approve reports and manage staff. */
 export const canReview = (role: string | null) => role === 'admin' || role === 'lead';
 
+/** Days between marking something for deletion and its permanent removal. */
+export const RETENTION_DAYS = 30;
+
+export const purgeDate = (deletedAt: Date) => new Date(new Date(deletedAt).getTime() + RETENTION_DAYS * 86400000);
+
+/**
+ * Permanently remove self-assessments and engagements marked for deletion more
+ * than RETENTION_DAYS ago. The purge-deleted scheduled function does this daily
+ * on Netlify; the workbench also runs it so local copies stay tidy.
+ */
+export async function purgeDeleted() {
+  const keys = await db()<{ blob_key: string }[]>`
+    select ev.blob_key from evidence ev join engagements e on e.id = ev.engagement_id
+    where e.deleted_at < now() - make_interval(days => ${RETENTION_DAYS}) and ev.blob_key is not null`;
+  for (const k of keys) await deleteEvidenceFile(k.blob_key).catch(() => {});
+  await db()`delete from engagements where deleted_at < now() - make_interval(days => ${RETENTION_DAYS})`;
+  await db()`delete from assessments where deleted_at < now() - make_interval(days => ${RETENTION_DAYS})`;
+}
+
 /** Admins and leads see every engagement and self-assessment; assessors only those assigned to them. */
 export const seesAll = (role: string | null) => role === 'admin' || role === 'lead';
 
@@ -52,7 +71,7 @@ export async function requireEngagementAccess(engagementId: string, returnTo: st
 export async function isClientContact(accountId: string, engagementId: string) {
   const [r] = await db()`
     select 1 from engagements e join client_contacts cc on cc.client_id = e.client_id
-    where e.id = ${engagementId} and cc.account_id = ${accountId}`;
+    where e.id = ${engagementId} and cc.account_id = ${accountId} and e.deleted_at is null`;
   return !!r;
 }
 
@@ -75,6 +94,8 @@ export interface Engagement {
   due_date: string | null;
   created_at: Date;
   updated_at: Date;
+  deleted_at: Date | null;
+  deleted_by: string | null;
 }
 
 export async function getEngagement(id: string): Promise<Engagement | null> {

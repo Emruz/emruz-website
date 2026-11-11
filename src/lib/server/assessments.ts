@@ -54,19 +54,25 @@ export async function getRegistration(accountId: string): Promise<Registration |
 export const activeRegistration = (r: Registration | null) => !!r && !r.withdrawn_at;
 
 export async function getAssessment(id: string): Promise<AssessmentRow | null> {
-  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id}`;
+  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null`;
   return a ?? null;
 }
 
 export async function listAssessments(accountId: string): Promise<AssessmentRow[]> {
-  return db()<AssessmentRow[]>`select * from assessments where account_id = ${accountId} order by created_at desc`;
+  return db()<AssessmentRow[]>`select * from assessments where account_id = ${accountId} and deleted_at is null order by created_at desc`;
+}
+
+/** The account's assessment in progress, if any. */
+export async function openAssessment(accountId: string): Promise<AssessmentRow | null> {
+  const [open] = await db()<AssessmentRow[]>`
+    select * from assessments where account_id = ${accountId} and status = 'in_progress' and deleted_at is null
+    order by updated_at desc limit 1`;
+  return open ?? null;
 }
 
 /** The account's assessment in progress, created if there is none. */
 export async function currentAssessment(accountId: string): Promise<AssessmentRow> {
-  const [open] = await db()<AssessmentRow[]>`
-    select * from assessments where account_id = ${accountId} and status = 'in_progress'
-    order by updated_at desc limit 1`;
+  const open = await openAssessment(accountId);
   if (open) return open;
   // Start from the last profile so returning users don't answer it again
   const [last] = await db()<{ profile: Profile }[]>`

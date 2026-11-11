@@ -2,12 +2,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
-import { requireStaff, seesAll, staffList } from '@/lib/server/workbench';
+import { purgeDate, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { controls, inScope, profileSummary, targetIG } from '@/content/cis-assessment';
 import { frameworks } from '@/content/crosswalk';
 import ResultsView from '@/app/assessments/self/ResultsView';
 import PrintButton from '@/app/assessments/self/PrintButton';
-import { engagementFromSelf, toggleSelfFollowUp } from '../../actions';
+import { engagementFromSelf, markSelfDeleted, restoreSelf, toggleSelfFollowUp } from '../../actions';
 import AssignSelect from '../../AssignSelect';
 import { btn, btnGhost, card, fmtDate, fmtTime } from '../../ui';
 import { selfAssessments } from '../data';
@@ -37,6 +37,20 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
+          {r.deleted_at && (
+            <div role="status" className="mb-4 p-4 rounded-lg border border-red-200 bg-red-50 text-red-800 flex flex-wrap items-center justify-between gap-3">
+              <p>
+                Marked for deletion by {r.deleted_by} on {fmtDate(r.deleted_at)}. It will be permanently deleted on{' '}
+                <strong>{fmtDate(purgeDate(r.deleted_at))}</strong>.
+              </p>
+              {(role === 'admin' || r.assigned_to === account.id) && (
+                <form action={restoreSelf}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <button className={btnGhost}>Restore</button>
+                </form>
+              )}
+            </div>
+          )}
           {sp.error === 'incomplete' && <p role="alert" className="mb-4 text-red-700 font-semibold">The assessment must be completed before starting an engagement.</p>}
           <div className={`${card} p-5 mb-6 grid md:grid-cols-4 gap-5 text-sm print:hidden`}>
             <div>
@@ -67,13 +81,19 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
             <div className="flex flex-col gap-2 md:items-end">
               {r.engagement_id ? (
                 <Link href={`/workbench/e/${r.engagement_id}`} className={btn}>Open engagement</Link>
-              ) : r.status === 'completed' ? (
+              ) : r.status === 'completed' && !r.deleted_at ? (
                 <form action={engagementFromSelf}>
                   <input type="hidden" name="id" value={r.id} />
                   <button className={btn}>Start engagement</button>
                 </form>
               ) : null}
               {r.status === 'completed' && <PrintButton />}
+              {!r.deleted_at && (role === 'admin' || r.assigned_to === account.id) && (
+                <form action={markSelfDeleted}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <button className="text-xs text-gray-500 hover:text-red-700">Mark for deletion</button>
+                </form>
+              )}
               {!r.engagement_id && r.status === 'completed' && (
                 <p className="text-xs text-gray-500 md:text-right max-w-56">Creates the client, adds {r.full_name.split(' ')[0]} as a portal contact and pre-fills the NIST CSF ratings.</p>
               )}

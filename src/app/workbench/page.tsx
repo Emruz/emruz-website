@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
-import { requireStaff, seesAll } from '@/lib/server/workbench';
+import { purgeDate, purgeDeleted, requireStaff, seesAll } from '@/lib/server/workbench';
 import { engagementStatuses, statusLabel, type EngagementStatus, type ReportStatus, EVIDENCE_REQUIRED_AT } from '@/content/workbench';
 import { csfSubcategories } from '@/content/csf';
 import { StatusBadge, ReportBadge, WorkbenchNav, Meter, fmtDate, btn, card } from './ui';
@@ -22,13 +22,16 @@ interface Row {
   open_requests: number;
   report_status: ReportStatus | null;
   report_version: number | null;
+  deleted_at: Date | null;
 }
 
-export default async function Workbench({ searchParams }: { searchParams: Promise<{ status?: string; mine?: string }> }) {
+export default async function Workbench({ searchParams }: { searchParams: Promise<{ status?: string; mine?: string; deleted?: string }> }) {
   const { account, role } = await requireStaff('/workbench');
   const sp = await searchParams;
   const status = engagementStatuses.includes(sp.status as EngagementStatus) ? (sp.status as EngagementStatus) : null;
   const mine = sp.mine === '1';
+  const deleted = sp.deleted === '1';
+  await purgeDeleted();
 
   const rows = await db()<Row[]>`
     select e.id, e.title, c.name as client_name, e.status, coalesce(a.name, a.email) as lead,
@@ -39,22 +42,26 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
               and not exists (select 1 from evidence_links l join evidence ev on ev.id = l.evidence_id
                               where ev.engagement_id = e.id and l.subcategory = r.subcategory)) as missing_evidence,
            (select count(*)::int from evidence_requests q where q.engagement_id = e.id and q.status = 'open') as open_requests,
-           lr.status as report_status, lr.version as report_version
+           lr.status as report_status, lr.version as report_version, e.deleted_at
     from engagements e
     join clients c on c.id = e.client_id
     left join accounts a on a.id = e.lead_account_id
     left join lateral (select status, version from reports where engagement_id = e.id order by version desc limit 1) lr on true
     where (${status}::text is null or e.status = ${status})
+      and (e.deleted_at is not null) = ${deleted}
       and (${!mine && seesAll(role)} or e.lead_account_id = ${account.id})
     order by (e.status = 'closed'), e.due_date nulls last, e.updated_at desc
     limit 300`;
 
   const counts = await db()<{ status: EngagementStatus; n: number }[]>`
-    select status, count(*)::int as n from engagements where ${seesAll(role)} or lead_account_id = ${account.id} group by status`;
+    select status, count(*)::int as n from engagements
+    where deleted_at is null and (${seesAll(role)} or lead_account_id = ${account.id}) group by status`;
+  const [{ n: deletedCount }] = await db()<{ n: number }[]>`
+    select count(*)::int as n from engagements where deleted_at is not null and (${seesAll(role)} or lead_account_id = ${account.id})`;
   const n = (s: EngagementStatus) => counts.find((c) => c.status === s)?.n ?? 0;
   const q = (p: Record<string, string | null>) => {
     const u = new URLSearchParams();
-    const merged = { status, mine: mine ? '1' : null, ...p };
+    const merged = { status, mine: mine ? '1' : null, deleted: null, ...p };
     for (const [k, v] of Object.entries(merged)) if (v) u.set(k, v);
     const s = u.toString();
     return `/workbench${s ? `?${s}` : ''}`;
@@ -72,7 +79,7 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
           <WorkbenchNav current="engagements" isAdmin={role === 'admin'} />
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex flex-wrap gap-2 text-sm">
-              <Link href={q({ status: null })} className={`px-3 py-1.5 rounded-full border ${!status ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-gray-300'}`}>
+              <Link href={q({ status: null })} className={`px-3 py-1.5 rounded-full border ${!status && !deleted ? 'bg-slate-900 text-white border-slate-900' : 'bg-white border-gray-300'}`}>
                 All
               </Link>
               {engagementStatuses.map((s) => (
@@ -83,6 +90,11 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
               {seesAll(role) && <Link href={q({ mine: mine ? null : '1' })} className={`px-3 py-1.5 rounded-full border ${mine ? 'bg-blue-600 text-white border-blue-600' : 'bg-white border-gray-300'}`}>
                 Mine
               </Link>}
+              {deletedCount > 0 && (
+                <Link href={q({ status: null, deleted: deleted ? null : '1' })} className={`px-3 py-1.5 rounded-full border ${deleted ? 'bg-red-700 text-white border-red-700' : 'bg-white border-gray-300 text-red-700'}`}>
+                  Marked for deletion <span className="opacity-60">{deletedCount}</span>
+                </Link>
+              )}
             </div>
             <Link href="/workbench/new" className={btn}>
               <Plus className="w-4 h-4" /> New engagement
@@ -116,7 +128,9 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
                         <Link href={`/workbench/e/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.client_name}</Link>
                         <p className="text-gray-500">{r.title}</p>
                       </td>
-                      <td className="p-3"><StatusBadge status={r.status} /></td>
+                      <td className="p-3">
+                        {r.deleted_at ? <span className="text-xs font-semibold text-red-700">Deletes {fmtDate(purgeDate(r.deleted_at))}</span> : <StatusBadge status={r.status} />}
+                      </td>
                       <td className="p-3 text-gray-700">{r.lead}</td>
                       <td className={`p-3 whitespace-nowrap ${overdue ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>{fmtDate(r.due_date)}</td>
                       <td className="p-3">

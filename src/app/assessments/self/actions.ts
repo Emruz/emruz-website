@@ -8,6 +8,7 @@ import { isUuid } from '@/lib/server/api';
 import {
   activeRegistration,
   completeAssessment,
+  currentAssessment,
   getAssessment,
   getRegistration,
 } from '@/lib/server/assessments';
@@ -103,6 +104,7 @@ export async function startNew() {
   const account = await currentAccount();
   if (!account) redirect('/signin?next=/assessments/self');
   await db()`delete from assessments where account_id = ${account.id} and status = 'in_progress'`;
+  await currentAssessment(account.id);
   redirect('/assessments/self');
 }
 

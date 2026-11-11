@@ -15,6 +15,8 @@ export interface Account {
   id: string;
   email: string;
   name: string | null;
+  /** Emails on this account's identities that the provider or an email link verified (lowercase) */
+  verifiedEmails: string[];
   /** Set when an admin is viewing the site as this account */
   impersonatedBy: { id: string; email: string } | null;
 }
@@ -44,9 +46,11 @@ export async function currentAccount(): Promise<Account | null> {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return null;
   const [row] = await db()<
-    { id: string; email: string; name: string | null; admin_id: string | null; admin_email: string | null }[]
+    { id: string; email: string; name: string | null; verified_emails: string[]; admin_id: string | null; admin_email: string | null }[]
   >`
-    select a.id, a.email, a.name, adm.id as admin_id, adm.email as admin_email
+    select a.id, a.email, a.name, adm.id as admin_id, adm.email as admin_email,
+      coalesce((select array_agg(distinct lower(i.email)) from identities i
+                where i.account_id = a.id and i.email_verified and i.email is not null), '{}') as verified_emails
     from sessions s join accounts a on a.id = s.account_id
     left join accounts adm on adm.id = s.impersonated_by
     where s.token_hash = ${sha256(token)} and s.expires_at > now()`;
@@ -55,6 +59,7 @@ export async function currentAccount(): Promise<Account | null> {
     id: row.id,
     email: row.email,
     name: row.name,
+    verifiedEmails: row.verified_emails ?? [],
     impersonatedBy: row.admin_id ? { id: row.admin_id, email: row.admin_email! } : null,
   };
 }
@@ -100,9 +105,15 @@ export async function destroySession() {
   }
 }
 
-/** Admin rights belong to the signed-in admin, never to an account they are viewing as. */
+/**
+ * Admin rights belong to the signed-in admin, never to an account they are viewing as.
+ * They require a verified identity (provider-verified or email link) whose email is
+ * in ADMIN_EMAILS; accounts.email alone is not trusted.
+ */
 export function isAdmin(a: Account | null): boolean {
-  return !!a && !a.impersonatedBy && adminEmails().includes(a.email.toLowerCase());
+  if (!a || a.impersonatedBy) return false;
+  const admins = adminEmails();
+  return a.verifiedEmails.some((e) => admins.includes(e));
 }
 
 /** Only allow same-site relative return paths. */

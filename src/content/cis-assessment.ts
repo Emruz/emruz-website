@@ -6,7 +6,7 @@
  * questions at or below it are scored. Everything runs in the browser;
  * answers are never sent to the server.
  */
-import { packages, type CapabilityCode, type ServicePackage } from './packages';
+import { addOns, packages, type AddOn, type CapabilityCode, type ServicePackage } from './packages';
 import type { FrameworkKey } from './crosswalk';
 
 const FRAMEWORK_KEYS: FrameworkKey[] = ['cis', 'cmmc', 'iso', 'csf', 'soc2'];
@@ -21,6 +21,8 @@ export interface Question {
   ig: IG;
   text: string;
   needs?: Needs;
+  /** Managed capabilities that fully deliver this question when included in a package */
+  closes?: CapabilityCode[];
 }
 
 export interface Control {
@@ -46,9 +48,9 @@ export const controls: Control[] = [
     summary: 'Know every device that connects to your environment, so you can protect it.',
     capabilities: ['ESPM', 'CTEM'],
     questions: [
-      { id: '1a', ig: 1, text: 'We keep an accurate, current inventory of every device that connects to our environment, including remote and cloud devices.' },
-      { id: '1b', ig: 1, text: 'Unknown or unauthorized devices are found and removed or quarantined within a week.' },
-      { id: '1c', ig: 2, text: 'Asset discovery runs automatically and keeps the inventory up to date.' },
+      { id: '1a', ig: 1, closes: ['ESPM', 'CTEM'], text: 'We keep an accurate, current inventory of every device that connects to our environment, including remote and cloud devices.' },
+      { id: '1b', ig: 1, closes: ['ESPM'], text: 'Unknown or unauthorized devices are found and removed or quarantined within a week.' },
+      { id: '1c', ig: 2, closes: ['ESPM', 'CTEM'], text: 'Asset discovery runs automatically and keeps the inventory up to date.' },
     ],
   },
   {
@@ -57,8 +59,8 @@ export const controls: Control[] = [
     summary: 'Only authorized, supported software is installed and allowed to run.',
     capabilities: ['ESPM'],
     questions: [
-      { id: '2a', ig: 1, text: 'We keep an inventory of authorized software and review it at least twice a year.' },
-      { id: '2b', ig: 1, text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
+      { id: '2a', ig: 1, closes: ['ESPM'], text: 'We keep an inventory of authorized software and review it at least twice a year.' },
+      { id: '2b', ig: 1, closes: ['ESPM'], text: 'Unsupported or unauthorized software is removed or recorded as an approved exception.' },
       { id: '2c', ig: 2, text: 'Allowlisting stops unauthorized software, libraries and scripts from running.' },
     ],
   },
@@ -66,12 +68,12 @@ export const controls: Control[] = [
     id: 3,
     title: 'Data Protection',
     summary: 'Know where sensitive data lives and protect it from exposure and loss.',
-    capabilities: ['DSPM', 'CFS'],
+    capabilities: ['DSPM', 'CFS', 'MDE'],
     service: grc,
     questions: [
-      { id: '3a', ig: 1, text: 'We have a data management process and know where our sensitive data is stored.' },
-      { id: '3b', ig: 1, text: 'Access to sensitive data is restricted, and data on laptops and mobile devices is encrypted.' },
-      { id: '3c', ig: 2, text: 'Sensitive data is classified, encrypted in transit and at rest, and monitored for leaks.' },
+      { id: '3a', ig: 1, closes: ['DSPM'], text: 'We have a data management process and know where our sensitive data is stored.' },
+      { id: '3b', ig: 1, closes: ['MDE'], text: 'Access to sensitive data is restricted, and data on laptops and mobile devices is encrypted.' },
+      { id: '3c', ig: 2, closes: ['DSPM'], text: 'Sensitive data is classified, encrypted in transit and at rest, and monitored for leaks.' },
     ],
   },
   {
@@ -80,9 +82,9 @@ export const controls: Control[] = [
     summary: 'Systems start from a hardened baseline and stay that way.',
     capabilities: ['ESPM', 'NSPM'],
     questions: [
-      { id: '4a', ig: 1, text: 'We have documented secure configuration standards for endpoints, servers, network devices and cloud services.' },
-      { id: '4b', ig: 1, text: 'Default accounts and passwords are changed or disabled, and devices lock automatically when idle.' },
-      { id: '4c', ig: 2, text: 'Configuration drift is detected and corrected automatically.' },
+      { id: '4a', ig: 1, closes: ['ESPM', 'NSPM'], text: 'We have documented secure configuration standards for endpoints, servers, network devices and cloud services.' },
+      { id: '4b', ig: 1, closes: ['ESPM'], text: 'Default accounts and passwords are changed or disabled, and devices lock automatically when idle.' },
+      { id: '4c', ig: 2, closes: ['ESPM', 'NSPM'], text: 'Configuration drift is detected and corrected automatically.' },
     ],
   },
   {
@@ -91,9 +93,9 @@ export const controls: Control[] = [
     summary: 'Every account is known, needed and owned by someone.',
     capabilities: ['ISPM'],
     questions: [
-      { id: '5a', ig: 1, text: 'We keep an inventory of all user, administrator and service accounts.' },
-      { id: '5b', ig: 1, text: 'Accounts are disabled promptly when people leave, and unused accounts are disabled after 45 days.' },
-      { id: '5c', ig: 1, text: 'Administrators use separate accounts for privileged work, and every account has a unique password.' },
+      { id: '5a', ig: 1, closes: ['ISPM'], text: 'We keep an inventory of all user, administrator and service accounts.' },
+      { id: '5b', ig: 1, closes: ['ISPM'], text: 'Accounts are disabled promptly when people leave, and unused accounts are disabled after 45 days.' },
+      { id: '5c', ig: 1, closes: ['ISPM'], text: 'Administrators use separate accounts for privileged work, and every account has a unique password.' },
     ],
   },
   {
@@ -103,8 +105,8 @@ export const controls: Control[] = [
     capabilities: ['ISPM', 'ITDR'],
     questions: [
       { id: '6a', ig: 1, text: 'Access is granted and removed through a defined process based on role.' },
-      { id: '6b', ig: 1, text: 'MFA is required for email, remote access, internet-facing applications and all administrator access.' },
-      { id: '6c', ig: 2, text: 'Access is managed centrally (single sign-on) and reviewed at least quarterly.' },
+      { id: '6b', ig: 1, closes: ['ISPM'], text: 'MFA is required for email, remote access, internet-facing applications and all administrator access.' },
+      { id: '6c', ig: 2, closes: ['ISPM'], text: 'Access is managed centrally (single sign-on) and reviewed at least quarterly.' },
     ],
   },
   {
@@ -114,8 +116,8 @@ export const controls: Control[] = [
     capabilities: ['CTEM', 'ESPM'],
     questions: [
       { id: '7a', ig: 1, text: 'Operating systems and applications are patched automatically, at least monthly.' },
-      { id: '7b', ig: 2, text: 'Internal assets are scanned for vulnerabilities at least quarterly and external assets at least monthly.' },
-      { id: '7c', ig: 2, text: 'Findings are prioritized by risk and fixed within defined timeframes.' },
+      { id: '7b', ig: 2, closes: ['CTEM', 'ESPM'], text: 'Internal assets are scanned for vulnerabilities at least quarterly and external assets at least monthly.' },
+      { id: '7c', ig: 2, closes: ['CTEM'], text: 'Findings are prioritized by risk and fixed within defined timeframes.' },
     ],
   },
   {
@@ -124,9 +126,9 @@ export const controls: Control[] = [
     summary: 'Collect and review the logs you need to detect and investigate attacks.',
     capabilities: ['SIEM'],
     questions: [
-      { id: '8a', ig: 1, text: 'Audit logging is enabled on key systems and logs are kept for at least 90 days.' },
-      { id: '8b', ig: 2, text: 'Logs are collected in one central place with synchronized time.' },
-      { id: '8c', ig: 2, text: 'Logs are reviewed for threats at least weekly, by people or automated analytics.' },
+      { id: '8a', ig: 1, closes: ['SIEM'], text: 'Audit logging is enabled on key systems and logs are kept for at least 90 days.' },
+      { id: '8b', ig: 2, closes: ['SIEM'], text: 'Logs are collected in one central place with synchronized time.' },
+      { id: '8c', ig: 2, closes: ['SIEM'], text: 'Logs are reviewed for threats at least weekly, by people or automated analytics.' },
     ],
   },
   {
@@ -135,9 +137,9 @@ export const controls: Control[] = [
     summary: 'Block the most common ways attackers reach your people.',
     capabilities: ['APP', 'ITP'],
     questions: [
-      { id: '9a', ig: 1, text: 'Only supported, up-to-date browsers and email clients are allowed.' },
-      { id: '9b', ig: 1, text: 'DNS filtering blocks access to known malicious sites for all users, wherever they work.' },
-      { id: '9c', ig: 2, text: 'Email is protected with DMARC, and attachments and links are scanned or sandboxed.' },
+      { id: '9a', ig: 1, closes: ['ESPM'], text: 'Only supported, up-to-date browsers and email clients are allowed.' },
+      { id: '9b', ig: 1, closes: ['ITP'], text: 'DNS filtering blocks access to known malicious sites for all users, wherever they work.' },
+      { id: '9c', ig: 2, closes: ['APP'], text: 'Email is protected with DMARC, and attachments and links are scanned or sandboxed.' },
     ],
   },
   {
@@ -146,20 +148,20 @@ export const controls: Control[] = [
     summary: 'Prevent, detect and contain malicious code on every device.',
     capabilities: ['EPP', 'EDR'],
     questions: [
-      { id: '10a', ig: 1, text: 'Anti-malware runs on every endpoint and updates automatically.' },
-      { id: '10b', ig: 1, text: 'Autorun is disabled and removable media is scanned automatically.' },
-      { id: '10c', ig: 2, text: 'Centrally managed, behavior-based detection (EDR) is in place on every endpoint.' },
+      { id: '10a', ig: 1, closes: ['EPP', 'EDR'], text: 'Anti-malware runs on every endpoint and updates automatically.' },
+      { id: '10b', ig: 1, closes: ['EPP', 'EDR'], text: 'Autorun is disabled and removable media is scanned automatically.' },
+      { id: '10c', ig: 2, closes: ['EDR'], text: 'Centrally managed, behavior-based detection (EDR) is in place on every endpoint.' },
     ],
   },
   {
     id: 11,
     title: 'Data Recovery',
     summary: 'Restore systems and data quickly after an incident.',
-    capabilities: ['EDR'],
+    capabilities: ['DSB'],
     service: cloud,
     questions: [
-      { id: '11a', ig: 1, text: 'Critical systems and data are backed up automatically at least weekly.' },
-      { id: '11b', ig: 1, text: 'At least one backup copy is isolated from the network (offline, immutable or off-site).' },
+      { id: '11a', ig: 1, closes: ['DSB'], text: 'Critical systems and data are backed up automatically at least weekly.' },
+      { id: '11b', ig: 1, closes: ['DSB'], text: 'At least one backup copy is isolated from the network (offline, immutable or off-site).' },
       { id: '11c', ig: 2, text: 'Restores are tested at least quarterly.' },
     ],
   },
@@ -169,8 +171,8 @@ export const controls: Control[] = [
     summary: 'Keep network devices current, segmented and securely managed.',
     capabilities: ['NSPM'],
     questions: [
-      { id: '12a', ig: 1, needs: 'network', text: 'Firewalls, routers and switches run supported, up-to-date firmware.' },
-      { id: '12b', ig: 2, needs: 'network', text: 'The network is segmented, and admin interfaces are reachable only from management networks.' },
+      { id: '12a', ig: 1, closes: ['NSPM'], needs: 'network', text: 'Firewalls, routers and switches run supported, up-to-date firmware.' },
+      { id: '12b', ig: 2, closes: ['NSPM'], needs: 'network', text: 'The network is segmented, and admin interfaces are reachable only from management networks.' },
       { id: '12c', ig: 2, text: 'Remote access uses VPN or zero-trust access with MFA, and the network architecture is documented.' },
     ],
   },
@@ -180,21 +182,21 @@ export const controls: Control[] = [
     summary: 'Watch the environment and respond to threats as they happen.',
     capabilities: ['SIEM', 'ITP', 'BTH'],
     questions: [
-      { id: '13a', ig: 2, text: 'Security events are correlated and alerted on from a central platform.' },
-      { id: '13b', ig: 2, text: 'Intrusion detection, or equivalent monitoring for cloud environments, is in place.' },
-      { id: '13c', ig: 2, text: 'Alerts are triaged by analysts around the clock.' },
+      { id: '13a', ig: 2, closes: ['SIEM'], text: 'Security events are correlated and alerted on from a central platform.' },
+      { id: '13b', ig: 2, closes: ['SIEM'], text: 'Intrusion detection, or equivalent monitoring for cloud environments, is in place.' },
+      { id: '13c', ig: 2, closes: ['SIEM'], text: 'Alerts are triaged by analysts around the clock.' },
     ],
   },
   {
     id: 14,
     title: 'Security Awareness and Skills Training',
     summary: 'Help people recognize and report attacks.',
-    capabilities: ['APP'],
+    capabilities: ['PSA'],
     service: grc,
     questions: [
-      { id: '14a', ig: 1, text: 'All staff complete security awareness training at least once a year.' },
-      { id: '14b', ig: 1, text: 'Training covers phishing, social engineering, data handling and how to report incidents.' },
-      { id: '14c', ig: 2, text: 'Phishing simulations and role-specific training run regularly.' },
+      { id: '14a', ig: 1, closes: ['PSA'], text: 'All staff complete security awareness training at least once a year.' },
+      { id: '14b', ig: 1, closes: ['PSA'], text: 'Training covers phishing, social engineering, data handling and how to report incidents.' },
+      { id: '14c', ig: 2, closes: ['PSA'], text: 'Phishing simulations and role-specific training run regularly.' },
     ],
   },
   {
@@ -218,7 +220,7 @@ export const controls: Control[] = [
     questions: [
       { id: '16a', ig: 2, needs: 'dev', text: 'We follow a secure development process and track the third-party components we use.' },
       { id: '16b', ig: 2, needs: 'dev', text: 'Application vulnerabilities are tracked and fixed through a defined process.' },
-      { id: '16c', ig: 3, needs: 'dev', text: 'Applications are tested with code analysis and penetration testing before and after release.' },
+      { id: '16c', ig: 3, closes: ['CPT'], needs: 'dev', text: 'Applications are tested with code analysis and penetration testing before and after release.' },
     ],
   },
   {
@@ -228,9 +230,9 @@ export const controls: Control[] = [
     capabilities: ['CIR'],
     service: vciso,
     questions: [
-      { id: '17a', ig: 1, text: 'A named person manages incidents, with a backup.' },
-      { id: '17b', ig: 1, text: 'Contacts for reporting incidents (staff, insurer, authorities, partners) are current and known.' },
-      { id: '17c', ig: 2, text: 'A written incident response plan exists and is exercised at least once a year.' },
+      { id: '17a', ig: 1, closes: ['CIR'], text: 'A named person manages incidents, with a backup.' },
+      { id: '17b', ig: 1, closes: ['CIR'], text: 'Contacts for reporting incidents (staff, insurer, authorities, partners) are current and known.' },
+      { id: '17c', ig: 2, closes: ['CIR'], text: 'A written incident response plan exists and is exercised at least once a year.' },
     ],
   },
   {
@@ -239,9 +241,9 @@ export const controls: Control[] = [
     summary: 'Test your defenses the way an attacker would.',
     capabilities: ['CPT', 'CTEM'],
     questions: [
-      { id: '18a', ig: 2, text: 'A penetration testing program defines scope, frequency and rules of engagement.' },
-      { id: '18b', ig: 2, text: 'External penetration tests run at least once a year.' },
-      { id: '18c', ig: 3, text: 'Internal tests run regularly, and findings are fixed and retested.' },
+      { id: '18a', ig: 2, closes: ['CPT'], text: 'A penetration testing program defines scope, frequency and rules of engagement.' },
+      { id: '18b', ig: 2, closes: ['CPT'], text: 'External penetration tests run at least once a year.' },
+      { id: '18c', ig: 3, closes: ['CPT'], text: 'Internal tests run regularly, and findings are fixed and retested.' },
     ],
   },
 ];
@@ -398,6 +400,8 @@ export interface Recommendation {
   needed: CapabilityCode[];
   pkg: ServicePackage | null;
   covered: CapabilityCode[];
+  /** Add-on services that close gaps the edition does not */
+  addOns: AddOn[];
   services: { label: string; href: string }[];
 }
 
@@ -427,7 +431,24 @@ export function recommend(answers: Answers, ig: IG, p: Profile = {}): Recommenda
   for (const g of gaps) if (g.control.service) services.set(g.control.service.href, g.control.service);
   if (overallScore(answers, ig, p) < 50) services.set(vciso.href, vciso);
 
-  return { gaps, needed, pkg, covered, services: [...services.values()] };
+  // Add-ons: recommend one when it would deliver an in-scope question answered Partly or lower
+  // that the edition doesn't already deliver.
+  const weak = controls
+    .flatMap((c) => inScope(c, ig, p))
+    .filter((q) => (answers[q.id] ?? 0) < 3 && q.closes?.length && !q.closes.some((cap) => pkg?.includes.includes(cap)));
+  const helps = (a: AddOn) => weak.some((q) => q.closes!.some((cap) => a.includes.includes(cap)));
+  const chosen: AddOn[] = [];
+  const psa = addOns.find((a) => a.code === 'PSA')!;
+  if (helps(psa)) chosen.push(psa);
+  const drm = addOns.find((a) => a.code === 'DRM-CP')!;
+  const mde = addOns.find((a) => a.code === 'MDE-PM')!;
+  const needsDspm = weak.some((q) => q.closes!.includes('DSPM'));
+  if (needsDspm) chosen.push(drm);
+  else if (helps(mde)) chosen.push(mde);
+  const dsb = addOns.find((a) => a.code === 'DSB')!;
+  if (helps(dsb)) chosen.push(dsb);
+
+  return { gaps, needed, pkg, covered, addOns: chosen, services: [...services.values()] };
 }
 
 
@@ -468,3 +489,16 @@ export function cleanProfile(input: unknown): Profile {
 
 export const isComplete = (p: Profile, a: Answers) =>
   profileDone(p) && controls.flatMap((c) => inScope(c, targetIG(p), p)).every((q) => q.id in a);
+
+/** Answers as they would be with a package in place: questions it delivers become Fully. */
+export function withPackage(answers: Answers, ...services: ({ includes: CapabilityCode[] } | null)[]): Answers {
+  const caps = new Set(services.flatMap((x) => x?.includes ?? []));
+  if (!caps.size) return answers;
+  const out: Answers = { ...answers };
+  for (const c of controls) {
+    for (const q of c.questions) {
+      if (q.closes?.some((cap) => caps.has(cap))) out[q.id] = 4;
+    }
+  }
+  return out;
+}

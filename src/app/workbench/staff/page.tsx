@@ -51,6 +51,9 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
                         </td>
                         <td className="p-3">
                           {s.role === 'lead' ? 'Lead' : 'Assessor'}
+                          {(s.is_admin || s.permanent_admin) && (
+                            <span className="ml-2 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Admin</span>
+                          )}
                           {!s.active && <p className="text-xs font-semibold text-red-700">Deactivated</p>}
                         </td>
                         <td className="p-3 text-gray-700 whitespace-nowrap">{s.phone ?? <span className="text-gray-400">–</span>}</td>
@@ -65,8 +68,10 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
                 </table>
               </div>
               <div className={`${card} p-5`}>
-                <h2 className="font-bold text-gray-900 mb-1">Site admins</h2>
-                <p className="text-sm text-gray-600 mb-3">Full access everywhere. Set by ADMIN_EMAILS on Netlify, not here.</p>
+                <h2 className="font-bold text-gray-900 mb-1">Permanent admins</h2>
+                <p className="text-sm text-gray-600 mb-3">
+                  Set by ADMIN_EMAILS on Netlify and cannot be removed here. Give anyone else admin rights from their staff record.
+                </p>
                 <ul className="text-sm space-y-1">
                   {admins.map((a) => <li key={a.email}>{a.name || a.email} <span className="text-gray-500">{a.email}</span></li>)}
                 </ul>
@@ -86,6 +91,7 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
                   <option value="lead">Lead: sees everything, approves reports</option>
                 </select>
               </div>
+              <label className="flex gap-2 text-sm"><input type="checkbox" name="admin" /> Admin: full access to the site and Workbench</label>
               <label className="flex gap-2 text-sm"><input type="checkbox" name="invite" defaultChecked /> Email them a sign-in link</label>
               <button className={btn}>Add</button>
             </form>

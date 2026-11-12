@@ -24,6 +24,7 @@ const eventText: Record<string, (d: Record<string, unknown>) => string> = {
   report_sent: (d) => `Sent v${d.version} to ${(d.to as string[]).join(', ')}`,
   client_link_added: (d) => `Client shared a link: ${d.title}`,
   marked_deleted: () => 'Marked the engagement for deletion',
+  started_from_contact: (d) => `Started from ${d.contact}'s profile`,
   restored: () => 'Restored the engagement',
 };
 

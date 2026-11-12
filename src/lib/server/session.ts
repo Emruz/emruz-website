@@ -28,6 +28,10 @@ export interface Account {
   authenticatedAt: Date;
   /** Set when an admin is viewing the site as this account */
   impersonatedBy: { id: string; email: string } | null;
+  /** Admin rights granted on the Staff page (active staff record with is_admin) */
+  grantedAdmin: boolean;
+  /** Profile photo version, null when there is none */
+  avatarVersion: number | null;
 }
 
 const cookieOptions = (maxAgeSeconds: number) => ({
@@ -69,10 +73,13 @@ export async function currentAccount(): Promise<Account | null> {
       created_at: Date;
       last_seen_at: Date;
       authenticated_at: Date;
+      granted_admin: boolean;
+      avatar_version: string | null;
     }[]
   >`
     select a.id, a.email, a.name, adm.id as admin_id, adm.email as admin_email,
-      s.created_at, s.last_seen_at, s.authenticated_at,
+      s.created_at, s.last_seen_at, s.authenticated_at, a.avatar_version,
+      exists(select 1 from staff st where st.account_id = a.id and st.active and st.is_admin) as granted_admin,
       coalesce((select array_agg(distinct lower(i.email)) from identities i
                 where i.account_id = a.id and i.email_verified and i.email is not null), '{}') as verified_emails
     from sessions s join accounts a on a.id = s.account_id
@@ -89,6 +96,8 @@ export async function currentAccount(): Promise<Account | null> {
     verifiedEmails: row.verified_emails ?? [],
     authenticatedAt: new Date(row.authenticated_at),
     impersonatedBy: row.admin_id ? { id: row.admin_id, email: row.admin_email! } : null,
+    grantedAdmin: !!row.granted_admin,
+    avatarVersion: row.avatar_version ? Number(row.avatar_version) : null,
   };
   // Admin sessions are shorter: fixed lifetime and a short idle timeout
   if (
@@ -161,11 +170,17 @@ export async function destroySession() {
 
 /**
  * Admin rights belong to the signed-in admin, never to an account they are viewing as.
- * They require a verified identity (provider-verified or email link) whose email is
- * in ADMIN_EMAILS; accounts.email alone is not trusted.
+ * They come from a verified identity (provider-verified or email link) whose email is
+ * in ADMIN_EMAILS (accounts.email alone is not trusted), or from an admin grant on the
+ * Staff page for an account that has signed in with a verified identity.
  */
 export function isAdmin(a: Account | null): boolean {
   if (!a || a.impersonatedBy) return false;
+  return isPermanentAdmin(a) || (a.grantedAdmin && a.verifiedEmails.length > 0);
+}
+
+/** Admin through ADMIN_EMAILS on Netlify; cannot be changed from the site. */
+export function isPermanentAdmin(a: Pick<Account, 'verifiedEmails'>): boolean {
   const admins = adminEmails();
   return a.verifiedEmails.some((e) => admins.includes(e));
 }

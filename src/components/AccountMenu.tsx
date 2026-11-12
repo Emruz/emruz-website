@@ -4,23 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, LogIn } from 'lucide-react';
+import { initials } from '@/lib/initials';
+
+export { initials };
 
 export interface Me {
-  account: { email: string; name: string | null } | null;
+  account: { email: string; name: string | null; avatar?: string | null } | null;
   isAdmin?: boolean;
   isStaff?: boolean;
   isClient?: boolean;
   impersonatedBy?: string | null;
-}
-
-export function initials(a: { email: string; name: string | null }): string {
-  const fromName = (a.name || '')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('');
-  return (fromName || a.email[0] || '?').toUpperCase();
 }
 
 /**
@@ -30,6 +23,13 @@ export function initials(a: { email: string; name: string | null }): string {
 export function useMe(): Me | null {
   const [me, setMe] = useState<Me | null>(null);
   const pathname = usePathname();
+  const [bump, setBump] = useState(0);
+  useEffect(() => {
+    // The profile page asks for a refresh after a change
+    const onChange = () => setBump((n) => n + 1);
+    window.addEventListener('emruz:me', onChange);
+    return () => window.removeEventListener('emruz:me', onChange);
+  }, []);
   useEffect(() => {
     let alive = true;
     fetch('/api/me', { cache: 'no-store' })
@@ -39,11 +39,16 @@ export function useMe(): Me | null {
     return () => {
       alive = false;
     };
-  }, [pathname]);
+  }, [pathname, bump]);
   return me;
 }
 
 export function Avatar({ me, size = 'md' }: { me: NonNullable<Me['account']>; size?: 'md' | 'lg' }) {
+  const box = size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
+  if (me.avatar) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={me.avatar} alt="" aria-hidden className={`${box} rounded-full object-cover`} />;
+  }
   return (
     <span
       aria-hidden
@@ -58,6 +63,7 @@ export function Avatar({ me, size = 'md' }: { me: NonNullable<Me['account']>; si
 
 export function accountLinks(me: Me) {
   const links = [
+    { label: 'Your profile', href: '/account' },
     { label: 'Your account', href: '/motiv/account' },
     { label: 'Subscriptions', href: '/motiv/account#subscriptions' },
     { label: 'Register a computer', href: '/activate' },
@@ -82,7 +88,8 @@ export function adminLinks(me: Me | null): AdminLink[] {
   if (!me?.account || !me.isAdmin) return [];
   return [
     { label: 'Workbench', href: '/workbench', description: 'Assessments, engagements and reports' },
-    { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench' },
+    { label: 'Clients', href: '/workbench/clients', description: 'Client organizations and portal contacts' },
+    { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench and who is an admin' },
     { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
     { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
     { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },

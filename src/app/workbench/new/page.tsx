@@ -2,6 +2,8 @@ import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { requireStaff, staffList } from '@/lib/server/workbench';
 import { createEngagement } from '../actions';
+import { contactOptions } from '@/lib/server/profile';
+import ClientPicker from './ClientPicker';
 import { btn, card, input, label } from '../ui';
 
 export const metadata = { title: 'New engagement', robots: { index: false } };
@@ -9,7 +11,7 @@ export const metadata = { title: 'New engagement', robots: { index: false } };
 export default async function NewEngagement({ searchParams }: { searchParams: Promise<{ client?: string; error?: string }> }) {
   const { account } = await requireStaff('/workbench/new');
   const sp = await searchParams;
-  const [clients, staff, selfs] = await Promise.all([
+  const [clients, staff, selfs, contacts] = await Promise.all([
     db()<{ id: string; name: string }[]>`select id, name from clients order by name`,
     staffList(),
     db()<{ id: string; company: string; email: string; score: number; completed_at: Date }[]>`
@@ -17,6 +19,7 @@ export default async function NewEngagement({ searchParams }: { searchParams: Pr
       from assessments s join accounts a on a.id = s.account_id
       join assessment_registrations r on r.account_id = s.account_id and r.withdrawn_at is null
       where s.status = 'completed' and s.deleted_at is null order by s.completed_at desc limit 200`,
+    contactOptions(),
   ]);
   const leads = [{ account_id: account.id, email: account.email, name: account.name }, ...staff.filter((s) => s.account_id !== account.id)];
 
@@ -25,25 +28,13 @@ export default async function NewEngagement({ searchParams }: { searchParams: Pr
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Workbench', href: '/workbench' }, { label: 'New engagement' }]}
         title="New engagement"
-        summary="Set up a NIST CSF 2.0 assessment. A completed self-assessment can pre-fill the ratings."
+        summary="Set up a NIST CSF 2.0 assessment. Start from a contact's profile, and a completed self-assessment can pre-fill the ratings."
       />
       <section className="py-8 bg-gray-50">
         <Container>
           {sp.error && <p role="alert" className="mb-4 text-red-700 font-semibold">Choose a client or enter a new client name.</p>}
           <form action={createEngagement} className={`${card} p-6 md:p-8 max-w-2xl space-y-5`}>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className={label} htmlFor="client_id">Client</label>
-                <select id="client_id" name="client_id" defaultValue={sp.client ?? ''} className={input}>
-                  <option value="">Choose…</option>
-                  {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={label} htmlFor="new_client">Or new client</label>
-                <input id="new_client" name="new_client" className={input} placeholder="Company name" />
-              </div>
-            </div>
+            <ClientPicker clients={clients} contacts={contacts} defaultClient={sp.client ?? ''} />
             <div>
               <label className={label} htmlFor="title">Title</label>
               <input id="title" name="title" className={input} defaultValue="NIST CSF 2.0 Assessment" />

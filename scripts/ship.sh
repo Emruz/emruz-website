@@ -57,7 +57,8 @@ if [ "$SKIP_BUILD" = 0 ]; then
 fi
 
 step "Push"
-git push -u origin "$branch"
+# The branch is ours alone, so a rebased branch may replace the copy on GitHub
+git push --force-with-lease -u origin "$branch"
 
 step "Pull request"
 if gh pr view "$branch" --json number >/dev/null 2>&1; then

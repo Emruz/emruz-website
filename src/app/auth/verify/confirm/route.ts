@@ -2,7 +2,7 @@ import { SITE_URL } from '@/lib/server/config';
 import { NextResponse } from 'next/server';
 import { clientIp, sameOrigin } from '@/lib/server/api';
 import { securityEvent } from '@/lib/server/alerts';
-import { changeEmail, claimEmail, signInWithIdentity } from '@/lib/server/accounts';
+import { addEmail, claimEmail, signInWithIdentity } from '@/lib/server/accounts';
 import { sendEmail } from '@/lib/server/email';
 import { db } from '@/lib/server/db';
 import { sha256 } from '@/lib/server/lease';
@@ -30,19 +30,20 @@ export async function POST(req: Request) {
     return to('/motiv/account?claim=done');
   }
 
-  if (t.purpose === 'change_email') {
+  if (t.purpose === 'change_email' || t.purpose === 'add_email') {
     const current = await currentAccount();
     if (!current || current.id !== t.account_id) return to('/signin?error=claim&next=/account');
     const old = current.email;
-    const r = await changeEmail(current.id, t.email);
-    if (r === 'done' && old.toLowerCase() !== t.email) {
+    const makeDefault = t.purpose === 'change_email';
+    const r = await addEmail(current.id, t.email, makeDefault);
+    if (r === 'done' && makeDefault && old.toLowerCase() !== t.email) {
       await sendEmail(
         old,
         'Your Emruz email address was changed',
         `The email address on your Emruz account was changed to ${t.email}.\n\nIf you did not make this change, reply to this email right away.`,
       ).catch((e) => console.error('email change notice failed', e));
     }
-    return to(`/account?email=${r}`);
+    return to(`/account?email=${r === 'done' ? 'added' : r}`);
   }
 
   const result = await signInWithIdentity({ provider: 'email', subject: t.email, email: t.email, emailVerified: true });

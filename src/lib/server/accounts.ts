@@ -121,10 +121,10 @@ export async function accountForEmail(emailInput: string, name?: string | null):
 }
 
 /**
- * Make a verified address the account's main email. Refused when another account
- * already uses it; the old address stays as a sign-in method.
+ * Add a verified address to the account (optionally as its default email).
+ * Refused when another account already uses it.
  */
-export async function changeEmail(accountId: string, emailInput: string): Promise<'done' | 'taken'> {
+export async function addEmail(accountId: string, emailInput: string, makeDefault: boolean): Promise<'done' | 'taken'> {
   const email = lower(emailInput)!;
   const [other] = await db()`
     select 1 from accounts where lower(email) = ${email} and id <> ${accountId}
@@ -136,7 +136,7 @@ export async function changeEmail(accountId: string, emailInput: string): Promis
     insert into identities (account_id, provider, provider_subject, email, email_verified)
     values (${accountId}, 'email', ${email}, ${email}, true)
     on conflict (provider, provider_subject) do nothing`;
-  await db()`update accounts set email = ${email} where id = ${accountId}`;
-  await logEvent('email_changed', { email }, { accountId });
+  if (makeDefault) await db()`update accounts set email = ${email} where id = ${accountId}`;
+  await logEvent(makeDefault ? 'email_changed' : 'email_added', { email }, { accountId });
   return 'done';
 }

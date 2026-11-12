@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { uploadPhoto } from './actions';
 
 const SIZE = 256;
@@ -17,6 +18,7 @@ async function squareJpeg(file: File): Promise<Blob> {
 }
 
 export default function PhotoPicker({ current, initials }: { current: string | null; initials: string }) {
+  const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -44,7 +46,10 @@ export default function PhotoPicker({ current, initials }: { current: string | n
     const r = await uploadPhoto(fd);
     setBusy(false);
     if (!r.ok) return setError(r.error ?? 'Upload failed.');
-    window.location.reload();
+    setPreview(null);
+    setBlob(null);
+    router.refresh();
+    window.dispatchEvent(new Event('emruz:me'));
   }
 
   const shown = preview ?? current;

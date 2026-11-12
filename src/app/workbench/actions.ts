@@ -10,6 +10,7 @@ import { EMAIL_RE } from '@/lib/server/newsletter';
 import { SITE_URL } from '@/lib/server/config';
 import { sendEmail } from '@/lib/server/email';
 import { securityEvent } from '@/lib/server/alerts';
+import { formatAddress, getProfile } from '@/lib/server/profile';
 import {
   canManageContacts,
   canReview,
@@ -154,15 +155,47 @@ async function newEngagement(o: {
   return e.id;
 }
 
+/** A contact's profile, for starting an engagement from them. Staff only. */
+export async function contactForEngagement(id: string) {
+  await staff();
+  if (!isUuid(id)) return null;
+  const p = await getProfile(id);
+  if (!p) return null;
+  const [match] = p.company
+    ? await db()<{ id: string }[]>`select id from clients where lower(name) = lower(${p.company}) limit 1`
+    : [];
+  return {
+    id: p.id,
+    name: p.name,
+    email: p.email,
+    company: p.company,
+    phone_mobile: p.phone_mobile,
+    phone_work: p.phone_work,
+    addresses: p.addresses.map((a) => ({ label: a.label, text: formatAddress(a), is_default: a.is_default })),
+    clientId: match?.id ?? null,
+  };
+}
+
 export async function createEngagement(form: FormData) {
   const { account } = await staff();
   let clientId = form.get('client_id');
   const newClient = str(form.get('new_client'), 160);
+  const contactId = form.get('contact_id');
+  const contact = isUuid(contactId) ? await getProfile(contactId) : null;
   if (newClient) {
-    const [c] = await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
+    // Reuse a client with the same name rather than making a duplicate
+    const [found] = await db()<{ id: string }[]>`select id from clients where lower(name) = lower(${newClient}) limit 1`;
+    const [c] = found ? [found] : await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
     clientId = c.id;
   }
   if (!isUuid(clientId)) redirect('/workbench/new?error=client');
+  if (contact && form.get('contact_portal') === 'on' && !(await isStaffEmail(contact.email))) {
+    const [hasPrimary] = await db()`select 1 from client_contacts where client_id = ${clientId} and is_primary limit 1`;
+    await db()`
+      insert into client_contacts (client_id, account_id, is_primary) values (${clientId}, ${contact.id}, ${!hasPrimary})
+      on conflict (client_id, account_id) do nothing`;
+    await logEvent('client_contact_added', { clientId, contact: contact.id }, { accountId: account.id, actor: account.email });
+  }
   const ig = (Number(form.get('target_ig')) || 2) as IG;
   const lead = form.get('lead');
   const selfId = form.get('self_assessment_id');
@@ -176,6 +209,14 @@ export async function createEngagement(form: FormData) {
     selfId: isUuid(selfId) ? selfId : null,
     actor: account,
   });
+  if (contact) {
+    // Start the intake from the contact's profile
+    const intake: Record<string, string> = {};
+    if (contact.name) intake.sponsor = contact.name;
+    if (contact.addresses.length) intake.locations = contact.addresses.map((a) => `${a.label ? `${a.label}: ` : ''}${formatAddress(a).replace(/\n/g, ', ')}`).join('\n');
+    if (Object.keys(intake).length) await db()`update engagements set intake = intake || ${db().json(intake)} where id = ${id}`;
+    await logActivity(id, account.email, 'started_from_contact', { contact: contact.email });
+  }
   redirect(ePath(id));
 }
 

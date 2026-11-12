@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { mainNav } from '@/content/navigation';
 import Logo from './Logo';
-import AccountMenu, { Avatar, SessionButtons, accountLinks, useMe } from './AccountMenu';
+import AccountMenu, { Avatar, SessionButtons, accountLinks, adminLinks, useMe } from './AccountMenu';
 
 export default function Header() {
   const pathname = usePathname();
@@ -41,6 +41,8 @@ export default function Header() {
   }, []);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const admin = adminLinks(me);
+  const adminActive = isActive('/admin') || isActive('/workbench');
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200">
@@ -125,6 +127,35 @@ export default function Header() {
               </Link>
             ),
           )}
+          {admin.length > 0 && (
+            <div className="relative" onMouseEnter={() => setOpenMenu('Admin')} onMouseLeave={() => setOpenMenu(null)}>
+              <button
+                className={`flex items-center gap-1 px-3 py-2 rounded-md font-medium transition-colors ${
+                  adminActive ? 'text-blue-700' : 'text-gray-700 hover:text-blue-700'
+                }`}
+                aria-expanded={openMenu === 'Admin'}
+                aria-haspopup="true"
+                onClick={() => setOpenMenu(openMenu === 'Admin' ? null : 'Admin')}
+              >
+                Admin
+                <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === 'Admin' ? 'rotate-180' : ''}`} />
+              </button>
+              {openMenu === 'Admin' && (
+                <div className="absolute right-0 top-full pt-2">
+                  <ul className="w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2">
+                    {admin.map((item) => (
+                      <li key={item.href} className={item.divider ? 'mt-1 pt-1 border-t border-gray-200' : ''}>
+                        <Link href={item.href} className={`block rounded-lg px-3 py-2 hover:bg-gray-50 ${isActive(item.href) ? 'bg-blue-50' : ''}`}>
+                          <span className="block font-semibold text-gray-900">{item.label}</span>
+                          <span className="block text-sm text-gray-500">{item.description}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="hidden lg:flex items-center gap-3">
@@ -189,6 +220,29 @@ export default function Header() {
                 )}
               </li>
             ))}
+            {admin.length > 0 && (
+              <li className="border-b border-gray-100 last:border-0">
+                <button
+                  className="w-full flex items-center justify-between py-3 font-semibold text-gray-900"
+                  aria-expanded={mobileGroup === 'Admin'}
+                  onClick={() => setMobileGroup(mobileGroup === 'Admin' ? null : 'Admin')}
+                >
+                  Admin
+                  <ChevronDown className={`w-4 h-4 transition-transform ${mobileGroup === 'Admin' ? 'rotate-180' : ''}`} />
+                </button>
+                {mobileGroup === 'Admin' && (
+                  <ul className="pb-3 pl-3 space-y-2">
+                    {admin.map((item) => (
+                      <li key={item.href} className={item.divider ? 'pt-2 border-t border-gray-100' : ''}>
+                        <Link href={item.href} className="block text-gray-700">
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            )}
           </ul>
           <div className="px-4 pb-3 border-t border-gray-200 pt-3">
             {me?.account ? (
@@ -198,7 +252,7 @@ export default function Header() {
                   <span className="text-sm text-gray-600 truncate">{me.account.email}</span>
                 </div>
                 <ul className="pl-11 space-y-2 mb-2">
-                  {[...accountLinks(me).links, ...accountLinks(me).admin].map((l) => (
+                  {accountLinks(me).links.map((l) => (
                     <li key={l.href}>
                       <Link href={l.href} className="block text-gray-700">
                         {l.label}

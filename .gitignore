@@ -42,3 +42,25 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+/.data
+
+# Screenshots and scratch images in the project root (site images live in /public)
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
+
+# Keep the env template
+!.env.example
+
+# Local test output
+/test-results/
+/playwright-report/
+/screenshots/
+
+# Editors and logs
+.vscode/
+.idea/
+*.swp
+*.log

@@ -1,5 +1,4 @@
 import 'server-only';
-import { marked } from 'marked';
 import { db } from './db';
 
 export interface InsightRow {
@@ -33,9 +32,7 @@ export const monthYear = (d: Date) =>
 
 export const isoDate = (d: Date) => new Date(d).toISOString().slice(0, 10);
 
-export function renderMarkdown(md: string): string {
-  return marked.parse(md, { async: false, gfm: true }) as string;
-}
+export { renderMarkdown } from '../markdown';
 
 export async function publishedInsights(limit = 100) {
   return db()<InsightRow[]>`

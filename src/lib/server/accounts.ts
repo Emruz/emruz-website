@@ -42,6 +42,14 @@ export async function signInWithIdentity(c: IdentityClaims, linkToAccountId?: st
   }
   if (!accountId) {
     if (!email) return { ok: false, error: 'Your sign-in provider did not share an email address.' };
+    // Never create an account from an email the provider has not verified:
+    // that would let someone pre-register an address they do not own.
+    if (!c.emailVerified) {
+      return {
+        ok: false,
+        error: 'Your sign-in provider did not confirm this email address. Sign in with an email link first, then link this sign-in method from your account page.',
+      };
+    }
     const [taken] = await db()<{ id: string }[]>`select id from accounts where lower(email) = ${email}`;
     if (taken) {
       return {

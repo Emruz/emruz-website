@@ -3,11 +3,12 @@
 import { notFound, redirect } from 'next/navigation';
 import { db, logEvent } from '@/lib/server/db';
 import { SLUG_RE, slugify } from '@/lib/server/insights';
-import { currentAccount, isAdmin } from '@/lib/server/session';
+import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
 async function admin() {
   const a = await currentAccount();
   if (!isAdmin(a)) notFound();
+  requireRecentSignIn(a!, '/admin/insights');
   return a!;
 }
 

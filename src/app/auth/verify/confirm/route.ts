@@ -1,6 +1,7 @@
 import { SITE_URL } from '@/lib/server/config';
 import { NextResponse } from 'next/server';
-import { sameOrigin } from '@/lib/server/api';
+import { clientIp, sameOrigin } from '@/lib/server/api';
+import { securityEvent } from '@/lib/server/alerts';
 import { claimEmail, signInWithIdentity } from '@/lib/server/accounts';
 import { db } from '@/lib/server/db';
 import { sha256 } from '@/lib/server/lease';
@@ -16,7 +17,10 @@ export async function POST(req: Request) {
     update email_tokens set used_at = now()
     where token_hash = ${sha256(token)} and used_at is null and expires_at > now()
     returning email, purpose, account_id, return_to`;
-  if (!t) return to('/signin?error=link');
+  if (!t) {
+    await securityEvent('signin_failure', { provider: 'email', reason: 'invalid or used link', ip: clientIp(req) });
+    return to('/signin?error=link');
+  }
 
   if (t.purpose === 'claim') {
     const current = await currentAccount();

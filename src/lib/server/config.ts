@@ -7,6 +7,8 @@ import 'server-only';
  */
 export const SITE_URL = (
   process.env.SITE_URL ||
+  // Set in next.config.ts at build time (correct for deploy previews)
+  process.env.EMRUZ_BUILD_SITE_URL ||
   (process.env.CONTEXT && process.env.CONTEXT !== 'production' ? process.env.DEPLOY_PRIME_URL : undefined) ||
   process.env.URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||

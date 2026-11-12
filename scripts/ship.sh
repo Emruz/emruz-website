@@ -61,25 +61,30 @@ step "Push"
 git push --force-with-lease -u origin "$branch"
 
 step "Pull request"
-if gh pr view "$branch" --json number >/dev/null 2>&1; then
-  echo "Using the open pull request."
+# Only an open pull request counts; an earlier one on the same branch name may already be merged
+pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+if [ -n "$pr" ]; then
+  echo "Using open pull request #$pr."
 else
   body="$(git log --reverse --pretty='- %s' origin/main..HEAD)"
   gh pr create --base main --head "$branch" --title "$TITLE" --body "$body"
+  pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
 fi
-gh pr view "$branch" --json url --jq .url
+[ -n "$pr" ] || fail "Could not find or open a pull request for $branch."
+gh pr view "$pr" --json url --jq .url
 
 step "Waiting for checks"
 # Checks take a few seconds to register on a new push
 for _ in $(seq 1 24); do
-  gh pr checks "$branch" >/dev/null 2>&1 && break
-  [ "$(gh pr checks "$branch" 2>&1 | grep -c 'no checks')" = 0 ] && break
+  gh pr checks "$pr" >/dev/null 2>&1 && break
+  [ "$(gh pr checks "$pr" 2>&1 | grep -c 'no checks')" = 0 ] && break
   sleep 5
 done
-gh pr checks "$branch" --watch --required || fail "A required check failed. Fix it, then run npm run ship again."
+gh pr checks "$pr" --watch --required || fail "A required check failed. Fix it, then run npm run ship again."
 
 step "Merge"
-gh pr merge "$branch" --squash --delete-branch
+gh pr merge "$pr" --squash --delete-branch
+[ "$(gh pr view "$pr" --json state --jq .state)" = "MERGED" ] || fail "Pull request #$pr did not merge. Check it on GitHub."
 
 step "Update main locally"
 git switch main

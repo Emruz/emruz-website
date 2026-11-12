@@ -80,6 +80,19 @@ export default function Home() {
       href: '/services/ai',
       color: 'blue' as const,
     },
+    {
+      icon: Shield,
+      title: 'Managed Security',
+      description: 'Monitored and managed by our 24x7 SOC, from endpoint protection to full detect, defend and respond.',
+      benefits: [
+        'EDR, MDR, XDR and ΔDR editions',
+        '24x7 detection and response',
+        'Continuous exposure management and pen testing',
+      ],
+      href: '/products/compare',
+      ctaLabel: 'Compare editions',
+      color: 'purple' as const,
+    },
   ];
 
   // Value propositions
@@ -227,6 +240,7 @@ export default function Home() {
                 description={cap.description}
                 benefits={cap.benefits}
                 href={cap.href}
+                ctaLabel={'ctaLabel' in cap ? cap.ctaLabel : undefined}
                 color={cap.color}
               />
             ))}
@@ -272,31 +286,6 @@ export default function Home() {
         </Container>
       </section>
 
-      {/* Managed security */}
-      <section className="py-12 md:py-16 bg-gray-50 border-y border-gray-200">
-        <Container>
-          <Link
-            href="/products/compare"
-            className="group flex flex-col md:flex-row md:items-center gap-6 rounded-2xl p-6 md:p-8 bg-white border border-gray-200 hover:shadow-lg transition-shadow"
-          >
-            <span className="w-16 h-16 flex-shrink-0 rounded-2xl bg-slate-900 text-white flex items-center justify-center">
-              <Shield className="w-8 h-8" aria-hidden />
-            </span>
-            <div className="flex-grow">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">EDR · MDR · XDR · ΔDR</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">Managed security</h2>
-              <p className="text-gray-600 mt-1">
-                Monitored and managed by our 24x7 SOC, from endpoint protection to full detect, defend and respond. Eleven
-                editions, so you pay for the protection you need.
-              </p>
-              <p className="text-[11px] text-gray-400 mt-2">Powered by WhiteDog Cyber</p>
-            </div>
-            <span className="font-semibold text-indigo-700 whitespace-nowrap group-hover:translate-x-1 transition-transform">
-              Compare editions →
-            </span>
-          </Link>
-        </Container>
-      </section>
 
       {/* Why Emruz Section */}
       <section className="py-12 md:py-16 bg-gradient-to-br from-slate-50 to-purple-50 relative overflow-hidden">

@@ -9,7 +9,7 @@ import { WorkbenchNav, btn, card, input, label } from '../ui';
 
 export const metadata = { title: 'Staff', robots: { index: false } };
 
-export default async function Staff({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function Staff({ searchParams }: { searchParams: Promise<{ error?: string; added?: string; saved?: string }> }) {
   const { role } = await requireStaff('/workbench/staff');
   if (role !== 'admin') notFound();
   const sp = await searchParams;
@@ -21,12 +21,13 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Workbench', href: '/workbench' }, { label: 'Staff' }]}
-        title="Assessment workbench"
+        title="Workbench"
         summary="Who can use the workbench. Assessors see only their own work; leads see everything and approve reports."
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
           <WorkbenchNav current="staff" isAdmin />
+          {(sp.added || sp.saved) && <p role="status" className="mb-4 text-emerald-700 font-semibold">{sp.added ? 'Staff member added.' : 'Changes saved.'}</p>}
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <div className={`${card} overflow-x-auto`}>

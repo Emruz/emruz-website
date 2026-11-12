@@ -40,7 +40,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Workbench', href: '/workbench' }, { label: 'Self-assessments' }]}
-        title="Assessment workbench"
+        title="Workbench"
         summary={all ? 'Every self-assessment from registered visitors. Assign each to an analyst to follow up.' : 'Self-assessments assigned to you.'}
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">

@@ -7,7 +7,7 @@ import { engagementStatuses, statusLabel, type EngagementStatus, type ReportStat
 import { csfSubcategories } from '@/content/csf';
 import { StatusBadge, ReportBadge, WorkbenchNav, Meter, fmtDate, btn, card } from './ui';
 
-export const metadata = { title: 'Assessment workbench', robots: { index: false } };
+export const metadata = { title: 'Workbench', robots: { index: false } };
 
 interface Row {
   id: string;
@@ -71,7 +71,7 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Workbench' }]}
-        title="Assessment workbench"
+        title="Workbench"
         summary="NIST CSF 2.0 assessments, evidence and reports."
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">

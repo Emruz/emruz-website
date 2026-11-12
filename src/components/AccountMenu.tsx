@@ -67,7 +67,7 @@ export function accountLinks(me: Me) {
   ];
   const admin = me.isAdmin || me.isStaff
     ? [
-        { label: 'Assessment workbench', href: '/workbench' },
+        { label: 'Workbench', href: '/workbench' },
         ...(me.isAdmin ? [
         { label: 'Motiv admin', href: '/admin/motiv' },
         { label: 'Insights admin', href: '/admin/insights' },

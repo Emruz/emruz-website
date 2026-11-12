@@ -1,5 +1,5 @@
 /**
- * Assessment workbench rules: intake structure, NIST CSF 2.0 scoring,
+ * Workbench rules: intake structure, NIST CSF 2.0 scoring,
  * evidence flags and rollups. Shared by the browser and the server.
  *
  * Scoring rules (shown to assessors and in every report's methodology):

@@ -8,6 +8,10 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # 11.x stored evidence files corrupted on Netlify (Nov 2026); stay on 10.x until fixed upstream
+      - dependency-name: "@netlify/blobs"
+        versions: [">=11"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

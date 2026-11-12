@@ -64,6 +64,8 @@ export function accountLinks(me: Me) {
     { label: 'Sign-in methods', href: '/motiv/account#signin' },
     { label: 'Self-assessments', href: '/assessments/self/history' },
     ...(me.isClient ? [{ label: 'Client portal', href: '/portal' }] : []),
+    // Assessors and leads; admins reach it from the Admin menu
+    ...(me.isStaff && !me.isAdmin ? [{ label: 'My workbench', href: '/workbench' }] : []),
   ];
   return { links };
 }
@@ -75,20 +77,16 @@ export interface AdminLink {
   divider?: boolean;
 }
 
-/** The Admin menu: Workbench for staff, plus site administration for admins. */
+/** The Admin menu, for site admins only. */
 export function adminLinks(me: Me | null): AdminLink[] {
-  if (!me?.account || !(me.isAdmin || me.isStaff)) return [];
+  if (!me?.account || !me.isAdmin) return [];
   return [
     { label: 'Workbench', href: '/workbench', description: 'Assessments, engagements and reports' },
-    ...(me.isAdmin
-      ? [
-          { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench' },
-          { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
-          { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
-          { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
-          { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },
-        ]
-      : []),
+    { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench' },
+    { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
+    { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
+    { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
+    { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },
   ];
 }
 

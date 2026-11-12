@@ -27,10 +27,16 @@ export function priceId(plan: Plan): string | undefined {
 
 const toDate = (unix: number | null | undefined) => (unix ? new Date(unix * 1000) : null);
 
-/** Current period end lives on the subscription items in current API versions. */
+/**
+ * End of paid access. Current period end lives on the subscription items in
+ * current API versions. A subscription canceled immediately keeps its original
+ * period end in Stripe, so use ended_at when it is earlier.
+ */
 function periodEnd(sub: Stripe.Subscription): Date | null {
   const ends = sub.items.data.map((i) => i.current_period_end).filter(Boolean) as number[];
-  return ends.length ? toDate(Math.max(...ends)) : null;
+  const end = ends.length ? Math.max(...ends) : null;
+  if (sub.ended_at && (!end || sub.ended_at < end)) return toDate(sub.ended_at);
+  return toDate(end);
 }
 
 function mapStatus(s: Stripe.Subscription.Status): 'active' | 'past_due' | 'canceled' {

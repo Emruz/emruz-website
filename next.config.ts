@@ -12,8 +12,19 @@ const securityHeaders = [
   },
 ];
 
+// The site's public address, fixed at build time. Netlify only sets CONTEXT and
+// DEPLOY_PRIME_URL during the build; at run time a deploy preview only sees URL
+// (the production address), so sign-in callbacks and email links on previews
+// pointed at production.
+const buildSiteUrl =
+  process.env.SITE_URL ||
+  (process.env.CONTEXT && process.env.CONTEXT !== 'production' ? process.env.DEPLOY_PRIME_URL : undefined) ||
+  process.env.URL ||
+  '';
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  env: { EMRUZ_BUILD_SITE_URL: buildSiteUrl },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { DetailHeader, Container } from '@/components';
 import { requireAccount } from '@/lib/server/session';
+import { staffRole } from '@/lib/server/workbench';
 import { getRegistration, listAssessments } from '@/lib/server/assessments';
 import { maturity } from '@/content/cis-assessment';
 import { displayCode } from '@/content/packages';
@@ -14,6 +15,9 @@ export default async function HistoryPage() {
   const account = await requireAccount('/assessments/self/history');
   const [reg, rows] = await Promise.all([getRegistration(account.id), listAssessments(account.id)]);
   const done = rows.filter((r) => r.status === 'completed');
+  const inProgress = rows.some((r) => r.status === 'in_progress');
+  // Staff are asked whether a new one is for them or a client
+  const startHref = !inProgress && (await staffRole(account)) ? '/assessments/self?choose=1' : '/assessments/self';
 
   return (
     <>
@@ -25,7 +29,10 @@ export default async function HistoryPage() {
           { label: 'Your assessments' },
         ]}
         title="Your assessments"
-        primaryCta={{ label: 'Go to assessment', href: '/assessments/self' }}
+        primaryCta={{
+          label: inProgress ? 'Continue your assessment' : done.length ? 'Start a new assessment' : 'Create a new assessment',
+          href: startHref,
+        }}
       />
       <section className="py-8 md:py-10">
         <Container>

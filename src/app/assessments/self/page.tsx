@@ -7,7 +7,8 @@ import { maturity } from '@/content/cis-assessment';
 import { startNew } from './actions';
 import SelfAssessment from './client';
 import RegisterForm from './RegisterForm';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, User, Users } from 'lucide-react';
+import { staffRole } from '@/lib/server/workbench';
 
 export const metadata = {
   title: 'Security Self-Assessment',
@@ -22,11 +23,44 @@ const benefits = [
   'A report by email, and a follow-up call with our team if you want one',
 ];
 
-export default async function SelfAssessmentPage({ searchParams }: { searchParams: Promise<{ withdrawn?: string }> }) {
+/** Staff starting a self-assessment: for themselves, or a guided one for a client? */
+function WhoFor() {
+  const option = 'flex gap-4 items-start rounded-xl border border-gray-200 p-5 hover:border-blue-400 hover:bg-blue-50/40 transition-colors';
+  return (
+    <section className="py-8 md:py-10 bg-gray-50">
+      <Container>
+        <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 max-w-2xl">
+          <h2 className="text-2xl font-bold text-gray-900">Who is this assessment for?</h2>
+          <p className="text-gray-600 mt-1 mb-6">You are signed in as Emruz staff.</p>
+          <div className="space-y-3">
+            <Link href="/workbench/self/new" className={option}>
+              <Users className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" aria-hidden />
+              <span>
+                <span className="block font-semibold text-gray-900">On behalf of a client</span>
+                <span className="block text-sm text-gray-600">A guided self-assessment. Results go to the client&apos;s account and email, marked as performed by you.</span>
+              </span>
+            </Link>
+            <Link href="/assessments/self?for=me" className={option}>
+              <User className="w-6 h-6 text-blue-600 shrink-0 mt-0.5" aria-hidden />
+              <span>
+                <span className="block font-semibold text-gray-900">For me</span>
+                <span className="block text-sm text-gray-600">Your own self-assessment, saved to your account.</span>
+              </span>
+            </Link>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+export default async function SelfAssessmentPage({ searchParams }: { searchParams: Promise<{ withdrawn?: string; for?: string; choose?: string }> }) {
   const sp = await searchParams;
   const account = await currentAccount();
   const reg = account ? await getRegistration(account.id) : null;
   const registered = activeRegistration(reg);
+  const isStaff = !!(await staffRole(account));
+  const forMe = sp.for === 'me';
 
   const header = (
     <DetailHeader
@@ -40,11 +74,21 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
     />
   );
 
+  // Staff are asked first, unless they are resuming their own assessment in progress
+  if (isStaff && !forMe && (sp.choose === '1' || !registered) && !(account && (await openAssessment(account.id)))) {
+    return (
+      <>
+        {header}
+        <WhoFor />
+      </>
+    );
+  }
+
   if (account && registered) {
     const history = (await listAssessments(account.id)).filter((x) => x.status === 'completed');
     // After finishing, show the latest result instead of silently starting a new draft
     const open = await openAssessment(account.id);
-    if (!open && history.length) {
+    if (!open && history.length && !forMe) {
       const last = history[0];
       return (
         <>
@@ -59,9 +103,13 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link href={`/assessments/self/report/${last.id}`} className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700">View report</Link>
-                  <form action={startNew}>
-                    <button className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50">Start a new assessment</button>
-                  </form>
+                  {isStaff ? (
+                    <Link href="/assessments/self?choose=1" className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50">Start a new assessment</Link>
+                  ) : (
+                    <form action={startNew}>
+                      <button className="px-5 py-2.5 rounded-lg font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50">Start a new assessment</button>
+                    </form>
+                  )}
                   {history.length > 1 && <Link href="/assessments/self/history" className="px-5 py-2.5 rounded-lg font-semibold text-blue-700 hover:bg-blue-50">All results</Link>}
                 </div>
               </div>

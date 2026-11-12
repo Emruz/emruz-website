@@ -167,6 +167,7 @@ export async function contactForEngagement(id: string) {
   return {
     id: p.id,
     name: p.name,
+    job_title: p.job_title,
     email: p.email,
     company: p.company,
     phone_mobile: p.phone_mobile,
@@ -192,7 +193,7 @@ export async function createEngagement(form: FormData) {
   if (contact && form.get('contact_portal') === 'on' && !(await isStaffEmail(contact.email))) {
     const [hasPrimary] = await db()`select 1 from client_contacts where client_id = ${clientId} and is_primary limit 1`;
     await db()`
-      insert into client_contacts (client_id, account_id, is_primary) values (${clientId}, ${contact.id}, ${!hasPrimary})
+      insert into client_contacts (client_id, account_id, title, is_primary) values (${clientId}, ${contact.id}, ${contact.job_title}, ${!hasPrimary})
       on conflict (client_id, account_id) do nothing`;
     await logEvent('client_contact_added', { clientId, contact: contact.id }, { accountId: account.id, actor: account.email });
   }
@@ -212,7 +213,7 @@ export async function createEngagement(form: FormData) {
   if (contact) {
     // Start the intake from the contact's profile
     const intake: Record<string, string> = {};
-    if (contact.name) intake.sponsor = contact.name;
+    if (contact.name) intake.sponsor = [contact.name, contact.job_title].filter(Boolean).join(', ');
     if (contact.addresses.length) intake.locations = contact.addresses.map((a) => `${a.label ? `${a.label}: ` : ''}${formatAddress(a).replace(/\n/g, ', ')}`).join('\n');
     if (Object.keys(intake).length) await db()`update engagements set intake = intake || ${db().json(intake)} where id = ${id}`;
     await logActivity(id, account.email, 'started_from_contact', { contact: contact.email });

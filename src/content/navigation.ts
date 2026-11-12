@@ -38,7 +38,7 @@ export const mainNav: NavGroup[] = [
     href: '/products',
     children: [
       { label: 'Motiv', href: '/motiv', description: 'Private AI meeting assistant for Mac and Windows' },
-      { label: 'Managed Services', href: '/products/compare', description: 'All eleven editions side by side', divider: true },
+      { label: 'Managed Security', href: '/products/compare', description: 'All eleven editions side by side', divider: true },
       { label: 'EDR', href: '/products/edr', description: 'Endpoint detection & response, 3 editions', note: POWERED_BY, indent: true },
       { label: 'MDR', href: '/products/mdr', description: 'Managed detection & response, 24/7', note: POWERED_BY, indent: true },
       { label: 'XDR', href: '/products/xdr', description: 'Extended detection & response, 3 editions', note: POWERED_BY, indent: true },

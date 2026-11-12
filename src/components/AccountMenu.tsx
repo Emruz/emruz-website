@@ -64,19 +64,30 @@ export function accountLinks(me: Me) {
     { label: 'Sign-in methods', href: '/motiv/account#signin' },
     { label: 'Self-assessments', href: '/assessments/self/history' },
     ...(me.isClient ? [{ label: 'Client portal', href: '/portal' }] : []),
+    // Assessors and leads; admins reach it from the Admin menu
+    ...(me.isStaff && !me.isAdmin ? [{ label: 'My workbench', href: '/workbench' }] : []),
   ];
-  const admin = me.isAdmin || me.isStaff
-    ? [
-        { label: 'Workbench', href: '/workbench' },
-        ...(me.isAdmin ? [
-        { label: 'Motiv admin', href: '/admin/motiv' },
-        { label: 'Insights admin', href: '/admin/insights' },
-        { label: 'Messages', href: '/admin/messages' },
-        { label: 'Switch user', href: '/admin/users' },
-        ] : []),
-      ]
-    : [];
-  return { links, admin };
+  return { links };
+}
+
+export interface AdminLink {
+  label: string;
+  href: string;
+  description: string;
+  divider?: boolean;
+}
+
+/** The Admin menu, for site admins only. */
+export function adminLinks(me: Me | null): AdminLink[] {
+  if (!me?.account || !me.isAdmin) return [];
+  return [
+    { label: 'Workbench', href: '/workbench', description: 'Assessments, engagements and reports' },
+    { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench' },
+    { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
+    { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
+    { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
+    { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },
+  ];
 }
 
 /** Sign out, or switch back when an admin is viewing as someone else. */
@@ -131,7 +142,7 @@ export default function AccountMenu({ me }: { me: Me | null }) {
     );
   }
 
-  const { links, admin } = accountLinks(me);
+  const { links } = accountLinks(me);
   const item = 'block w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-50';
   return (
     <div ref={ref} className="relative">
@@ -164,18 +175,6 @@ export default function AccountMenu({ me }: { me: Me | null }) {
               {l.label}
             </Link>
           ))}
-          {admin.length > 0 && (
-            <>
-              <p className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 border-t border-gray-100 mt-1">
-                Admin
-              </p>
-              {admin.map((l) => (
-                <Link key={l.href} href={l.href} className={`${item} text-gray-800`}>
-                  {l.label}
-                </Link>
-              ))}
-            </>
-          )}
           <div className="border-t border-gray-100 mt-1 pt-1">
             <SessionButtons me={me} className={item} />
           </div>

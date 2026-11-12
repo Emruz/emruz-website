@@ -3,6 +3,9 @@
   functions = "netlify/functions"
   publish = ".next"
 
+[build.environment]
+  NODE_VERSION = "24"
+
 # Redirect 404s to home (optional, for SPA-style routing)
 # [[redirects]]
 #   from = "/*"

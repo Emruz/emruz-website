@@ -12,6 +12,9 @@ updates:
       # 11.x stored evidence files corrupted on Netlify (Nov 2026); stay on 10.x until fixed upstream
       - dependency-name: "@netlify/blobs"
         versions: [">=11"]
+      # Types follow the Node version we run (NODE_VERSION in netlify.toml)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

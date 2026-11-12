@@ -31,6 +31,7 @@ export async function saveProfile(form: FormData) {
   await db()`
     update accounts set
       name = ${field(form.get('name'), 120) || null},
+      job_title = ${field(form.get('job_title'), 120) || null},
       phone_mobile = ${field(form.get('phone_mobile'), 40) || null},
       phone_work = ${field(form.get('phone_work'), 40) || null},
       company = ${field(form.get('company'), 160) || null}

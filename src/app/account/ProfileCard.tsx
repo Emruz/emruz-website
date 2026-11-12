@@ -70,7 +70,7 @@ export default function ProfileCard({
             )}
             <div>
               <p className="text-xl font-bold text-gray-900">{profile.name || profile.email}</p>
-              {profile.company && <p className="text-gray-600">{profile.company}</p>}
+              {(profile.job_title || profile.company) && <p className="text-gray-600">{[profile.job_title, profile.company].filter(Boolean).join(', ')}</p>}
             </div>
           </div>
           {!locked && (
@@ -81,6 +81,7 @@ export default function ProfileCard({
         </div>
         <dl>
           <Row title="Full name">{profile.name || none}</Row>
+          <Row title="Title">{profile.job_title || none}</Row>
           <Row title="Email">
             <ul className="space-y-1">
               {profile.emails.map((e) => (
@@ -146,6 +147,11 @@ export default function ProfileCard({
       <section>
         <label className={label} htmlFor="name">Full name</label>
         <input id="name" name="name" form={F} defaultValue={profile.name ?? ''} maxLength={120} className={input} />
+      </section>
+
+      <section>
+        <label className={label} htmlFor="job_title">Title</label>
+        <input id="job_title" name="job_title" form={F} defaultValue={profile.job_title ?? ''} maxLength={120} placeholder="e.g. Director of IT" className={input} />
       </section>
 
       <section>

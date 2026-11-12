@@ -23,6 +23,7 @@ export interface ProfileEmail {
 export interface ContactProfile {
   id: string;
   name: string | null;
+  job_title: string | null;
   email: string;
   emails: ProfileEmail[];
   phone_mobile: string | null;
@@ -44,9 +45,9 @@ export async function addressesFor(accountId: string): Promise<Address[]> {
 
 /** Profile for the account page and for engagements started from a contact. */
 export async function getProfile(accountId: string): Promise<ContactProfile | null> {
-  const [a] = await db()<{ id: string; name: string | null; email: string; phone_mobile: string | null; phone_work: string | null; company: string | null; reg_company: string | null; reg_phone: string | null }[]>`
-    select a.id, a.name, a.email, a.phone_mobile, a.phone_work, a.company,
-           r.company as reg_company, r.phone as reg_phone
+  const [a] = await db()<{ id: string; name: string | null; job_title: string | null; reg_title: string | null; email: string; phone_mobile: string | null; phone_work: string | null; company: string | null; reg_company: string | null; reg_phone: string | null }[]>`
+    select a.id, a.name, a.job_title, a.email, a.phone_mobile, a.phone_work, a.company,
+           r.company as reg_company, r.phone as reg_phone, r.job_title as reg_title
     from accounts a left join assessment_registrations r on r.account_id = a.id and r.withdrawn_at is null
     where a.id = ${accountId}`;
   if (!a) return null;
@@ -66,6 +67,7 @@ export async function getProfile(accountId: string): Promise<ContactProfile | nu
   return {
     id: a.id,
     name: a.name,
+    job_title: a.job_title ?? a.reg_title,
     email: a.email,
     emails: [...seen.values()],
     // Fall back to what they gave when registering for the self-assessment

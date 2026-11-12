@@ -62,7 +62,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full" data-scroll-behavior="smooth">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900 antialiased">
         <Header />

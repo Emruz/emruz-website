@@ -119,3 +119,24 @@ export async function accountForEmail(emailInput: string, name?: string | null):
     returning id`;
   return created.id;
 }
+
+/**
+ * Make a verified address the account's main email. Refused when another account
+ * already uses it; the old address stays as a sign-in method.
+ */
+export async function changeEmail(accountId: string, emailInput: string): Promise<'done' | 'taken'> {
+  const email = lower(emailInput)!;
+  const [other] = await db()`
+    select 1 from accounts where lower(email) = ${email} and id <> ${accountId}
+    union all
+    select 1 from identities where lower(email) = ${email} and account_id <> ${accountId}
+    limit 1`;
+  if (other) return 'taken';
+  await db()`
+    insert into identities (account_id, provider, provider_subject, email, email_verified)
+    values (${accountId}, 'email', ${email}, ${email}, true)
+    on conflict (provider, provider_subject) do nothing`;
+  await db()`update accounts set email = ${email} where id = ${accountId}`;
+  await logEvent('email_changed', { email }, { accountId });
+  return 'done';
+}

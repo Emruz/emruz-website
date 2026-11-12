@@ -232,6 +232,10 @@ export interface StaffMember {
   phone: string | null;
   notes: string | null;
   active: boolean;
+  /** Admin granted on the Staff page */
+  is_admin: boolean;
+  /** Admin through ADMIN_EMAILS; not changeable here */
+  permanent_admin: boolean;
   added_by: string | null;
   added_at: Date;
   engagements: number;
@@ -241,7 +245,9 @@ export interface StaffMember {
 /** Active staff, for pickers. Pass all: true for the staff admin page. */
 export async function staffList(opts: { all?: boolean } = {}) {
   return db()<StaffMember[]>`
-    select s.account_id, a.email, a.name, s.role, s.title, s.phone, s.notes, s.active, s.added_by, s.added_at,
+    select s.account_id, a.email, a.name, s.role, s.title, s.phone, s.notes, s.active, s.is_admin, s.added_by, s.added_at,
+           exists(select 1 from identities i where i.account_id = s.account_id and i.email_verified
+                  and lower(i.email) = any(${adminEmails()})) as permanent_admin,
            (select count(*)::int from engagements e where e.lead_account_id = s.account_id and e.deleted_at is null and e.status <> 'closed') as engagements,
            (select count(*)::int from assessments x where x.assigned_to = s.account_id and x.deleted_at is null) as self_assessments
     from staff s join accounts a on a.id = s.account_id

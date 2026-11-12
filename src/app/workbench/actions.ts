@@ -9,6 +9,7 @@ import { accountForEmail } from '@/lib/server/accounts';
 import { EMAIL_RE } from '@/lib/server/newsletter';
 import { SITE_URL } from '@/lib/server/config';
 import { sendEmail } from '@/lib/server/email';
+import { securityEvent } from '@/lib/server/alerts';
 import {
   canManageContacts,
   canReview,
@@ -516,10 +517,12 @@ export async function addStaff(form: FormData) {
   if (!EMAIL_RE.test(email)) redirect('/workbench/staff?error=email');
   const id = await accountForEmail(email, name || null);
   if (name) await db()`update accounts set name = ${name} where id = ${id}`;
+  const makeAdmin = form.get('admin') === 'on';
   await db()`
-    insert into staff (account_id, role, title, phone, added_by) values (${id}, ${r}, ${str(form.get('title'), 120) || null}, ${str(form.get('phone'), 40) || null}, ${account.email})
+    insert into staff (account_id, role, title, phone, is_admin, added_by) values (${id}, ${r}, ${str(form.get('title'), 120) || null}, ${str(form.get('phone'), 40) || null}, ${makeAdmin}, ${account.email})
     on conflict (account_id) do update set role = excluded.role, title = coalesce(excluded.title, staff.title),
-      phone = coalesce(excluded.phone, staff.phone), active = true, updated_at = now()`;
+      phone = coalesce(excluded.phone, staff.phone), is_admin = staff.is_admin or excluded.is_admin, active = true, updated_at = now()`;
+  if (makeAdmin) await adminChanged(account.email, email, true);
   if (form.get('invite') === 'on') {
     await sendEmail(
       email,
@@ -531,12 +534,28 @@ export async function addStaff(form: FormData) {
   redirect('/workbench/staff?added=1');
 }
 
+/** Admin grants and removals are logged and alert the site admins. */
+async function adminChanged(by: string, who: string, granted: boolean) {
+  await logEvent(granted ? 'admin_granted' : 'admin_revoked', { by, who });
+  await securityEvent('admin_changed', { by, who, granted });
+}
+
 export async function updateStaff(form: FormData) {
-  await adminOnly();
+  const { account } = await adminOnly();
   const id = form.get('account_id');
   if (!isUuid(id)) throw new Error('Not found');
   const name = str(form.get('name'), 120);
   const r = str(form.get('role'), 20) === 'lead' ? 'lead' : 'assessor';
+  // You cannot remove your own admin rights
+  if (id !== account.id) {
+    const makeAdmin = form.get('admin') === 'on';
+    const [prev] = await db()<{ is_admin: boolean; email: string }[]>`
+      select s.is_admin, a.email from staff s join accounts a on a.id = s.account_id where s.account_id = ${id}`;
+    if (prev && prev.is_admin !== makeAdmin) {
+      await db()`update staff set is_admin = ${makeAdmin} where account_id = ${id}`;
+      await adminChanged(account.email, prev.email, makeAdmin);
+    }
+  }
   await db()`update accounts set name = ${name || null} where id = ${id}`;
   await db()`
     update staff set role = ${r}, title = ${str(form.get('title'), 120) || null}, phone = ${str(form.get('phone'), 40) || null},
@@ -559,9 +578,13 @@ export async function setStaffActive(form: FormData) {
 }
 
 export async function removeStaff(form: FormData) {
-  await adminOnly();
+  const { account } = await adminOnly();
   const id = form.get('account_id');
-  if (isUuid(id)) await db()`delete from staff where account_id = ${id}`;
+  if (isUuid(id) && id !== account.id) {
+    const [gone] = await db()<{ is_admin: boolean; email: string }[]>`
+      delete from staff s using accounts a where s.account_id = ${id} and a.id = s.account_id returning s.is_admin, a.email`;
+    if (gone?.is_admin) await adminChanged(account.email, gone.email, false);
+  }
   revalidatePath('/workbench/staff');
   redirect('/workbench/staff');
 }

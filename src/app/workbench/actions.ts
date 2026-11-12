@@ -9,6 +9,8 @@ import { accountForEmail } from '@/lib/server/accounts';
 import { EMAIL_RE } from '@/lib/server/newsletter';
 import { SITE_URL } from '@/lib/server/config';
 import { sendEmail } from '@/lib/server/email';
+import { securityEvent } from '@/lib/server/alerts';
+import { formatAddress, getProfile } from '@/lib/server/profile';
 import {
   canManageContacts,
   canReview,
@@ -153,15 +155,47 @@ async function newEngagement(o: {
   return e.id;
 }
 
+/** A contact's profile, for starting an engagement from them. Staff only. */
+export async function contactForEngagement(id: string) {
+  await staff();
+  if (!isUuid(id)) return null;
+  const p = await getProfile(id);
+  if (!p) return null;
+  const [match] = p.company
+    ? await db()<{ id: string }[]>`select id from clients where lower(name) = lower(${p.company}) limit 1`
+    : [];
+  return {
+    id: p.id,
+    name: p.name,
+    email: p.email,
+    company: p.company,
+    phone_mobile: p.phone_mobile,
+    phone_work: p.phone_work,
+    addresses: p.addresses.map((a) => ({ label: a.label, text: formatAddress(a), is_default: a.is_default })),
+    clientId: match?.id ?? null,
+  };
+}
+
 export async function createEngagement(form: FormData) {
   const { account } = await staff();
   let clientId = form.get('client_id');
   const newClient = str(form.get('new_client'), 160);
+  const contactId = form.get('contact_id');
+  const contact = isUuid(contactId) ? await getProfile(contactId) : null;
   if (newClient) {
-    const [c] = await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
+    // Reuse a client with the same name rather than making a duplicate
+    const [found] = await db()<{ id: string }[]>`select id from clients where lower(name) = lower(${newClient}) limit 1`;
+    const [c] = found ? [found] : await db()<{ id: string }[]>`insert into clients (name) values (${newClient}) returning id`;
     clientId = c.id;
   }
   if (!isUuid(clientId)) redirect('/workbench/new?error=client');
+  if (contact && form.get('contact_portal') === 'on' && !(await isStaffEmail(contact.email))) {
+    const [hasPrimary] = await db()`select 1 from client_contacts where client_id = ${clientId} and is_primary limit 1`;
+    await db()`
+      insert into client_contacts (client_id, account_id, is_primary) values (${clientId}, ${contact.id}, ${!hasPrimary})
+      on conflict (client_id, account_id) do nothing`;
+    await logEvent('client_contact_added', { clientId, contact: contact.id }, { accountId: account.id, actor: account.email });
+  }
   const ig = (Number(form.get('target_ig')) || 2) as IG;
   const lead = form.get('lead');
   const selfId = form.get('self_assessment_id');
@@ -175,6 +209,14 @@ export async function createEngagement(form: FormData) {
     selfId: isUuid(selfId) ? selfId : null,
     actor: account,
   });
+  if (contact) {
+    // Start the intake from the contact's profile
+    const intake: Record<string, string> = {};
+    if (contact.name) intake.sponsor = contact.name;
+    if (contact.addresses.length) intake.locations = contact.addresses.map((a) => `${a.label ? `${a.label}: ` : ''}${formatAddress(a).replace(/\n/g, ', ')}`).join('\n');
+    if (Object.keys(intake).length) await db()`update engagements set intake = intake || ${db().json(intake)} where id = ${id}`;
+    await logActivity(id, account.email, 'started_from_contact', { contact: contact.email });
+  }
   redirect(ePath(id));
 }
 
@@ -516,10 +558,12 @@ export async function addStaff(form: FormData) {
   if (!EMAIL_RE.test(email)) redirect('/workbench/staff?error=email');
   const id = await accountForEmail(email, name || null);
   if (name) await db()`update accounts set name = ${name} where id = ${id}`;
+  const makeAdmin = form.get('admin') === 'on';
   await db()`
-    insert into staff (account_id, role, title, phone, added_by) values (${id}, ${r}, ${str(form.get('title'), 120) || null}, ${str(form.get('phone'), 40) || null}, ${account.email})
+    insert into staff (account_id, role, title, phone, is_admin, added_by) values (${id}, ${r}, ${str(form.get('title'), 120) || null}, ${str(form.get('phone'), 40) || null}, ${makeAdmin}, ${account.email})
     on conflict (account_id) do update set role = excluded.role, title = coalesce(excluded.title, staff.title),
-      phone = coalesce(excluded.phone, staff.phone), active = true, updated_at = now()`;
+      phone = coalesce(excluded.phone, staff.phone), is_admin = staff.is_admin or excluded.is_admin, active = true, updated_at = now()`;
+  if (makeAdmin) await adminChanged(account.email, email, true);
   if (form.get('invite') === 'on') {
     await sendEmail(
       email,
@@ -531,12 +575,28 @@ export async function addStaff(form: FormData) {
   redirect('/workbench/staff?added=1');
 }
 
+/** Admin grants and removals are logged and alert the site admins. */
+async function adminChanged(by: string, who: string, granted: boolean) {
+  await logEvent(granted ? 'admin_granted' : 'admin_revoked', { by, who });
+  await securityEvent('admin_changed', { by, who, granted });
+}
+
 export async function updateStaff(form: FormData) {
-  await adminOnly();
+  const { account } = await adminOnly();
   const id = form.get('account_id');
   if (!isUuid(id)) throw new Error('Not found');
   const name = str(form.get('name'), 120);
   const r = str(form.get('role'), 20) === 'lead' ? 'lead' : 'assessor';
+  // You cannot remove your own admin rights
+  if (id !== account.id) {
+    const makeAdmin = form.get('admin') === 'on';
+    const [prev] = await db()<{ is_admin: boolean; email: string }[]>`
+      select s.is_admin, a.email from staff s join accounts a on a.id = s.account_id where s.account_id = ${id}`;
+    if (prev && prev.is_admin !== makeAdmin) {
+      await db()`update staff set is_admin = ${makeAdmin} where account_id = ${id}`;
+      await adminChanged(account.email, prev.email, makeAdmin);
+    }
+  }
   await db()`update accounts set name = ${name || null} where id = ${id}`;
   await db()`
     update staff set role = ${r}, title = ${str(form.get('title'), 120) || null}, phone = ${str(form.get('phone'), 40) || null},
@@ -559,9 +619,13 @@ export async function setStaffActive(form: FormData) {
 }
 
 export async function removeStaff(form: FormData) {
-  await adminOnly();
+  const { account } = await adminOnly();
   const id = form.get('account_id');
-  if (isUuid(id)) await db()`delete from staff where account_id = ${id}`;
+  if (isUuid(id) && id !== account.id) {
+    const [gone] = await db()<{ is_admin: boolean; email: string }[]>`
+      delete from staff s using accounts a where s.account_id = ${id} and a.id = s.account_id returning s.is_admin, a.email`;
+    if (gone?.is_admin) await adminChanged(account.email, gone.email, false);
+  }
   revalidatePath('/workbench/staff');
   redirect('/workbench/staff');
 }

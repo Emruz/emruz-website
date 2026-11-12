@@ -119,3 +119,24 @@ export async function accountForEmail(emailInput: string, name?: string | null):
     returning id`;
   return created.id;
 }
+
+/**
+ * Add a verified address to the account (optionally as its default email).
+ * Refused when another account already uses it.
+ */
+export async function addEmail(accountId: string, emailInput: string, makeDefault: boolean): Promise<'done' | 'taken'> {
+  const email = lower(emailInput)!;
+  const [other] = await db()`
+    select 1 from accounts where lower(email) = ${email} and id <> ${accountId}
+    union all
+    select 1 from identities where lower(email) = ${email} and account_id <> ${accountId}
+    limit 1`;
+  if (other) return 'taken';
+  await db()`
+    insert into identities (account_id, provider, provider_subject, email, email_verified)
+    values (${accountId}, 'email', ${email}, ${email}, true)
+    on conflict (provider, provider_subject) do nothing`;
+  if (makeDefault) await db()`update accounts set email = ${email} where id = ${accountId}`;
+  await logEvent(makeDefault ? 'email_changed' : 'email_added', { email }, { accountId });
+  return 'done';
+}

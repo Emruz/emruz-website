@@ -50,6 +50,18 @@ export default async function StaffMember({ params }: { params: Promise<{ id: st
                   <option value="lead">Lead: sees everything, approves reports</option>
                 </select>
               </div>
+              <div>
+                <span className={label}>Admin</span>
+                {s.permanent_admin ? (
+                  <p className="text-sm text-gray-700">Yes, permanent (ADMIN_EMAILS on Netlify)</p>
+                ) : id === account.id ? (
+                  <p className="text-sm text-gray-700">{s.is_admin ? 'Yes. Another admin can remove your admin rights.' : 'No'}</p>
+                ) : (
+                  <label className="flex gap-2 text-sm text-gray-800">
+                    <input type="checkbox" name="admin" defaultChecked={s.is_admin} /> Full access to the site and Workbench
+                  </label>
+                )}
+              </div>
               <div><label className={label} htmlFor="notes">Notes</label><textarea id="notes" name="notes" rows={3} defaultValue={s.notes ?? ''} className={input} placeholder="Certifications, specialties, availability" /></div>
               <button className={btn}>Save</button>
             </form>

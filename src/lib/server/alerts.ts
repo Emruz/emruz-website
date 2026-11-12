@@ -12,13 +12,14 @@ import { sendEmail } from './email';
  * inside its window, an alert email goes to ALERT_EMAILS (or ADMIN_EMAILS), at most
  * once per kind per cooldown.
  */
-export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited';
+export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited' | 'admin_changed';
 
 const RULES: Record<SecurityEventKind, { threshold: number; windowSeconds: number; cooldownSeconds: number; label: string }> = {
   webhook_failure: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 3600, label: 'Stripe webhook handler failed' },
   webhook_bad_signature: { threshold: 10, windowSeconds: 3600, cooldownSeconds: 3600, label: 'Stripe webhook signature failures' },
   signin_failure: { threshold: 20, windowSeconds: 900, cooldownSeconds: 3600, label: 'Sign-in failure spike' },
   rate_limited: { threshold: 50, windowSeconds: 900, cooldownSeconds: 3600, label: 'Rate-limit hits' },
+  admin_changed: { threshold: 1, windowSeconds: 60, cooldownSeconds: 0, label: 'Admin rights granted or removed' },
 };
 
 function alertRecipients(): string[] {

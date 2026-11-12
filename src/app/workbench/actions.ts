@@ -523,12 +523,12 @@ export async function addStaff(form: FormData) {
   if (form.get('invite') === 'on') {
     await sendEmail(
       email,
-      'You have access to the Emruz assessment workbench',
-      `Hello${name ? ` ${name.split(' ')[0]}` : ''},\n\n${account.name || account.email} has given you access to the Emruz assessment workbench as ${r === 'lead' ? 'a lead' : 'an assessor'}.\n\nSign in with this email address: ${SITE_URL}/signin?next=/workbench\n\nEmruz`,
+      'You have access to the Emruz Workbench',
+      `Hello${name ? ` ${name.split(' ')[0]}` : ''},\n\n${account.name || account.email} has given you access to the Emruz Workbench as ${r === 'lead' ? 'a lead' : 'an assessor'}.\n\nSign in with this email address: ${SITE_URL}/signin?next=/workbench\n\nEmruz`,
     ).catch((e) => console.error('staff invite failed', e));
   }
   revalidatePath('/workbench/staff');
-  redirect(`/workbench/staff/${id}?added=1`);
+  redirect('/workbench/staff?added=1');
 }
 
 export async function updateStaff(form: FormData) {
@@ -544,7 +544,7 @@ export async function updateStaff(form: FormData) {
     where account_id = ${id}`;
   revalidatePath('/workbench/staff');
   revalidatePath(`/workbench/staff/${id}`);
-  redirect(`/workbench/staff/${id}?saved=1`);
+  redirect('/workbench/staff?saved=1');
 }
 
 /** Deactivate keeps the person on record (and their history) but removes workbench access. */

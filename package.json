@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/migrate.mjs",
+    "local": "bash scripts/local.sh",
+    "ship": "bash scripts/ship.sh",
     "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {

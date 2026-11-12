@@ -8,7 +8,7 @@ import { getStore } from '@netlify/blobs';
 
 const RETENTION_DAYS = 30;
 
-export default async () => {
+const purgeDeleted = async () => {
   const url = process.env.DATABASE_URL || process.env.NETLIFY_DB_URL;
   if (!url) return new Response('No database configured', { status: 500 });
   const sql = postgres(url, { max: 1, prepare: false, onnotice: () => {} });
@@ -26,5 +26,7 @@ export default async () => {
     await sql.end();
   }
 };
+
+export default purgeDeleted;
 
 export const config = { schedule: '@daily' };

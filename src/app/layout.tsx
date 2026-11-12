@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Header, Footer } from "@/components";
+import SessionGuard from "@/components/SessionGuard";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://emruz.com";
@@ -67,6 +68,7 @@ export default async function RootLayout({
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
+        <SessionGuard />
       </body>
     </html>
   );

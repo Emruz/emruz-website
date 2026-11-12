@@ -10,13 +10,12 @@ import { StatusBadge, btn, btnGhost, card, input, label, fmtDate } from '../../u
 
 export const metadata = { title: 'Staff member', robots: { index: false } };
 
-export default async function StaffMember({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; added?: string }> }) {
+export default async function StaffMember({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { account, role } = await requireStaff(`/workbench/staff/${id}`);
   if (role !== 'admin' || !isUuid(id)) notFound();
   const s = (await staffList({ all: true })).find((x) => x.account_id === id);
   if (!s) notFound();
-  const sp = await searchParams;
   const [engagements, selfs] = await Promise.all([
     db()<{ id: string; title: string; client: string; status: EngagementStatus }[]>`
       select e.id, e.title, c.name as client, e.status from engagements e join clients c on c.id = e.client_id
@@ -36,7 +35,6 @@ export default async function StaffMember({ params, searchParams }: { params: Pr
       />
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
-          {(sp.saved || sp.added) && <p role="status" className="mb-4 text-emerald-700 font-semibold">{sp.added ? 'Added.' : 'Saved.'}</p>}
           <div className="grid lg:grid-cols-3 gap-6">
             <form action={updateStaff} className={`${card} p-5 space-y-3 lg:col-span-1`}>
               <h2 className="font-bold text-gray-900">Details</h2>

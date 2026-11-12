@@ -56,7 +56,9 @@ export default function ClientPicker({
         <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 text-sm space-y-2">
           <p className="font-semibold text-gray-900">
             {contact.name || contact.email}
-            {contact.company && <span className="font-normal text-gray-600"> · {contact.company}</span>}
+            {(contact.job_title || contact.company) && (
+              <span className="font-normal text-gray-600"> · {[contact.job_title, contact.company].filter(Boolean).join(', ')}</span>
+            )}
           </p>
           <p className="text-gray-700">
             {contact.email}

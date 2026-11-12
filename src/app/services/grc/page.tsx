@@ -11,7 +11,7 @@ import { CheckCircle2 } from 'lucide-react';
 export const metadata = {
   title: 'GRC Program',
   description:
-    'Governance, risk, and compliance programs grounded in NIST CSF, CIS Controls, and industry-specific frameworks.',
+    'Governance, risk, and compliance programs grounded in industry frameworks.',
 };
 
 export default function GRC() {
@@ -38,7 +38,7 @@ export default function GRC() {
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance', href: '/services/security' }, { label: 'GRC Program' }]}
         title="GRC Program"
-        summary="Build a compliance program grounded in NIST, CIS, or ISO frameworks. Then maintain it without it becoming a second job."
+        summary="Build a compliance program grounded in the frameworks you answer to. Then maintain it without it becoming a second job."
         primaryCta={{ label: 'Schedule GRC Assessment', href: '/assessments' }}
         secondaryCta={{ label: 'Discuss Compliance Needs', href: '/contact' }}
       />

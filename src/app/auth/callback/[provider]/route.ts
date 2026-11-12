@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { signInWithIdentity } from '@/lib/server/accounts';
 import { finishAuth, PROVIDERS, type Provider } from '@/lib/server/oauth';
 import { createSession, currentAccount, safeNext } from '@/lib/server/session';
+import { securityEvent } from '@/lib/server/alerts';
+import { clientIp } from '@/lib/server/api';
 
 interface Pending {
   p: Provider;
@@ -32,8 +34,10 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
   const back = (error: string, next = '/motiv/account') =>
     NextResponse.redirect(new URL(`/signin?error=${encodeURIComponent(error)}&next=${encodeURIComponent(next)}`, SITE_URL), 303);
 
-  const reject = (reason: string, error: string, next?: string) => {
+  const failure = (reason: string) => securityEvent('signin_failure', { provider, reason: reason.slice(0, 200), ip: clientIp(req) });
+  const reject = async (reason: string, error: string, next?: string) => {
     console.warn(`oauth callback rejected (${provider}): ${reason}`);
+    if (error !== 'cancelled') await failure(reason);
     return back(error, next);
   };
   if (params.get('error')) {
@@ -54,11 +58,15 @@ async function handle(req: Request, provider: string, params: URLSearchParams) {
     const claims = await finishAuth(pending.p, code, pending.cv, pending.nonce, params.get('user'));
     const current = pending.link ? await currentAccount() : null;
     const result = await signInWithIdentity(claims, current?.id ?? null);
-    if (!result.ok) return back(result.error, pending.next);
+    if (!result.ok) {
+      await failure(`account resolution: ${result.error}`);
+      return back(result.error, pending.next);
+    }
     if (!current) await createSession(result.accountId);
     return NextResponse.redirect(new URL(safeNext(pending.next), SITE_URL), 303);
   } catch (e) {
     console.error('sign-in failed', e);
+    await failure(`exception: ${e instanceof Error ? e.message : String(e)}`);
     return back('failed', pending.next);
   }
 }

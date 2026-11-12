@@ -26,7 +26,7 @@ export default async function MessagesPage() {
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin', href: '/admin/motiv' }, { label: 'Messages' }]}
         title="Messages"
-        summary="Everything sent through the contact form, newest first. Each one is also emailed to contact@emruz.com."
+        summary="Everything sent through the contact form, newest first. Each one is also emailed to info@emruz.com."
       />
       <section className="py-8">
         <Container>

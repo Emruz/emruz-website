@@ -279,7 +279,7 @@ module.exports = nextConfig
 ```
 NEXT_PUBLIC_SITE_URL=https://emruz.com
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX (if using Google Analytics)
-FORM_HANDLER_EMAIL=contact@emruz.com
+FORM_HANDLER_EMAIL=info@emruz.com
 SENDGRID_API_KEY=... (if using SendGrid)
 ```
 

@@ -1,6 +1,6 @@
 import { PageHeader, SectionIntro, Container, Card, CTABanner, FAQAccordion } from '@/components';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ClipboardCheck } from 'lucide-react';
 
 export const metadata = {
   title: 'Assessments',
@@ -49,6 +49,29 @@ export default function Assessments() {
         description="Start with clarity. Diagnostic assessments across security, compliance, cloud, and AI. Understanding your current state leads to better decisions."
         cta={{ label: 'Schedule an Assessment', href: '/contact' }}
       />
+
+      <section className="pt-10 md:pt-12">
+        <Container>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+            <div className="flex gap-4">
+              <ClipboardCheck className="w-10 h-10 text-blue-600 flex-shrink-0" aria-hidden />
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">Security self-assessment</h2>
+                <p className="text-gray-700 mt-1">
+                  Rate your organization against the 18 CIS Critical Security Controls v8 in about 15 minutes. Get a maturity score,
+                  your biggest gaps and what closes them, with a report by email. Free for registered users.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/assessments/self"
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 whitespace-nowrap"
+            >
+              Register and start <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </Container>
+      </section>
 
       <section id="types" className="py-12 md:py-16">
         <Container>

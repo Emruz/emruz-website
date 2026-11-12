@@ -36,7 +36,7 @@ export default function SecurityHub() {
                 GRC Program
               </h3>
               <p className="text-gray-600 mb-6 flex-grow">
-                Governance, risk management, and compliance frameworks grounded in NIST CSF, CIS Controls, or ISO 27001. Build sustainable compliance programs that audit-ready.
+                Governance, risk management, and compliance grounded in industry frameworks. Build sustainable compliance programs that are audit-ready.
               </p>
               <ul className="space-y-2 mb-6">
                 <li className="flex items-start gap-2 text-sm text-gray-600">

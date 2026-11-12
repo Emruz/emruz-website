@@ -54,7 +54,7 @@ export default function VCISo() {
     {
       question: 'What frameworks do you use?',
       answer:
-        'Every engagement is grounded in NIST CSF, CIS Controls, or industry-specific frameworks. We align your governance model to frameworks your board and auditors recognize.',
+        'Every engagement is grounded in industry frameworks (regulatory or self-imposed). We align your governance model to frameworks your board and auditors recognize.',
     },
     {
       question: 'Can you help with board reporting?',

@@ -9,6 +9,7 @@ import {
   onPaymentReversed,
   onSubscriptionChanged,
 } from '@/lib/server/stripe';
+import { securityEvent } from '@/lib/server/alerts';
 
 const pi = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : v?.id ?? null);
 
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
   try {
     event = stripe().webhooks.constructEvent(raw, req.headers.get('stripe-signature') || '', secret);
   } catch {
+    await securityEvent('webhook_bad_signature', {});
     return new NextResponse('Bad signature', { status: 400 });
   }
 
@@ -57,6 +59,7 @@ export async function POST(req: Request) {
     // Let Stripe retry
     await db()`delete from stripe_events where id = ${event.id}`;
     console.error(`stripe ${event.type} failed`, e);
+    await securityEvent('webhook_failure', { type: event.type, id: event.id, error: e instanceof Error ? e.message : String(e) });
     return new NextResponse('Handler failed', { status: 500 });
   }
   return NextResponse.json({ received: true });

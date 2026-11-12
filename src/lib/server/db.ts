@@ -41,5 +41,10 @@ export async function rateLimit(key: string, limit: number, windowSeconds: numbe
       window_start = case when rate_limits.window_start < now() - make_interval(secs => ${windowSeconds}) then now() else rate_limits.window_start end
     returning count
   `;
-  return row.count <= limit;
+  const ok = row.count <= limit;
+  // Report the first hit in each window (finding E9); dynamic import avoids a cycle
+  if (!ok && row.count === limit + 1) {
+    void import('./alerts').then((m) => m.securityEvent('rate_limited', { key: key.replace(/:[^:]*@[^:]*$/, ':<email>'), limit }));
+  }
+  return ok;
 }

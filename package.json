@@ -11,14 +11,17 @@
     "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.13",
     "arctic": "^3.7.0",
+    "file-type": "^22.3.0",
     "jose": "^6.2.16",
     "lucide-react": "^1.23.0",
     "marked": "^15.0.12",
-    "next": "16.2.10",
+    "next": "16.4.6",
     "postgres": "^4.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sanitize-html": "^2.18.2",
     "server-only": "^0.0.1",
     "stripe": "^23.1.0"
   },
@@ -27,8 +30,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

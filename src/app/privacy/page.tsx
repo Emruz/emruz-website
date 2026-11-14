@@ -180,6 +180,12 @@ export default function PrivacyPage() {
         </tbody>
       </table>
 
+      <p>
+        Some forms save what you have typed in your browser&apos;s local storage, so you don&apos;t lose it if you are
+        signed out or the page reloads. The draft stays on your device, is never sent to us, and is removed when you
+        submit the form.
+      </p>
+
       <h2>How long we keep it</h2>
       <ul>
         <li>Contact form messages: as long as needed to handle your request and any follow-up.</li>

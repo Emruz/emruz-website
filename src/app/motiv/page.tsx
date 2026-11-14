@@ -13,8 +13,8 @@ export const metadata = {
 const privacyIcons = [Lock, Cpu, EyeOff, CalendarCheck];
 
 const plans = [
-  { plan: 'monthly', name: 'Monthly', price: '$9', period: 'per month', note: 'Billed monthly. Cancel any time.' },
-  { plan: 'annual', name: 'Annual', price: '$99', period: 'per year', note: 'Billed yearly. One month free compared with monthly.' },
+  { plan: 'monthly', name: 'Monthly', price: '$9', period: 'per month', note: 'Renews every month until you cancel. Cancel any time.' },
+  { plan: 'annual', name: 'Annual', price: '$99', period: 'per year', note: 'Renews every year until you cancel. One month free compared with monthly.' },
   { plan: 'lifetime', name: 'Lifetime', price: '$299', period: 'one time', note: 'One payment, Premium for as long as you use Motiv.' },
 ];
 

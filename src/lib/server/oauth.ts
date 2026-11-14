@@ -1,6 +1,6 @@
 import 'server-only';
-import { Apple, Google, MicrosoftEntraId, generateCodeVerifier, generateState } from 'arctic';
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
+import { createHash, randomBytes } from 'node:crypto';
+import { SignJWT, createRemoteJWKSet, importPKCS8, jwtVerify, type JWTPayload } from 'jose';
 import { SITE_URL } from './config';
 import type { IdentityClaims } from './accounts';
 
@@ -21,16 +21,75 @@ export function providerConfigured(p: Provider): boolean {
   return !!(process.env.APPLE_CLIENT_ID && process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY);
 }
 
-function microsoft() {
-  return new MicrosoftEntraId('common', process.env.MICROSOFT_CLIENT_ID!, process.env.MICROSOFT_CLIENT_SECRET!, redirectUri('microsoft'));
+/** Authorization and token endpoints (OAuth 2.0 authorization code flow, with PKCE for Microsoft and Google). */
+const endpoints: Record<Provider, { authorize: string; token: string }> = {
+  microsoft: {
+    authorize: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    token: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  },
+  google: {
+    authorize: 'https://accounts.google.com/o/oauth2/v2/auth',
+    token: 'https://oauth2.googleapis.com/token',
+  },
+  apple: {
+    authorize: 'https://appleid.apple.com/auth/authorize',
+    token: 'https://appleid.apple.com/auth/token',
+  },
+};
+
+const clientId = (p: Provider) =>
+  p === 'microsoft' ? process.env.MICROSOFT_CLIENT_ID! : p === 'google' ? process.env.GOOGLE_CLIENT_ID! : process.env.APPLE_CLIENT_ID!;
+
+/** Random URL-safe value for state, nonce and the PKCE verifier. */
+export const randomValue = () => randomBytes(32).toString('base64url');
+const pkceChallenge = (verifier: string) => createHash('sha256').update(verifier).digest('base64url');
+
+/** Apple's client secret is a short-lived ES256 JWT signed with the Sign in with Apple key. */
+async function appleClientSecret(): Promise<string> {
+  let pem = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, '\n').trim();
+  // Accept the key with or without its PEM header lines
+  if (!pem.startsWith('-----BEGIN')) pem = `-----BEGIN PRIVATE KEY-----\n${pem.replace(/\s/g, '')}\n-----END PRIVATE KEY-----`;
+  const key = await importPKCS8(pem, 'ES256');
+  return new SignJWT({})
+    .setProtectedHeader({ alg: 'ES256', typ: 'JWT', kid: process.env.APPLE_KEY_ID! })
+    .setIssuer(process.env.APPLE_TEAM_ID!)
+    .setSubject(process.env.APPLE_CLIENT_ID!)
+    .setAudience('https://appleid.apple.com')
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(key);
 }
-function google() {
-  return new Google(process.env.GOOGLE_CLIENT_ID!, process.env.GOOGLE_CLIENT_SECRET!, redirectUri('google'));
+
+async function clientSecret(p: Provider): Promise<string> {
+  if (p === 'microsoft') return process.env.MICROSOFT_CLIENT_SECRET!;
+  if (p === 'google') return process.env.GOOGLE_CLIENT_SECRET!;
+  return appleClientSecret();
 }
-function apple() {
-  const pem = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, '\n');
-  const der = Buffer.from(pem.replace(/-----[^-]+-----/g, '').replace(/\s/g, ''), 'base64');
-  return new Apple(process.env.APPLE_CLIENT_ID!, process.env.APPLE_TEAM_ID!, process.env.APPLE_KEY_ID!, new Uint8Array(der), redirectUri('apple'));
+
+/** Exchange the authorization code for tokens; returns the ID token. */
+async function exchangeCode(p: Provider, code: string, codeVerifier: string | null): Promise<string> {
+  const body = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri(p) });
+  const headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
+  if (p === 'apple') {
+    // Apple takes the client credentials in the body
+    body.set('client_id', clientId(p));
+    body.set('client_secret', await clientSecret(p));
+  } else {
+    // Microsoft and Google: HTTP Basic client authentication
+    headers.authorization = `Basic ${Buffer.from(`${clientId(p)}:${await clientSecret(p)}`).toString('base64')}`;
+  }
+  if (codeVerifier) body.set('code_verifier', codeVerifier);
+  const res = await fetch(endpoints[p].token, {
+    method: 'POST',
+    headers,
+    body,
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = (await res.json().catch(() => ({}))) as { id_token?: string; error?: string; error_description?: string };
+  if (!res.ok || !data.id_token) {
+    throw new Error(`Token exchange failed (${res.status}): ${data.error ?? 'no id_token'} ${data.error_description ?? ''}`.trim());
+  }
+  return data.id_token;
 }
 
 export interface AuthStart {
@@ -41,21 +100,23 @@ export interface AuthStart {
 }
 
 export function startAuth(p: Provider): AuthStart {
-  const state = generateState();
-  const nonce = generateState();
-  let url: URL;
+  const state = randomValue();
+  const nonce = randomValue();
+  const url = new URL(endpoints[p].authorize);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('client_id', clientId(p));
+  url.searchParams.set('redirect_uri', redirectUri(p));
+  url.searchParams.set('state', state);
   let codeVerifier: string | null = null;
-  if (p === 'microsoft') {
-    codeVerifier = generateCodeVerifier();
-    url = microsoft().createAuthorizationURL(state, codeVerifier, ['openid', 'email', 'profile']);
-    url.searchParams.set('prompt', 'select_account');
-  } else if (p === 'google') {
-    codeVerifier = generateCodeVerifier();
-    url = google().createAuthorizationURL(state, codeVerifier, ['openid', 'email', 'profile']);
-    url.searchParams.set('prompt', 'select_account');
-  } else {
-    url = apple().createAuthorizationURL(state, ['name', 'email']);
+  if (p === 'apple') {
+    url.searchParams.set('scope', 'name email');
     url.searchParams.set('response_mode', 'form_post'); // required by Apple when asking for name/email
+  } else {
+    codeVerifier = randomValue();
+    url.searchParams.set('scope', 'openid email profile');
+    url.searchParams.set('code_challenge', pkceChallenge(codeVerifier));
+    url.searchParams.set('code_challenge_method', 'S256');
+    url.searchParams.set('prompt', 'select_account');
   }
   url.searchParams.set('nonce', nonce);
   return { url, state, codeVerifier, nonce };
@@ -67,12 +128,8 @@ const jwks = {
   apple: createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys')),
 };
 
-function audience(p: Provider) {
-  return p === 'microsoft' ? process.env.MICROSOFT_CLIENT_ID! : p === 'google' ? process.env.GOOGLE_CLIENT_ID! : process.env.APPLE_CLIENT_ID!;
-}
-
 async function verifyIdToken(p: Provider, idToken: string, nonce: string): Promise<JWTPayload> {
-  const { payload } = await jwtVerify(idToken, jwks[p], { audience: audience(p) });
+  const { payload } = await jwtVerify(idToken, jwks[p], { audience: clientId(p) });
   const iss = String(payload.iss ?? '');
   const issOk =
     p === 'google'
@@ -96,13 +153,9 @@ export async function finishAuth(
   nonce: string,
   appleUser?: string | null,
 ): Promise<IdentityClaims> {
-  const tokens =
-    p === 'microsoft'
-      ? await microsoft().validateAuthorizationCode(code, codeVerifier!)
-      : p === 'google'
-        ? await google().validateAuthorizationCode(code, codeVerifier!)
-        : await apple().validateAuthorizationCode(code);
-  const claims = await verifyIdToken(p, tokens.idToken(), nonce);
+  if (p !== 'apple' && !codeVerifier) throw new Error('Missing PKCE verifier');
+  const idToken = await exchangeCode(p, code, codeVerifier);
+  const claims = await verifyIdToken(p, idToken, nonce);
 
   let email = (claims.email as string | undefined) ?? null;
   let emailVerified = truthy(claims.email_verified);

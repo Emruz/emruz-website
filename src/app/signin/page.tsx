@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import SignInOptions from '@/components/account/SignInOptions';
@@ -45,7 +46,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             )}
             <SignInOptions next={next} />
             <p className="mt-6 text-sm text-gray-500">
-              Use the email you bought with, or any sign-in linked to it. New here? Signing in creates your account.
+              Use the email you bought with, or any sign-in linked to it. New here? Signing in creates your account. By signing in you agree to our <Link href="/terms" className="underline">terms of service</Link> and <Link href="/privacy" className="underline">privacy policy</Link>.
             </p>
           </div>
         </Container>

@@ -32,7 +32,7 @@ export const motivFree = [
   'Continue recording: add to a meeting after a break or a crash',
   'Search across all meetings',
   'Copy summaries as rich text or Markdown, or send by email',
-  'Import audio files and Meetily meetings',
+  'Import Meetily meetings',
 ];
 
 export const motivPremium: { title: string; description: string }[] = [
@@ -46,6 +46,7 @@ export const motivPremium: { title: string; description: string }[] = [
   { title: 'Custom templates', description: 'Create and edit your own summary templates, and remove the built-in ones you do not use.' },
   { title: 'Markers', description: 'Mark points while recording, such as a change of topic, with a click or a shortcut.' },
   { title: 'Trim, split and merge', description: 'Trim a recording to the meeting, split one recording into several meetings at your markers, or merge two recordings of the same meeting.' },
+  { title: 'Import and retranscribe', description: 'Importing audio files and retranscribing meetings.' },
 ];
 
 export const motivPrivacy = [

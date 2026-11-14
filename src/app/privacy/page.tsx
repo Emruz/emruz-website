@@ -176,7 +176,7 @@ export default function PrivacyPage() {
         <tbody>
           <tr><td>emruz_session</td><td>Keeps you signed in</td><td>30 days</td></tr>
           <tr><td>emruz_oauth_…</td><td>Protects a Microsoft, Google or Apple sign-in while it is in progress</td><td>10 minutes</td></tr>
-          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Until they switch back</td></tr>
+          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Up to 30 days, or until they switch back</td></tr>
         </tbody>
       </table>
 

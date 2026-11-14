@@ -4,7 +4,10 @@ import { db } from '@/lib/server/db';
 import { systemChecks } from '@/lib/server/health';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
 import { isAdmin, requireAccount } from '@/lib/server/session';
-import { adminRemoveDevice, grant, reinstate, revoke, setSeats } from './actions';
+import { REVOKE_CATEGORIES, REVOKE_LABELS } from '@/lib/server/revocation';
+import { adminRemoveDevice, grant, reinstate, revoke, setSeats, setSupport } from './actions';
+
+const dayInput = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : '');
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
 
@@ -22,6 +25,11 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const [totals] = await db()<{ active: number; devices: number }[]>`
     select (select count(*)::int from subscriptions where status in ('active','past_due')) as active,
            (select count(*)::int from devices where deactivated_at is null) as devices`;
+  const [support] = await db()<{ notice_given_at: Date | null; support_ends_at: Date | null; ended: boolean }[]>`
+    select notice_given_at, support_ends_at, (support_ends_at is not null and support_ends_at <= now()) as ended
+    from motiv_support where id = 1`;
+  const supportEnds = support?.support_ends_at ?? null;
+  const supportEnded = support?.ended ?? false;
 
   const checks = await systemChecks();
 
@@ -74,6 +82,31 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </form>
           </div>
 
+          <section className="mb-8 rounded-lg border border-gray-200 p-4">
+            <h2 className="font-semibold text-gray-900">Motiv support</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              {supportEnds
+                ? supportEnded
+                  ? `Support ended ${fmtDate(supportEnds)}. Lifetime licences can no longer be revoked for misuse.`
+                  : `Support ends ${fmtDate(supportEnds)}. Lifetime licences can be revoked for misuse until then.`
+                : 'Support is ongoing. No end date set.'}
+              {support?.notice_given_at && ` Buyers were told on ${fmtDate(support.notice_given_at)}.`}
+            </p>
+            <form action={setSupport} className="mt-3 flex flex-wrap gap-2 items-end">
+              <input type="hidden" name="q" value={q} />
+              <label className="text-sm flex flex-col gap-1">
+                Support ends (from 00:00 UTC)
+                <input name="support_ends_at" type="date" defaultValue={dayInput(supportEnds)} className={input} />
+              </label>
+              <label className="text-sm flex flex-col gap-1">
+                Buyers notified on
+                <input name="notice_given_at" type="date" defaultValue={dayInput(support?.notice_given_at ?? null)} className={input} />
+              </label>
+              <button className={btn}>Save support dates</button>
+            </form>
+            <p className="mt-2 text-xs text-gray-500">Clear a date to remove it. Leave the end date empty while support continues.</p>
+          </section>
+
           {subs.length === 0 && <p className="text-gray-600">No subscriptions found.</p>}
           <div className="space-y-4">
             {subs.map((s) => (
@@ -90,6 +123,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                 </div>
                 <p className="text-sm text-gray-500">
                   {s.customer_email} · bought {fmtDate(s.created_at)} · {s.devices.length}/{s.seats} computers
+                  {s.plan !== 'lifetime' && s.period_end && (
+                    <> · {s.cancel_at_period_end ? 'ends' : 'renews'} {fmtDate(s.period_end)}</>
+                  )}
                   {s.stripe_customer_id && (
                     <>
                       {' · '}
@@ -125,11 +161,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       <button className={btn}>Reinstate</button>
                     </form>
                   ) : (
-                    <form action={revoke} className="flex gap-2">
+                    <form action={revoke} className="flex flex-wrap gap-2 items-center">
                       <input type="hidden" name="id" value={s.id} />
                       <input type="hidden" name="q" value={q} />
-                      <input name="reason" placeholder="Reason" className={input} />
+                      <select name="category" required className={input} defaultValue="" aria-label="Reason">
+                        <option value="" disabled>Reason</option>
+                        {REVOKE_CATEGORIES.map((c) => (
+                          <option key={c} value={c}>{REVOKE_LABELS[c]}</option>
+                        ))}
+                      </select>
+                      <input name="note" placeholder="Note (required for EULA misuse)" className={`${input} min-w-64`} />
                       <button className={`${btn} text-red-700`}>Revoke</button>
+                      <span className="text-xs text-gray-500 basis-full">
+                        Cancels billing now. No refund is issued by this action; refund in Stripe first if one is due.
+                      </span>
                     </form>
                   )}
                   <form action={setSeats} className="flex gap-2">
@@ -157,8 +202,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             ))}
           </div>
           <p className="mt-6 text-xs text-gray-500">
-            Refunds: issue them in Stripe. Full refunds of lifetime purchases revoke automatically; for monthly or annual,
-            cancel the subscription in Stripe (or revoke here).
+            Refunds: issue them in Stripe. A refund or lost chargeback ends the licence and cancels billing automatically.
+            Revoking here for EULA misuse does not refund anything.
           </p>
         </Container>
       </section>

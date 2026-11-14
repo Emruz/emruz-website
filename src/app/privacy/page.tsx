@@ -220,7 +220,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         Email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> from the address on your account. We&apos;ll
-        respond within the time the law requires, and we won&apos;t treat you differently for exercising these
+        respond within one month (45 days for California residents), or sooner where the law requires, and we won&apos;t treat you differently for exercising these
         rights.
       </p>
       <p>

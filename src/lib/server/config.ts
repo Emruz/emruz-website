@@ -23,7 +23,7 @@ export const motiv = {
   defaultSeats: Number(process.env.MOTIV_DEFAULT_SEATS || 2),
   pairingMinutes: 10,
   pollIntervalSeconds: 5,
-  features: ['assistant', 'action_items', 'speakers', 'awareness', 'calendars', 'terms', 'cleanup', 'templates', 'trim'],
+  features: ['assistant', 'action_items', 'speakers', 'awareness', 'calendars', 'terms', 'cleanup', 'templates', 'trim', 'import'],
   manageUrl: `${SITE_URL}/motiv/account`,
   /** Checkout buttons show only when this is "true". */
   salesOpen: process.env.MOTIV_SALES_OPEN === 'true',

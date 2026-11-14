@@ -26,3 +26,49 @@ assert.equal(normalizeSubscriptionId('MOTIV-7K2M-QX9R-4HTP-W3ND'), 'MOTIV-7K2M-Q
 assert.equal(normalizeSubscriptionId('MOTIV-7K2M-QX9R-4HTP'), null);
 assert.equal(normalizeUserCode('k7qm 4xrt'), 'K7QM-4XRT');
 console.log(`lease tests passed (${n} vectors)`);
+
+// A newly issued lease for an active Premium subscription lists every Premium
+// feature, including "import". issueLease is loaded with the test key; licensing.ts
+// uses extensionless imports, so resolve those to .ts files here.
+import module from 'node:module';
+module.registerHooks({
+  resolve(specifier, context, next) {
+    if (specifier.startsWith('.') && !/\.[cm]?[jt]s$/.test(specifier)) {
+      try { return next(`${specifier}.ts`, context); } catch { /* fall through */ }
+    }
+    return next(specifier, context);
+  },
+});
+process.env.MOTIV_LICENSE_PRIVATE_KEY = key.export({ format: 'der', type: 'pkcs8' }).toString('base64');
+process.env.MOTIV_LICENSE_KID = 'ktest';
+const { issueLease } = await import('../src/lib/server/licensing.ts');
+const now = Date.parse('2026-11-14T12:00:00Z');
+const token = issueLease(
+  {
+    id: 'sub-row',
+    subscription_id: 'MOTIV-7K2M-QX9R-4HTP-W3ND',
+    account_id: null,
+    customer_email: 'test@example.com',
+    plan: 'annual',
+    status: 'active',
+    period_end: new Date('2027-11-14T12:00:00Z'),
+    cancel_at_period_end: false,
+    past_due_since: null,
+    seats: 2,
+  } as Parameters<typeof issueLease>[0],
+  'device-1',
+  now,
+);
+const [prefix, kid, body, sig] = token.split('.');
+assert.equal(prefix, 'MOTIV2');
+assert.equal(kid, 'ktest');
+const json = Buffer.from(body, 'base64url');
+assert.ok(crypto.verify(null, json, crypto.createPublicKey(key), Buffer.from(sig, 'base64url')), 'lease signature verifies');
+const lease = JSON.parse(json.toString('utf8'));
+assert.equal(lease.v, 2);
+assert.equal(lease.status, 'active');
+assert.ok(lease.features.includes('import'), 'new lease includes "import"');
+for (const f of ['assistant', 'action_items', 'speakers', 'awareness', 'calendars', 'terms', 'cleanup', 'templates', 'trim']) {
+  assert.ok(lease.features.includes(f), `new lease still includes "${f}"`);
+}
+console.log('issued lease includes "import"');

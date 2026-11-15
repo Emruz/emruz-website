@@ -16,6 +16,10 @@ Preview testing for #22 covered: a monthly misuse revoke with billing cancelled 
 
 Cleanup: the local branches `chore/replace-arctic` and `launch-audit` were deleted once their commits were confirmed in PR #22.
 
+## Drift check (2026-11-15)
+
+Release update since the launch baseline. Full report: `LAUNCH/drift-2026-11-15.md`. Found: a new permissive dependency tree behind `/database` (27 packages), a stale `arctic` lock entry, Lifetime and refund wording changes, AI-tool metadata in the logo files, and a possible Neon sub-processor. No new trackers, scripts, cookies or AI calls. A full re-audit is not needed.
+
 ## Commits
 
 | Commit | Group | Files | Why |

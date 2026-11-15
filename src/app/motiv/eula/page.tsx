@@ -11,13 +11,13 @@ export default function EulaPage() {
     <LegalPage
       title="Motiv license agreement"
       summary="The end user license agreement (EULA) for the Motiv desktop app."
-      updated="9 November 2026"
+      updated="15 November 2026"
       path="/motiv/eula"
       parent={{ label: 'Motiv', href: '/motiv' }}
     >
       <p>
         This agreement is between you and {LEGAL_PARTY} (&quot;the publisher&quot;). By installing or using Motiv you
-        agree to it. If you use Motiv for an organization, you agree on its behalf. Buying and managing Premium is also
+        agree to it. If you use Motiv for an organization, you agree on its behalf. Buying and managing Pro is also
         covered by the <Link href="/terms">terms of service</Link>.
       </p>
 
@@ -29,11 +29,11 @@ export default function EulaPage() {
       <ul>
         <li>The free features may be used without charge.</li>
         <li>
-          Premium features require an active subscription and may be used only by its holder, on no more computers
+          Pro features require an active subscription and may be used only by its holder, on no more computers
           than the subscription allows (two unless your plan says otherwise).
         </li>
         <li>
-          Motiv checks in with emruz.com about once a day to keep Premium on. If it can&apos;t, Premium keeps working
+          Motiv checks in with emruz.com about once a day to keep Pro on. If it can&apos;t, Pro keeps working
           for a limited time, then pauses until the next successful check-in.
         </li>
       </ul>
@@ -68,15 +68,16 @@ export default function EulaPage() {
 
       <h2>5. Open-source components</h2>
       <p>
-        Parts of Motiv come from Meetily Community Edition (MIT License) and other open-source libraries. Those parts
-        are governed by their own licenses, which this agreement doesn&apos;t limit. Their notices are included with
-        the app.
+        Parts of Motiv come from Meetily Community Edition and other open-source libraries. Only that code is under
+        the MIT License or its own open-source license, which this agreement doesn&apos;t limit. Their notices are
+        included with the app and published in the{' '}
+        <a href="https://github.com/Emruz/motiv-releases/blob/main/THIRD-PARTY-NOTICES.md">Motiv third-party notices</a>.
       </p>
 
       <h2>6. Updates</h2>
       <p>
         The publisher may release updates that fix, change, add or remove features. Some updates may be needed to keep
-        using Premium or to keep connecting to emruz.com.
+        using Pro or to keep connecting to emruz.com.
       </p>
 
       <h2>7. Ownership and copyright</h2>
@@ -86,8 +87,9 @@ export default function EulaPage() {
         grants you. Motiv and the Motiv logo are trademarks of the publisher.
       </p>
       <p>
-        Motiv is based on Meetily Community Edition v0.5.0 by Zackriya Solutions, used under the MIT License; that code
-        remains under its license, and its copyright notice is included with the app.
+        Motiv is proprietary software, in both its free and Pro features. It is based on Meetily Community Edition
+        v0.5.0 by Zackriya Solutions. The MIT License applies only to the code that came from Meetily, not to Motiv as
+        a whole; that code remains under its license, and its copyright notice is included with the app.
       </p>
 
       <h2>8. No warranty</h2>
@@ -107,7 +109,7 @@ export default function EulaPage() {
 
       <h2>10. Termination</h2>
       <p>
-        This license ends automatically if you breach it. Premium features stop when a subscription ends, is
+        This license ends automatically if you breach it. Pro features stop when a subscription ends, is
         cancelled or is revoked; free features and your existing meetings keep working while this license is in
         effect. You may end it at any time by uninstalling Motiv.
       </p>

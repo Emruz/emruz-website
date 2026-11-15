@@ -11,14 +11,14 @@ export default function MotivPrivacyPage() {
     <LegalPage
       title="Motiv privacy policy"
       summary="What the Motiv app keeps on your computer, and what leaves it only when you choose."
-      updated="9 November 2026"
+      updated="15 November 2026"
       path="/motiv/privacy"
       parent={{ label: 'Motiv', href: '/motiv' }}
     >
       <p>
         Motiv is a desktop app published by {LEGAL_PARTY}. It runs on your computer and has no analytics. The
         publisher doesn&apos;t receive, store or have access to your recordings, transcripts or meeting data. Buying
-        and managing Premium on emruz.com is covered by the <Link href="/privacy">emruz.com privacy policy</Link>.
+        and managing Pro on emruz.com is covered by the <Link href="/privacy">emruz.com privacy policy</Link>.
       </p>
 
       <h2>What stays on your computer</h2>
@@ -34,7 +34,7 @@ export default function MotivPrivacyPage() {
           the law where you or they live may require it.
         </li>
         <li>
-          <strong>Your subscription</strong>, if you have Premium: the subscription ID and a signed lease, in the macOS
+          <strong>Your subscription</strong>, if you have Pro: the subscription ID and a signed lease, in the macOS
           Keychain or Windows Credential Manager.
         </li>
         <li>
@@ -84,13 +84,13 @@ export default function MotivPrivacyPage() {
         </li>
       </ul>
 
-      <h2>Motiv Premium check-in</h2>
+      <h2>Motiv Pro check-in</h2>
       <p>
-        With Premium, Motiv contacts emruz.com when you register a computer and about once a day afterwards, to keep
-        Premium on. It sends only your subscription ID, a random ID created for the computer (not derived from its
+        With Pro, Motiv contacts emruz.com when you register a computer and about once a day afterwards, to keep
+        Pro on. It sends only your subscription ID, a random ID created for the computer (not derived from its
         hardware), the Motiv version and the operating system family (macOS or Windows), plus the computer&apos;s name
         only if you choose to share it. It never sends recordings, transcripts, summaries, meeting details or how you
-        use Motiv. Without Premium, Motiv doesn&apos;t contact emruz.com.
+        use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com.
       </p>
 
       <h2>Google user data</h2>
@@ -109,7 +109,7 @@ export default function MotivPrivacyPage() {
         <li>Settings &gt; Storage removes old recording audio automatically if you set a limit; you can also delete the recordings folder.</li>
         <li>Settings &gt; Meetings deletes voiceprints, one or all.</li>
         <li>
-          Settings &gt; Accounts &gt; Disconnect removes calendar sign-ins. To revoke access completely, also remove Motiv
+          Settings &gt; Calendars &gt; Disconnect removes calendar sign-ins. To revoke access completely, also remove Motiv
           at <a href="https://myaccount.microsoft.com">myaccount.microsoft.com</a> or{' '}
           <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.
         </li>

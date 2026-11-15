@@ -17,7 +17,7 @@ Check signing still matches the app: `npm run test:lease` (uses the test vectors
 
 ## 3. Stripe
 1. Turn on Stripe Tax and add your tax registrations.
-2. Create one product "Motiv Premium" with three prices: $9/month recurring, $99/year recurring, $299 one-time. Set each price's tax behavior. Put the price IDs in `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME`.
+2. Create one product "Motiv Pro" with three prices: $9/month recurring, $99/year recurring, $299 one-time. Set each price's tax behavior. Put the price IDs in `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME`.
 3. Add a webhook endpoint `https://emruz.com/api/stripe/webhook` for: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `charge.dispute.closed`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
 4. Configure the Customer Portal (Settings > Billing > Customer portal): allow cancel, update payment method and invoice history.
 5. Set `STRIPE_SECRET_KEY`. Use test-mode keys first; `stripe listen --forward-to localhost:8888/api/stripe/webhook` works with `netlify dev`.
@@ -39,7 +39,7 @@ Set `ADMIN_EMAILS` to your email. Sign in and open `/admin/motiv` (also linked f
 ## How it fits together
 - **Purchase:** /motiv Buy > Stripe Checkout > webhook creates the subscription, attaches it to the account with that email (creating one if needed) and emails the subscription ID.
 - **Register a computer:** Motiv calls `/api/motiv/v1/pair/start` and shows a code > the customer signs in at `/activate`, picks a subscription and approves > Motiv's next poll receives the lease.
-- **Check-in:** Motiv calls `/api/motiv/v1/checkin` daily and gets a fresh 14-day lease, or an error (revoked, canceled, expired, past due) that turns Premium off.
+- **Check-in:** Motiv calls `/api/motiv/v1/checkin` daily and gets a fresh 14-day lease, or an error (revoked, canceled, expired, past due) that turns Pro off.
 - **Refunds:** a full refund or lost dispute on a lifetime purchase revokes it automatically. For monthly and annual, cancel in Stripe (or revoke in admin).
 - **Apple Hide My Email:** the account page lets a signed-in user prove a purchase email by link, which moves those purchases to their account.
 

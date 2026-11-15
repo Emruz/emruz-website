@@ -52,6 +52,6 @@ export const motivPremium: { title: string; description: string }[] = [
 export const motivPrivacy = [
   { title: 'Audio stays on your computer', description: 'Recording and transcription happen locally. Recordings, transcripts and voiceprints never leave the machine.' },
   { title: 'You choose the AI', description: 'Use a local model and work fully offline, or a cloud provider such as Claude or OpenAI. Only transcript text is sent, and only to the provider you pick.' },
-  { title: 'No usage tracking', description: 'No analytics. Premium checks in with emruz.com using only your subscription ID and a random device ID.' },
+  { title: 'No usage tracking', description: 'No analytics. Pro checks in with emruz.com using only your subscription ID and a random device ID.' },
   { title: 'Read-only access', description: 'Calendar and Teams transcript access is read-only. Voiceprints are opt-in, stored locally and deletable.' },
 ];

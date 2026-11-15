@@ -49,19 +49,19 @@ function mapStatus(s: Stripe.Subscription.Status): 'active' | 'past_due' | 'canc
 const id = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : v?.id ?? null);
 
 async function welcomeEmail(email: string, subscriptionId: string, plan: Plan) {
-  const text = `Thanks for buying Motiv Premium (${plan}).
+  const text = `Thanks for buying Motiv Pro (${plan}).
 
 Your subscription ID: ${subscriptionId}
 
 Download Motiv: ${MOTIV_DOWNLOAD_URL}
 
-To unlock Premium, open Motiv > Settings > Premium and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email address and enter the code Motiv shows. You can also paste the subscription ID instead.
+To unlock Pro, open Motiv > Settings > License and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email address and enter the code Motiv shows. You can also paste the subscription ID instead.
 
 Manage your subscription, computers and receipts at ${SITE_URL}/motiv/account
 
 Emruz`;
   try {
-    await sendEmail(email, 'Your Motiv Premium subscription', text);
+    await sendEmail(email, 'Your Motiv Pro subscription', text);
   } catch (e) {
     console.error('welcome email failed', e);
   }
@@ -140,16 +140,16 @@ async function cancelStripeSubscription(stripeSubId: string) {
 }
 
 const REVOKED_TEXT: Record<RevokeCategory, string> = {
-  refund: 'Your Motiv Premium has ended because your payment was refunded.',
-  chargeback: 'Your Motiv Premium has ended because your payment was reversed.',
-  eula_misuse: 'Your Motiv Premium has been ended for breach of the Motiv licence agreement (EULA). No refund is due.',
-  admin_error: 'Your Motiv Premium has been ended. If you think this is a mistake, reply to this email.',
+  refund: 'Your Motiv Pro has ended because your payment was refunded.',
+  chargeback: 'Your Motiv Pro has ended because your payment was reversed.',
+  eula_misuse: 'Your Motiv Pro has been ended for breach of the Motiv licence agreement (EULA). No refund is due.',
+  admin_error: 'Your Motiv Pro has been ended. If you think this is a mistake, reply to this email.',
 };
 
 async function revokedEmail(row: RevocableRow, category: RevokeCategory) {
   const billing = row.plan === 'lifetime' ? '' : '\n\nYour subscription has been cancelled, so you will not be charged again.';
   try {
-    await sendEmail(row.customer_email, 'Your Motiv Premium has ended', `${REVOKED_TEXT[category]}${billing}\n\nEmruz`);
+    await sendEmail(row.customer_email, 'Your Motiv Pro has ended', `${REVOKED_TEXT[category]}${billing}\n\nEmruz`);
   } catch (e) {
     // The licence is already revoked; record the failed notice so it is not missed
     console.error('revoke email failed', e);

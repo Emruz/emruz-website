@@ -7,7 +7,7 @@ import { motiv } from '@/lib/server/config';
 export const metadata = {
   title: 'Motiv: private AI meeting assistant',
   description:
-    'Motiv records your meetings, transcribes them on your own computer, and turns them into summaries, action items and answers. For macOS and Windows.',
+    'Motiv records your meetings, transcribes them on your own computer, and turns them into summaries, action items and answers. For macOS, Windows and Linux.',
 };
 
 const privacyIcons = [Lock, Cpu, EyeOff, CalendarCheck];
@@ -45,7 +45,7 @@ export default function MotivPage() {
         <Container className="py-10 md:py-14 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
           <div className="max-w-2xl">
             <p className="inline-block text-xs font-semibold uppercase tracking-widest bg-white/15 rounded-full px-3 py-1 mb-4">
-              Now available · macOS and Windows
+              Now available · macOS, Windows and Linux
             </p>
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
               Otter-style notes, without giving a cloud service your audio.

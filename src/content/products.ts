@@ -19,7 +19,7 @@ export const products: Product[] = [
     tagline: 'Your meetings, recorded, transcribed and understood, without sending your audio anywhere.',
     description:
       'A private AI meeting assistant. Records Teams, Zoom and Google Meet calls, transcribes them on your computer, and turns them into summaries, action items and answers.',
-    platforms: 'macOS and Windows',
+    platforms: 'macOS, Windows and Linux',
     status: 'Available',
   },
 ];

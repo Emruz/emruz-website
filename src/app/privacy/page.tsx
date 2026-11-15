@@ -89,7 +89,7 @@ export default function PrivacyPage() {
         <li>your subscription ID;</li>
         <li>a random ID Motiv creates for the computer (not derived from its hardware);</li>
         <li>the computer&apos;s name, only if you choose to share it in Motiv;</li>
-        <li>the Motiv version and operating system family (macOS or Windows);</li>
+        <li>the Motiv version and operating system family (macOS, Windows or Linux);</li>
         <li>when the computer was registered and last checked in.</li>
       </ul>
       <p>

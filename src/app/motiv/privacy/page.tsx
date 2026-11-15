@@ -35,11 +35,12 @@ export default function MotivPrivacyPage() {
         </li>
         <li>
           <strong>Your subscription</strong>, if you have Pro: the subscription ID and a signed lease, in the macOS
-          Keychain or Windows Credential Manager.
+          Keychain, Windows Credential Manager or, on Linux, the Secret Service (GNOME Keyring or KWallet; a
+          file only your user can read if neither is available).
         </li>
         <li>
           <strong>Settings</strong>, including Names &amp; terms, and <strong>calendar sign-ins</strong> (stored in the
-          macOS Keychain or Windows Credential Manager).
+          macOS Keychain, Windows Credential Manager or Linux Secret Service).
         </li>
       </ul>
       <p>
@@ -88,7 +89,7 @@ export default function MotivPrivacyPage() {
       <p>
         With Pro, Motiv contacts emruz.com when you register a computer and about once a day afterwards, to keep
         Pro on. It sends only your subscription ID, a random ID created for the computer (not derived from its
-        hardware), the Motiv version and the operating system family (macOS or Windows), plus the computer&apos;s name
+        hardware), the Motiv version and the operating system family (macOS, Windows or Linux), plus the computer&apos;s name
         only if you choose to share it. It never sends recordings, transcripts, summaries, meeting details or how you
         use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com.
       </p>
@@ -115,7 +116,8 @@ export default function MotivPrivacyPage() {
         </li>
         <li>
           Uninstalling Motiv and deleting its data folder (<code>~/Library/Application Support/com.pirooz.motiv</code> on
-          macOS, <code>%APPDATA%\com.pirooz.motiv</code> on Windows) removes everything else.
+          macOS, <code>%APPDATA%\com.pirooz.motiv</code> on Windows, <code>~/.local/share/com.pirooz.motiv</code> on
+          Linux) removes everything else.
         </li>
         <li>
           To remove your subscription and computers from emruz.com, see the{' '}

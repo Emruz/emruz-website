@@ -4,6 +4,24 @@ Run by /launch-kit on branch `launch-audit`, 2026-11-14. Base commit `4353b05`; 
 
 Changelog: [`LAUNCH/changelog.md`](changelog.md)
 
+## Status update (2026-11-15)
+
+The launch audit's code fixes are on `main`, along with the Motiv changes that followed. Some items below were decided after this report was written:
+
+- **Lifetime wording: decided.** It's a perpetual licence that doesn't expire, with at least 12 months' notice before support ends and a clause for the case where Emruz stops trading. Counsel should review it (lawyer question 6).
+- **Lifetime revocation: decided.** Only for EULA misuse or admin error, and only while support runs. Refunds and chargebacks always end a licence.
+- **Admin sign-in: decided.** Changes need a sign-in within the last 60 minutes, and an idle session ends after 2 hours.
+
+Still open:
+- **Legal entity:** the code names "Shahin Pirooz, doing business as Emruz". The fictitious business name has lapsed, so it needs refiling before sales. Whether to form an LLC is still open (lawyer question 4).
+- **Refund rule:** the 14-day refund is in the terms and pricing page, but you haven't confirmed it (lawyer question 5).
+- **Counsel review:** the terms, refund, and governing law still need review (lawyer questions 5 and 7).
+- **Vendor agreements:** Netlify, Stripe, and Resend DPAs still need checking in each dashboard (`LAUNCH/vendors.md`).
+- **Font licence:** EspecialKay sets the wordmark on every page, and no licence is in the repo (lawyer question 12).
+- **Security items:** N3 (Origin check on cookie-authenticated API routes) and N4 (contact endpoint) are open. N2 and N5 need a check (`LAUNCH/security-findings.md`).
+- **Production checks:** the admin lock, and migrations 015 and 016 on the live database.
+- **Desktop app:** ship the update that honours the `perpetual` flag (the app prompt in `LAUNCH/lifetime-licence-fix.md`).
+
 ## Skill results
 
 | Skill | Run or skipped | Result |

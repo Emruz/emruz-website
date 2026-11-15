@@ -125,7 +125,7 @@ export default function MotivPage() {
           <p className="mt-2 text-gray-600 mb-8">Prices in USD. Sales tax or VAT is added at checkout where it applies.{!salesOpen && ' Available when Motiv launches.'}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => (
-              <div key={plan.name} className="rounded-xl border border-gray-200 p-6">
+              <div key={plan.name} className="flex flex-col rounded-xl border border-gray-200 p-6">
                 <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                 <p className="mt-4">
                   <span className="text-4xl font-bold text-gray-900">{plan.price}</span>{' '}
@@ -133,7 +133,7 @@ export default function MotivPage() {
                 </p>
                 <p className="mt-2 text-sm text-gray-600">{plan.note}</p>
                 {salesOpen && (
-                  <form action="/api/motiv/checkout" method="post" className="mt-5">
+                  <form action="/api/motiv/checkout" method="post" className="mt-auto pt-5">
                     <input type="hidden" name="plan" value={plan.plan} />
                     <button className="w-full bg-[#4F46E5] text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-[#4338CA] transition-colors">
                       Buy {plan.name}

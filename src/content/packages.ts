@@ -107,7 +107,7 @@ export const families: ProductFamily[] = [
     slug: 'DDR',
     path: 'ddr',
     label: 'ΔDR',
-    name: 'Detect, Defend & Respond',
+    name: 'Delta Detection & Response',
     tagline: 'Active defense with identity and data at the center',
     summary:
       'Active defense with data and identity risk and posture management, compliance reporting, DNS and cloud file security, and identity threat response, in four editions.',
@@ -220,7 +220,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-ST',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Starter',
+    name: 'Delta Detection & Response, Starter',
     tagline: 'Active defense with data and compliance in view',
     summary: 'Moves from detection to active defense, and adds data security posture management and compliance reporting.',
     bestFor: 'Organizations with sensitive data and audit obligations.',
@@ -230,7 +230,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-ES',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Essentials',
+    name: 'Delta Detection & Response, Essentials',
     tagline: 'Identity and DNS covered',
     summary: 'Adds identity security posture management and DNS security posture, protecting accounts, domains and DNS.',
     bestFor: 'Enterprises where identities and domains are prime targets.',
@@ -240,7 +240,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-PM',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Premium',
+    name: 'Delta Detection & Response, Premium',
     tagline: 'Cloud files covered too',
     summary: 'Adds security for files stored and shared in cloud platforms.',
     bestFor: 'Organizations that collaborate heavily in cloud storage.',
@@ -250,7 +250,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-CP',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Complete',
+    name: 'Delta Detection & Response, Complete',
     tagline: 'Maximum protection, identity attacks stopped',
     summary: 'Adds identity threat detection and response to stop account takeover as it happens.',
     bestFor: 'Regulated organizations that need the complete portfolio.',

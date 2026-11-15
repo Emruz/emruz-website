@@ -109,7 +109,7 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                 )}
               </div>
               <h3 className="text-2xl font-bold text-gray-900">{displayCode(pkg.code)}</h3>
-              <p className="text-sm text-gray-500">{pkg.name.replace(/^Detect, Defend & Respond/, 'ΔDR')}</p>
+              <p className="text-sm text-gray-500">{pkg.name}</p>
               <p className="mt-3 font-semibold text-gray-900">{pkg.tagline}</p>
               <p className="mt-1 text-sm text-gray-600">{pkg.summary}</p>
 

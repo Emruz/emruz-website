@@ -17,13 +17,21 @@ export interface SubscriptionView extends SubscriptionRow {
   created_at: Date;
   devices: DeviceRow[];
   usable: boolean;
+  archived_at: Date | null;
+  period_ended: boolean;
+  stripe_subscription_id: string | null;
+  revoke_category: string | null;
 }
 
-export async function subscriptionsFor(where: { accountId?: string; search?: string }): Promise<SubscriptionView[]> {
+export async function subscriptionsFor(where: { accountId?: string; search?: string; email?: string; id?: string }): Promise<SubscriptionView[]> {
   const sql = db();
   const q = where.search?.trim().toLowerCase();
-  const subs = where.accountId
-    ? await sql<SubscriptionView[]>`select * from subscriptions where account_id = ${where.accountId} order by created_at desc`
+  const subs = where.id
+    ? await sql<SubscriptionView[]>`select * from subscriptions where id = ${where.id}`
+    : where.email
+      ? await sql<SubscriptionView[]>`select * from subscriptions where lower(customer_email) = ${where.email.toLowerCase()} order by created_at desc`
+    : where.accountId
+      ? await sql<SubscriptionView[]>`select * from subscriptions where account_id = ${where.accountId} order by created_at desc`
     : await sql<SubscriptionView[]>`
         select s.* from subscriptions s left join accounts a on a.id = s.account_id
         where ${q ?? ''} = ''
@@ -40,7 +48,54 @@ export async function subscriptionsFor(where: { accountId?: string; search?: str
     ...s,
     devices: devices.filter((d) => d.subscription_id === s.id),
     usable: entitlementProblem(s) === null,
+    period_ended: !!s.period_end && s.period_end.getTime() <= Date.now(),
   }));
+}
+
+export interface ArchivedRow {
+  id: string;
+  customer_email: string;
+  plan: 'monthly' | 'annual' | 'lifetime';
+  status: 'active' | 'past_due' | 'canceled' | 'revoked';
+  complimentary: boolean;
+  revoke_reason: string | null;
+  created_at: Date;
+  archived_at: Date;
+}
+
+/** Archived licences, newest first, optionally filtered by customer email. */
+export async function archivedLicences(search: string): Promise<ArchivedRow[]> {
+  const q = search.trim().toLowerCase();
+  return db()<ArchivedRow[]>`
+    select id, customer_email, plan, status, complimentary, revoke_reason, created_at, archived_at
+    from subscriptions
+    where archived_at is not null and (${q} = '' or lower(customer_email) like ${'%' + q + '%'})
+    order by archived_at desc
+    limit 200`;
+}
+
+export interface CustomerRow {
+  email: string;
+  licences: number;
+  active: number;
+  revoked: number;
+  last_bought: Date;
+}
+
+/** One row per customer email, for the admin list. */
+export async function customerSummaries(search: string): Promise<CustomerRow[]> {
+  const q = search.trim().toLowerCase();
+  return db()<CustomerRow[]>`
+    select lower(customer_email) as email,
+           count(*)::int as licences,
+           count(*) filter (where status <> 'revoked')::int as active,
+           count(*) filter (where status = 'revoked')::int as revoked,
+           max(created_at) as last_bought
+    from subscriptions
+    where archived_at is null and (${q} = '' or lower(customer_email) like ${'%' + q + '%'})
+    group by lower(customer_email)
+    order by max(created_at) desc
+    limit 200`;
 }
 
 export const fmtDate = (d: Date | null) =>

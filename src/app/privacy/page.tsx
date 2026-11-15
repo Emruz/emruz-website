@@ -176,9 +176,15 @@ export default function PrivacyPage() {
         <tbody>
           <tr><td>emruz_session</td><td>Keeps you signed in</td><td>30 days</td></tr>
           <tr><td>emruz_oauth_…</td><td>Protects a Microsoft, Google or Apple sign-in while it is in progress</td><td>10 minutes</td></tr>
-          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Until they switch back</td></tr>
+          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Up to 30 days, or until they switch back</td></tr>
         </tbody>
       </table>
+
+      <p>
+        Some forms save what you have typed in your browser&apos;s local storage, so you don&apos;t lose it if you are
+        signed out or the page reloads. The draft stays on your device, is never sent to us, and is removed when you
+        submit the form.
+      </p>
 
       <h2>How long we keep it</h2>
       <ul>
@@ -214,7 +220,7 @@ export default function PrivacyPage() {
       </ul>
       <p>
         Email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> from the address on your account. We&apos;ll
-        respond within the time the law requires, and we won&apos;t treat you differently for exercising these
+        respond within one month (45 days for California residents), or sooner where the law requires, and we won&apos;t treat you differently for exercising these
         rights.
       </p>
       <p>

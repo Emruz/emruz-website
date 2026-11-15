@@ -88,9 +88,15 @@ gh pr merge "$pr" --squash --delete-branch
 
 step "Update main locally"
 git switch main
+before="$(git rev-parse HEAD)"
 git pull -q --ff-only
 git branch -D "$branch" 2>/dev/null || true
 git fetch -q --prune
-npm install --no-fund --no-audit
+# Reinstall only when the pull changed dependencies. npm ci installs exactly what
+# the lockfile says and never rewrites it (npm install did, leaving main dirty).
+if ! git diff --quiet "$before" HEAD -- package.json package-lock.json; then
+  echo "Dependencies changed; running npm ci."
+  npm ci --no-fund --no-audit
+fi
 
 printf '\n\033[1;32mShipped. Netlify is deploying main now; database updates run with the deploy.\033[0m\n'

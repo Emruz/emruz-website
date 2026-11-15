@@ -8,7 +8,7 @@ import { db, logEvent } from '@/lib/server/db';
 import { sendEmail } from '@/lib/server/email';
 import { newSubscriptionId } from '@/lib/server/lease';
 import { deactivateDevice, type SubscriptionRow } from '@/lib/server/licensing';
-import { isRevokeCategory, revocationProblem } from '@/lib/server/revocation';
+import { canArchive, canDelete, isRevokeCategory, revocationProblem } from '@/lib/server/revocation';
 import { revokeLicence, type RevocableRow } from '@/lib/server/stripe';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
@@ -126,6 +126,53 @@ export async function adminRemoveDevice(form: FormData) {
   const [s] = await db()<SubscriptionRow[]>`select * from subscriptions where id = ${id}`;
   if (s) await deactivateDevice(s, String(form.get('device') || ''), actor);
   back(to, 'Computer removed.');
+}
+
+/** Hide a finished licence from the lists. Paid licences are kept for records. */
+export async function archiveLicence(form: FormData) {
+  const actor = await admin();
+  const id = form.get('id');
+  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  const to = returnPath(form, licencePath(id));
+  const [row] = await db()<{ status: string; period_ended: boolean; customer_email: string }[]>`
+    select status, customer_email, (period_end is not null and period_end <= now()) as period_ended
+    from subscriptions where id = ${id}`;
+  if (!row) back('/admin/motiv', 'Licence not found.');
+  if (!canArchive(row.status, row.period_ended)) back(to, 'Only a revoked licence, or a cancelled one whose period has ended, can be archived.');
+  await db()`update subscriptions set archived_at = now() where id = ${id}`;
+  await logEvent('archived', {}, { subscriptionId: id, actor });
+  back(to, 'Archived. It is hidden from the lists and kept for records.');
+}
+
+export async function restoreLicence(form: FormData) {
+  const actor = await admin();
+  const id = form.get('id');
+  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  const to = returnPath(form, licencePath(id));
+  await db()`update subscriptions set archived_at = null where id = ${id}`;
+  await logEvent('restored', {}, { subscriptionId: id, actor });
+  back(to, 'Restored.');
+}
+
+/** Delete a complimentary licence after it is revoked or cancelled. Paid licences cannot be deleted. */
+export async function deleteLicence(form: FormData) {
+  const actor = await admin();
+  const id = form.get('id');
+  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  const to = returnPath(form, licencePath(id));
+  if (String(form.get('confirm') || '').trim() !== 'delete') back(to, 'Type delete to confirm.');
+  const [row] = await db()<{ status: string; complimentary: boolean; period_ended: boolean; customer_email: string; plan: string }[]>`
+    select status, complimentary, customer_email, plan, (period_end is not null and period_end <= now()) as period_ended
+    from subscriptions where id = ${id}`;
+  if (!row) back('/admin/motiv', 'Licence not found.');
+  if (!canDelete(row.complimentary, row.status, row.period_ended)) {
+    back(to, 'Only a complimentary licence that is revoked or cancelled can be deleted. Archive paid licences instead.');
+  }
+  // The record of the deletion stays in the history; the licence's link to it is cleared by the database
+  await logEvent('deleted', { customer_email: row.customer_email, plan: row.plan }, { subscriptionId: id, actor });
+  await db()`delete from subscriptions where id = ${id}`;
+  const [left] = await db()<{ n: number }[]>`select count(*)::int as n from subscriptions where lower(customer_email) = ${row.customer_email.toLowerCase()}`;
+  back(left.n > 0 ? `/admin/motiv/customers/${encodeURIComponent(row.customer_email)}` : '/admin/motiv', 'Deleted.');
 }
 
 export async function grant(form: FormData) {

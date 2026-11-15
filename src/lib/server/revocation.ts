@@ -36,6 +36,20 @@ export function revocationProblem(
   return null;
 }
 
+/**
+ * A licence can be archived once it is no longer active: revoked, or cancelled with the paid period over.
+ * Paid licences are archived, not deleted, so billing records are kept.
+ */
+export function canArchive(status: string, periodEnded: boolean): boolean {
+  if (status === 'revoked') return true;
+  return status === 'canceled' && periodEnded;
+}
+
+/** Complimentary licences can be deleted once revoked or cancelled. Paid licences are never deleted. */
+export function canDelete(complimentary: boolean, status: string, periodEnded: boolean): boolean {
+  return complimentary && canArchive(status, periodEnded);
+}
+
 /** Whether a stored revocation reason is one of the allowed categories. */
 export function isRevokeCategory(value: unknown): value is RevokeCategory {
   return typeof value === 'string' && (REVOKE_CATEGORIES as readonly string[]).includes(value);

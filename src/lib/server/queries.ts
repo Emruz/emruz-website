@@ -17,6 +17,8 @@ export interface SubscriptionView extends SubscriptionRow {
   created_at: Date;
   devices: DeviceRow[];
   usable: boolean;
+  archived_at: Date | null;
+  period_ended: boolean;
 }
 
 export async function subscriptionsFor(where: { accountId?: string; search?: string; email?: string; id?: string }): Promise<SubscriptionView[]> {
@@ -44,6 +46,7 @@ export async function subscriptionsFor(where: { accountId?: string; search?: str
     ...s,
     devices: devices.filter((d) => d.subscription_id === s.id),
     usable: entitlementProblem(s) === null,
+    period_ended: !!s.period_end && s.period_end.getTime() <= Date.now(),
   }));
 }
 
@@ -65,7 +68,7 @@ export async function customerSummaries(search: string): Promise<CustomerRow[]> 
            count(*) filter (where status = 'revoked')::int as revoked,
            max(created_at) as last_bought
     from subscriptions
-    where ${q} = '' or lower(customer_email) like ${'%' + q + '%'}
+    where archived_at is null and (${q} = '' or lower(customer_email) like ${'%' + q + '%'})
     group by lower(customer_email)
     order by max(created_at) desc
     limit 200`;

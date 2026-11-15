@@ -19,8 +19,10 @@ export default async function CustomerPage({
   const email = decodeURIComponent(raw).toLowerCase();
   const account = await requireAccount(`/admin/motiv/customers/${raw}`);
   if (!isAdmin(account)) notFound();
-  const licences = await subscriptionsFor({ email });
-  if (licences.length === 0) notFound();
+  const all = await subscriptionsFor({ email });
+  if (all.length === 0) notFound();
+  const licences = all.filter((s) => !s.archived_at);
+  const archived = all.filter((s) => s.archived_at);
 
   return (
     <>
@@ -70,6 +72,21 @@ export default async function CustomerPage({
               </tbody>
             </table>
           </div>
+          {archived.length > 0 && (
+            <div className="mt-8">
+              <h2 className="mb-3 font-semibold text-gray-900">Archived</h2>
+              <ul className="space-y-2 text-sm">
+                {archived.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-gray-200 px-4 py-2">
+                    <span className="text-gray-700">
+                      {planLabel[s.plan]} · {statusLabel(s)} · bought {fmtDate(s.created_at)}
+                    </span>
+                    <Link href={`/admin/motiv/licences/${s.id}`} className={btn}>Open</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </Container>
       </section>
     </>

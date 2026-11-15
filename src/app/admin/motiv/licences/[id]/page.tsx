@@ -4,9 +4,9 @@ import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
 import { db } from '@/lib/server/db';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
-import { REVOKE_CATEGORIES, REVOKE_LABELS } from '@/lib/server/revocation';
+import { canArchive, canDelete, REVOKE_CATEGORIES, REVOKE_LABELS } from '@/lib/server/revocation';
 import { isAdmin, requireAccount } from '@/lib/server/session';
-import { adminRemoveDevice, reinstate, revoke, setSeats } from '../../actions';
+import { adminRemoveDevice, archiveLicence, deleteLicence, reinstate, restoreLicence, revoke, setSeats } from '../../actions';
 import { btn, danger, input, licenceTone, Notice, StatusPill } from '../../ui';
 
 export const metadata = { title: 'Motiv licence', robots: { index: false } };
@@ -124,6 +124,46 @@ export default async function LicencePage({
                   Cancels billing now and emails the buyer. No refund is issued here. For a refund, refund in Stripe first.
                 </p>
               </form>
+            )}
+          </div>
+
+          <div className="mt-6 rounded-lg border border-gray-200 p-5 space-y-4 text-sm">
+            <h2 className="font-semibold text-gray-900">Archive and delete</h2>
+            {s.archived_at ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-gray-700">This licence is archived. It is hidden from the lists.</p>
+                <form action={restoreLicence}>
+                  <input type="hidden" name="id" value={s.id} />
+                  <input type="hidden" name="return" value={here} />
+                  <button className={btn}>Restore</button>
+                </form>
+              </div>
+            ) : canArchive(s.status, s.period_ended) ? (
+              <form action={archiveLicence} className="flex flex-wrap items-center gap-3">
+                <input type="hidden" name="id" value={s.id} />
+                <input type="hidden" name="return" value={here} />
+                <button className={btn}>Archive</button>
+                <span className="text-gray-500">Hides it from the lists and keeps the record.</span>
+              </form>
+            ) : (
+              <p className="text-gray-600">Archive is available once the licence is revoked, or cancelled and its period has ended.</p>
+            )}
+            {canDelete(s.complimentary, s.status, s.period_ended) ? (
+              <form action={deleteLicence} className="flex flex-wrap items-center gap-3">
+                <input type="hidden" name="id" value={s.id} />
+                <input type="hidden" name="return" value={here} />
+                <input name="confirm" placeholder="Type delete" className={input} aria-label="Type delete to confirm" />
+                <button className={danger}>Delete permanently</button>
+                <span className="basis-full text-xs text-gray-500">
+                  Removes this complimentary licence and its computers. The history keeps a record of the deletion.
+                </span>
+              </form>
+            ) : (
+              <p className="text-xs text-gray-500">
+                {s.complimentary
+                  ? 'A complimentary licence can be deleted once it is revoked or cancelled.'
+                  : 'Paid licences are archived, not deleted, so billing records are kept.'}
+              </p>
             )}
           </div>
 

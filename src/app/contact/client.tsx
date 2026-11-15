@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { PageHeader, SectionIntro, Container, Card } from '@/components';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -238,7 +239,7 @@ export default function ContactForm() {
                   </button>
 
                   <p className="text-xs text-gray-600 text-center">
-                    We respect your privacy. Your information will be kept confidential.
+                    We use your details to reply to you and follow up on your request. See our <Link href="/privacy" className="underline">privacy policy</Link>.
                   </p>
                 </form>
               </div>

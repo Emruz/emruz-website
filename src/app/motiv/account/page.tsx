@@ -54,7 +54,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ) : (
             <div className="space-y-6">
               {subs.map((s) => (
-                <article key={s.id} className="rounded-xl border border-gray-200 p-5 md:p-6">
+                <article key={s.id} className={`rounded-xl border border-gray-200 p-5 md:p-6 ${s.usable ? 'bg-white' : 'bg-gray-100'}`}>
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">

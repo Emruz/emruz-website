@@ -276,10 +276,15 @@ export function newInEdition(code: string): CapabilityCode[] {
   return prev ? pkg.includes.filter((c) => !prev.includes.includes(c)) : [];
 }
 
-/** Every capability any edition of a family includes, in glossary order. */
+/** Capability codes sorted alphabetically, for glossaries. */
+export function alphabetical(codes: readonly CapabilityCode[]): CapabilityCode[] {
+  return [...codes].sort((a, b) => a.localeCompare(b, 'en'));
+}
+
+/** Every capability any edition of a family includes, alphabetically for the glossary. */
 export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
   const all = new Set(packages.filter((p) => p.family === slug).flatMap((p) => p.includes));
-  return (Object.keys(capabilities) as CapabilityCode[]).filter((c) => all.has(c));
+  return alphabetical((Object.keys(capabilities) as CapabilityCode[]).filter((c) => all.has(c)));
 }
 
 /* ---------- Add-on services ---------- */

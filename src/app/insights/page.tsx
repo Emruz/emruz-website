@@ -121,7 +121,7 @@ export default async function Insights({ searchParams }: { searchParams: Promise
                 )}
 
                 <p className="text-xs text-gray-600 text-center">
-                  We email when we publish something worth reading. Unsubscribe any time.
+                  We email when we publish something worth reading. Unsubscribe any time. We use your email only for these updates. See our <Link href="/privacy" className="underline">privacy policy</Link>.
                 </p>
               </form>
             </Card>

@@ -14,9 +14,9 @@ const SWITCH_HOURS = 8;
 const IDLE_DAYS = 7;
 /** Admin sessions: absolute lifetime and idle timeout. */
 const ADMIN_SESSION_HOURS = 12;
-const ADMIN_IDLE_MINUTES = 30;
+const ADMIN_IDLE_MINUTES = 120;
 /** Step-up: admin actions and view-as need a sign-in within this window. */
-const STEP_UP_MINUTES = 15;
+const STEP_UP_MINUTES = 60;
 
 export interface Account {
   id: string;

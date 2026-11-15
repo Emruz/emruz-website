@@ -6,6 +6,7 @@ import { motiv, SITE_URL, type Plan } from './config';
 import { accountForEmail } from './accounts';
 import { sendEmail } from './email';
 import { newSubscriptionId } from './lease';
+import { REVOKE_LABELS, type RevokeCategory } from './revocation';
 
 let client: Stripe | null = null;
 export function stripe(): Stripe {
@@ -122,13 +123,83 @@ export async function onInvoiceFailed(inv: Stripe.Invoice) {
     where stripe_subscription_id = ${subId} and status = 'active'`;
 }
 
-/** Full refunds and lost disputes revoke a lifetime purchase. Subscription refunds are reviewed in admin. */
-export async function onPaymentReversed(paymentIntent: string | null, reason: string) {
-  if (!paymentIntent) return;
-  const rows = await db()<{ id: string }[]>`
-    update subscriptions set status = 'revoked', revoked_at = now(), revoke_reason = ${reason}
-    where stripe_payment_intent_id = ${paymentIntent} and status <> 'revoked'
-    returning id`;
-  for (const r of rows) await logEvent('revoked', { reason }, { subscriptionId: r.id, actor: 'stripe' });
-  if (!rows.length) await logEvent('payment_reversed_review', { payment_intent: paymentIntent, reason }, { actor: 'stripe' });
+// --- revocation -----------------------------------------------------------------
+
+export interface RevocableRow {
+  id: string;
+  customer_email: string;
+  plan: Plan;
+  stripe_subscription_id: string | null;
+}
+
+/** Stop billing for a subscription. Throws if Stripe refuses, so the caller leaves the licence unchanged. */
+async function cancelStripeSubscription(stripeSubId: string) {
+  const sub = await stripe().subscriptions.retrieve(stripeSubId);
+  if (sub.status === 'canceled') return;
+  await stripe().subscriptions.cancel(stripeSubId);
+}
+
+const REVOKED_TEXT: Record<RevokeCategory, string> = {
+  refund: 'Your Motiv Premium has ended because your payment was refunded.',
+  chargeback: 'Your Motiv Premium has ended because your payment was reversed.',
+  eula_misuse: 'Your Motiv Premium has been ended for breach of the Motiv licence agreement (EULA). No refund is due.',
+  admin_error: 'Your Motiv Premium has been ended. If you think this is a mistake, reply to this email.',
+};
+
+async function revokedEmail(row: RevocableRow, category: RevokeCategory) {
+  const billing = row.plan === 'lifetime' ? '' : '\n\nYour subscription has been cancelled, so you will not be charged again.';
+  try {
+    await sendEmail(row.customer_email, 'Your Motiv Premium has ended', `${REVOKED_TEXT[category]}${billing}\n\nEmruz`);
+  } catch (e) {
+    // The licence is already revoked; record the failed notice so it is not missed
+    console.error('revoke email failed', e);
+    await logEvent('notice_failed', { kind: 'revoked', error: e instanceof Error ? e.message : String(e) }, { subscriptionId: row.id, actor: 'system' });
+  }
+}
+
+/**
+ * Revoke a licence. Cancels its Stripe subscription first, so no more charges are made.
+ * If Stripe refuses the cancellation, this throws and the licence is not revoked.
+ */
+export async function revokeLicence(row: RevocableRow, category: RevokeCategory, note: string, actor: string) {
+  if (row.stripe_subscription_id) await cancelStripeSubscription(row.stripe_subscription_id);
+  const reason = note ? `${REVOKE_LABELS[category]}: ${note}` : REVOKE_LABELS[category];
+  await db()`
+    update subscriptions set status = 'revoked', revoked_at = now(), revoke_reason = ${reason}, revoke_category = ${category}
+    where id = ${row.id}`;
+  await logEvent('revoked', { category, reason }, { subscriptionId: row.id, actor });
+  await revokedEmail(row, category);
+}
+
+/** A refund or lost dispute on a charge: find the licence it paid for and revoke it. */
+export async function revokeForCharge(chargeId: string, category: 'refund' | 'chargeback') {
+  const charge = await stripe().charges.retrieve(chargeId);
+  const paymentIntent = id(charge.payment_intent);
+  let rows: RevocableRow[] = [];
+  if (paymentIntent) {
+    // Lifetime purchases store the payment intent on the subscription row
+    rows = await db()<RevocableRow[]>`
+      select id, customer_email, plan, stripe_subscription_id from subscriptions
+      where stripe_payment_intent_id = ${paymentIntent} and status <> 'revoked'`;
+    if (!rows.length) {
+      // Subscription charges: the payment belongs to an invoice, and the invoice names the subscription
+      const payments = await stripe().invoicePayments.list({ payment: { type: 'payment_intent', payment_intent: paymentIntent }, limit: 1 });
+      const invoiceId = id(payments.data[0]?.invoice);
+      if (invoiceId) {
+        const invoice = await stripe().invoices.retrieve(invoiceId);
+        const subId = id(invoice.parent?.subscription_details?.subscription);
+        if (subId) {
+          rows = await db()<RevocableRow[]>`
+            select id, customer_email, plan, stripe_subscription_id from subscriptions
+            where stripe_subscription_id = ${subId} and status <> 'revoked'`;
+        }
+      }
+    }
+  }
+  if (!rows.length) {
+    await logEvent('payment_reversed_review', { charge: chargeId, category }, { actor: 'stripe' });
+    return;
+  }
+  const note = category === 'refund' ? 'refunded in Stripe' : 'disputed and lost in Stripe';
+  for (const row of rows) await revokeLicence(row, category, note, 'stripe');
 }

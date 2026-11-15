@@ -57,6 +57,7 @@ export default async function PortalEngagement({ params, searchParams }: { param
                       </div>
                       {r.status === 'open' && client && (
                         <div className="grid md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-600 md:col-span-2">Files and links you share are used to deliver your assessment. See our <Link href="/privacy" className="underline">privacy policy</Link>.</p>
                           <EvidenceUpload engagementId={id} requestId={r.id} compact />
                           <form action={clientAddLink} className="flex gap-2">
                             <input type="hidden" name="id" value={id} />
@@ -87,6 +88,7 @@ export default async function PortalEngagement({ params, searchParams }: { param
                 {client && (
                   <div className="p-4 border-t border-gray-100">
                     <p className="text-sm font-semibold text-gray-900 mb-2">Share something else</p>
+                    <p className="text-xs text-gray-600 mb-2">Files and links you share are used to deliver your assessment. See our <Link href="/privacy" className="underline">privacy policy</Link>.</p>
                     <EvidenceUpload engagementId={id} compact />
                   </div>
                 )}

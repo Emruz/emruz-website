@@ -15,10 +15,12 @@ fail() { printf '\n\033[1;31mError: %s\033[0m\n' "$1" >&2; exit 1; }
 TITLE=""
 BRANCH_ARG=""
 SKIP_BUILD=0
+STRIPE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --branch) BRANCH_ARG="${2:-}"; shift 2 ;;
     --skip-build) SKIP_BUILD=1; shift ;;
+    --stripe) STRIPE=1; shift ;;
     -*) fail "Unknown option $1" ;;
     *) TITLE="$1"; shift ;;
   esac
@@ -74,3 +76,9 @@ gh pr view "$pr" --json url --jq .url
 printf '\n\033[1;32mPreview building: https://deploy-preview-%s--emruz-website.netlify.app\033[0m\n' "$pr"
 echo "Sign in on previews with an email link (Google and Microsoft only accept emruz.com)."
 echo "When it looks right: npm run ship"
+
+# Last step: the forwarder keeps running until you stop it, so it runs after everything else
+if [ "$STRIPE" = 1 ]; then
+  step "Forwarding Stripe test events to preview #$pr (Ctrl-C to stop)"
+  bash scripts/stripe-preview.sh "$pr"
+fi

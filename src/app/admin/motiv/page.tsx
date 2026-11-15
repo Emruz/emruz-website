@@ -75,6 +75,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
               <input id="q" name="q" defaultValue={q} placeholder="Search by email" className={`${input} flex-1`} />
               <button className={btn}>Search</button>
             </form>
+            <Link href="/admin/motiv/archive" className={btn}>Archive</Link>
             <Link href="/admin/motiv/grant" className={btn}>Grant a licence</Link>
           </div>
 

@@ -50,6 +50,28 @@ export async function subscriptionsFor(where: { accountId?: string; search?: str
   }));
 }
 
+export interface ArchivedRow {
+  id: string;
+  customer_email: string;
+  plan: 'monthly' | 'annual' | 'lifetime';
+  status: 'active' | 'past_due' | 'canceled' | 'revoked';
+  complimentary: boolean;
+  revoke_reason: string | null;
+  created_at: Date;
+  archived_at: Date;
+}
+
+/** Archived licences, newest first, optionally filtered by customer email. */
+export async function archivedLicences(search: string): Promise<ArchivedRow[]> {
+  const q = search.trim().toLowerCase();
+  return db()<ArchivedRow[]>`
+    select id, customer_email, plan, status, complimentary, revoke_reason, created_at, archived_at
+    from subscriptions
+    where archived_at is not null and (${q} = '' or lower(customer_email) like ${'%' + q + '%'})
+    order by archived_at desc
+    limit 200`;
+}
+
 export interface CustomerRow {
   email: string;
   licences: number;

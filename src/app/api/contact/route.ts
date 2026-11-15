@@ -1,4 +1,4 @@
-import { clientIp } from '@/lib/server/api';
+import { clientIp, sameOrigin } from '@/lib/server/api';
 import { db, rateLimit } from '@/lib/server/db';
 import { sendEmail } from '@/lib/server/email';
 import { EMAIL_RE } from '@/lib/server/newsletter';
@@ -6,6 +6,7 @@ import { EMAIL_RE } from '@/lib/server/newsletter';
 const field = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 export async function POST(req: Request) {
+  if (!sameOrigin(req)) return Response.json({ ok: false }, { status: 403 });
   let body: Record<string, unknown>;
   try {
     body = await req.json();

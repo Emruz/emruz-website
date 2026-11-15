@@ -12,6 +12,7 @@
     "ship": "bash scripts/ship.sh",
     "preview": "bash scripts/preview.sh",
     "pr": "bash scripts/preview.sh",
+    "stripe:preview": "bash scripts/stripe-preview.sh",
     "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
   },
   "dependencies": {

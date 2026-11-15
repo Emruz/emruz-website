@@ -46,7 +46,7 @@ export const mainNav: NavGroup[] = [
       { label: 'Add-on services', href: '/products#add-ons', description: 'Close specific gaps on any edition', divider: true },
       { label: 'SPM', href: '/products/spm', description: 'External & network security posture management', note: POWERED_BY, indent: true },
       { label: 'ZTI', href: '/products/zti', description: 'Identity posture, threat detection & response', note: POWERED_BY, indent: true },
-      { label: 'PSA', href: '/products/psa', description: 'Phishing simulation & awareness training', note: POWERED_BY, indent: true },
+      { label: 'PSAT', href: '/products/psa', description: 'Phishing simulation & awareness training', note: POWERED_BY, indent: true },
       { label: 'DRM', href: '/products/drm', description: 'Data risk management & encryption', note: POWERED_BY, indent: true },
       { label: 'DSB', href: '/products/dsb', description: 'Microsoft 365 & Google Workspace backup', note: POWERED_BY, indent: true },
     ],

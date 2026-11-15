@@ -118,7 +118,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
   );
 }
 
-/** Page for an add-on product line (PSA, DRM, DSB). */
+/** Page for an add-on product line (PSAT, DRM, DSB). */
 function AddOnPage({ path }: { path: string }) {
   const l = addOnLineByPath(path)!;
   const items = addOns.filter((a) => a.family === l.slug);

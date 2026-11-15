@@ -53,7 +53,7 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   CFS: { name: 'Cloud File Security', description: 'Scans files in cloud storage and collaboration platforms for threats.' },
   ITDR: { name: 'Identity Threat Detection & Response', description: 'Detects and responds to account takeover and identity attacks.' },
   MDE: { name: 'Managed Data Encryption', description: 'Policy-driven AES-256 file-level encryption of sensitive data, deployed and managed for you. Add-on.' },
-  PSA: { name: 'Phishing Simulation & Security Awareness', description: 'Monthly end-user training with advanced phishing and threat simulations. Add-on.' },
+  PSA: { name: 'Phishing Simulations & Awareness Training', description: 'Monthly end-user training with advanced phishing and threat simulations. Add-on.' },
   DSB: { name: 'Distributed SaaS Backup', description: 'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with granular restore. Add-on.' },
   CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use, such as NIST CSF, ISO 27001, SOC 2 and CMMC.' },
 };
@@ -347,7 +347,7 @@ export const addOns: AddOn[] = [
     code: 'PSA',
     sku: 'WD-PSA-CP-02',
     family: 'PSA',
-    name: 'Phishing Simulation & Security Awareness Training',
+    name: 'Phishing Simulations & Awareness Training',
     summary: 'Keeps people alert with monthly training and realistic phishing and threat simulations.',
     includes: ['PSA'],
     features: ['Monthly end-user training', 'Advanced phishing simulation', 'Advanced threat simulation', 'AI-optimized training and targeting'],
@@ -506,8 +506,8 @@ export const addOnLines: AddOnLine[] = [
   {
     slug: 'PSA',
     path: 'psa',
-    label: 'PSA',
-    name: 'Phishing Simulation & Security Awareness Training',
+    label: 'PSAT',
+    name: 'Phishing Simulations & Awareness Training',
     tagline: 'Turn people into your first line of defense',
     summary:
       'Monthly security awareness training with advanced phishing and threat simulations, targeted to each person by AI, so your people recognize and report attacks.',

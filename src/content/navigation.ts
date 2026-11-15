@@ -1,5 +1,3 @@
-import { POWERED_BY } from './packages';
-
 export interface NavLink {
   label: string;
   href: string;
@@ -38,17 +36,7 @@ export const mainNav: NavGroup[] = [
     href: '/products',
     children: [
       { label: 'Motiv', href: '/motiv', description: 'Private AI meeting assistant for Mac and Windows' },
-      { label: 'Managed Security', href: '/products/compare', description: 'All eleven editions side by side', divider: true },
-      { label: 'EDR', href: '/products/edr', description: 'Endpoint detection & response, 3 editions', note: POWERED_BY, indent: true },
-      { label: 'MDR', href: '/products/mdr', description: 'Managed detection & response, 24/7', note: POWERED_BY, indent: true },
-      { label: 'XDR', href: '/products/xdr', description: 'Extended detection & response, 3 editions', note: POWERED_BY, indent: true },
-      { label: 'ΔDR', href: '/products/ddr', description: 'Detect, defend & respond, 4 editions', note: POWERED_BY, indent: true },
-      { label: 'Add-on services', href: '/products#add-ons', description: 'Close specific gaps on any edition', divider: true },
-      { label: 'SPM', href: '/products/spm', description: 'External & network security posture management', note: POWERED_BY, indent: true },
-      { label: 'ZTI', href: '/products/zti', description: 'Identity posture, threat detection & response', note: POWERED_BY, indent: true },
-      { label: 'PSAT', href: '/products/psa', description: 'Phishing simulation & awareness training', note: POWERED_BY, indent: true },
-      { label: 'DRM', href: '/products/drm', description: 'Data risk management & encryption', note: POWERED_BY, indent: true },
-      { label: 'DSB', href: '/products/dsb', description: 'Microsoft 365 & Google Workspace backup', note: POWERED_BY, indent: true },
+      { label: 'Managed Security', href: '/products', description: 'EDR, MDR, XDR, ΔDR and add-on services. Powered by WhiteDog Cyber.' },
     ],
     footer: { label: 'All products', href: '/products' },
   },

@@ -19,6 +19,8 @@ export interface SubscriptionView extends SubscriptionRow {
   usable: boolean;
   archived_at: Date | null;
   period_ended: boolean;
+  stripe_subscription_id: string | null;
+  revoke_category: string | null;
 }
 
 export async function subscriptionsFor(where: { accountId?: string; search?: string; email?: string; id?: string }): Promise<SubscriptionView[]> {

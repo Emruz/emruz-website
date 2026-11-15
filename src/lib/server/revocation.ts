@@ -11,6 +11,14 @@ export const REVOKE_LABELS: Record<RevokeCategory, string> = {
   admin_error: 'Admin error',
 };
 
+/** What a buyer sees on their account when a licence has ended. The admin note is never shown. */
+export const REVOKE_CUSTOMER_TEXT: Record<RevokeCategory, string> = {
+  refund: 'Ended because the payment was refunded.',
+  chargeback: 'Ended because the payment was reversed.',
+  eula_misuse: 'Ended for breach of the Motiv licence agreement (EULA).',
+  admin_error: 'Ended in error. Contact us if you think this is a mistake.',
+};
+
 /** Lifetime leases never expire. This is the lease end date sent to the app. */
 export const PERPETUAL_LEASE_EXPIRES = Date.UTC(2099, 11, 31, 23, 59, 59);
 

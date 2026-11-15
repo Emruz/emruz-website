@@ -9,7 +9,7 @@ export const metadata = { title: 'Motiv archive', robots: { index: false } };
 
 const statusText = { active: 'Active', past_due: 'Payment overdue', canceled: 'Cancelled', revoked: 'Revoked' } as const;
 
-export default async function ArchivePage({ searchParams }: { searchParams: Promise<{ q?: string; msg?: string }> }) {
+export default async function ArchivePage({ searchParams }: { searchParams: Promise<{ q?: string; msg?: string; err?: string }> }) {
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv/archive');
   if (!isAdmin(account)) notFound();
@@ -25,7 +25,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <form method="get" className="mb-6 flex gap-2 max-w-xl">
             <label htmlFor="q" className="sr-only">Search archived licences</label>

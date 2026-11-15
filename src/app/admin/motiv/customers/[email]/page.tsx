@@ -12,7 +12,7 @@ export default async function CustomerPage({
   searchParams,
 }: {
   params: Promise<{ email: string }>;
-  searchParams: Promise<{ msg?: string }>;
+  searchParams: Promise<{ msg?: string; err?: string }>;
 }) {
   const { email: raw } = await params;
   const sp = await searchParams;
@@ -34,7 +34,7 @@ export default async function CustomerPage({
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-gray-600">

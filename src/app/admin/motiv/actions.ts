@@ -31,6 +31,12 @@ function back(path: string, msg: string): never {
   redirect(`${path}${sep}msg=${encodeURIComponent(msg)}`);
 }
 
+/** Redirect with an error message. The page shows it in red. */
+function fail(path: string, msg: string): never {
+  const sep = path.includes('?') ? '&' : '?';
+  redirect(`${path}${sep}err=1&msg=${encodeURIComponent(msg)}`);
+}
+
 const licencePath = (id: string) => `/admin/motiv/licences/${id}`;
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -40,23 +46,23 @@ export async function revoke(form: FormData) {
   const to = returnPath(form, isUuid(id) ? licencePath(id) : '/admin/motiv');
   const category = String(form.get('category') || '');
   const note = String(form.get('note') || '').trim().slice(0, 500);
-  if (!isUuid(id) || !isRevokeCategory(category)) back(to, 'Choose a reason to revoke.');
-  if (category === 'eula_misuse' && !note) back(to, 'Write the evidence of the misuse in the note.');
+  if (!isUuid(id) || !isRevokeCategory(category)) fail(to, 'Choose a reason to revoke.');
+  if (category === 'eula_misuse' && !note) fail(to, 'Write the evidence of the misuse in the note.');
 
   const [row] = await db()<(RevocableRow & { status: string })[]>`
     select id, customer_email, plan, stripe_subscription_id, status from subscriptions where id = ${id}`;
-  if (!row) back('/admin/motiv', 'Licence not found.');
-  if (row.status === 'revoked') back(to, 'Already revoked.');
+  if (!row) fail('/admin/motiv', 'Licence not found.');
+  if (row.status === 'revoked') fail(to, 'Already revoked.');
 
   const [support] = await db()<{ support_ends_at: Date | null }[]>`select support_ends_at from motiv_support where id = 1`;
   const problem = revocationProblem(row.plan, category, support?.support_ends_at ?? null);
-  if (problem) back(to, problem);
+  if (problem) fail(to, problem);
 
   try {
     await revokeLicence(row, category, note, actor);
   } catch (e) {
     // Not swallowed: the licence is unchanged and the admin sees why
-    back(to, `Not revoked. Stripe refused the cancellation: ${errorText(e)}`);
+    fail(to, `Not revoked. Stripe refused the cancellation: ${errorText(e)}`);
   }
   back(to, 'Revoked. Billing is cancelled and Premium turns off at the next check-in.');
 }
@@ -64,18 +70,18 @@ export async function revoke(form: FormData) {
 export async function reinstate(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
   const [row] = await db()<{ stripe_subscription_id: string | null; revoke_category: string | null }[]>`
     select stripe_subscription_id, revoke_category from subscriptions where id = ${id}`;
-  if (!row) back('/admin/motiv', 'Licence not found.');
+  if (!row) fail('/admin/motiv', 'Licence not found.');
   // Billing was cancelled with this subscription, and a refund or chargeback has returned the money,
   // so reinstating either would give Premium for free. Use a complimentary grant instead.
   if (row.stripe_subscription_id) {
-    back(to, 'Billing was cancelled for this subscription, so it cannot be reinstated. Grant a complimentary subscription instead.');
+    fail(to, 'Billing was cancelled for this subscription, so it cannot be reinstated. Grant a complimentary subscription instead.');
   }
   if (row.revoke_category === 'refund' || row.revoke_category === 'chargeback') {
-    back(to, 'This licence ended with a refund or chargeback, so it cannot be reinstated. Grant a complimentary subscription instead.');
+    fail(to, 'This licence ended with a refund or chargeback, so it cannot be reinstated. Grant a complimentary subscription instead.');
   }
   await db()`update subscriptions set status = 'active', revoked_at = null, revoke_reason = null, revoke_category = null where id = ${id}`;
   await logEvent('reinstated', {}, { subscriptionId: id, actor });
@@ -93,7 +99,7 @@ export async function setSupport(form: FormData) {
   };
   const end = parseDay(String(form.get('support_ends_at') || '').trim());
   const notice = parseDay(String(form.get('notice_given_at') || '').trim());
-  if (!end.ok || !notice.ok) back(to, 'Enter valid dates.');
+  if (!end.ok || !notice.ok) fail(to, 'Enter valid dates.');
   await db()`
     insert into motiv_support (id, notice_given_at, support_ends_at, updated_at, updated_by)
     values (1, ${notice.date}, ${end.date}, now(), ${actor})
@@ -110,7 +116,7 @@ export async function setSupport(form: FormData) {
 export async function setSeats(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
   const seats = Math.max(1, Math.min(50, Number(form.get('seats')) || motiv.defaultSeats));
   await db()`update subscriptions set seats = ${seats} where id = ${id}`;
@@ -121,7 +127,7 @@ export async function setSeats(form: FormData) {
 export async function adminRemoveDevice(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
   const [s] = await db()<SubscriptionRow[]>`select * from subscriptions where id = ${id}`;
   if (s) await deactivateDevice(s, String(form.get('device') || ''), actor);
@@ -132,13 +138,15 @@ export async function adminRemoveDevice(form: FormData) {
 export async function archiveLicence(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
   const [row] = await db()<{ status: string; period_ended: boolean; customer_email: string }[]>`
     select status, customer_email, (period_end is not null and period_end <= now()) as period_ended
     from subscriptions where id = ${id}`;
-  if (!row) back('/admin/motiv', 'Licence not found.');
-  if (!canArchive(row.status, row.period_ended)) back(to, 'Only a revoked licence, or a cancelled one whose period has ended, can be archived.');
+  if (!row) fail('/admin/motiv', 'Licence not found.');
+  if (!canArchive(row.status, row.period_ended)) {
+    fail(to, 'Only a revoked licence, or a cancelled one whose period has ended, can be archived.');
+  }
   await db()`update subscriptions set archived_at = now() where id = ${id}`;
   await logEvent('archived', {}, { subscriptionId: id, actor });
   back(to, 'Archived. It is hidden from the lists and kept for records.');
@@ -147,7 +155,7 @@ export async function archiveLicence(form: FormData) {
 export async function restoreLicence(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
   await db()`update subscriptions set archived_at = null where id = ${id}`;
   await logEvent('restored', {}, { subscriptionId: id, actor });
@@ -158,15 +166,15 @@ export async function restoreLicence(form: FormData) {
 export async function deleteLicence(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
-  if (!isUuid(id)) back('/admin/motiv', 'Licence not found.');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
-  if (String(form.get('confirm') || '').trim() !== 'delete') back(to, 'Type delete to confirm.');
+  if (String(form.get('confirm') || '').trim() !== 'delete') fail(to, 'Type delete to confirm.');
   const [row] = await db()<{ status: string; complimentary: boolean; period_ended: boolean; customer_email: string; plan: string }[]>`
     select status, complimentary, customer_email, plan, (period_end is not null and period_end <= now()) as period_ended
     from subscriptions where id = ${id}`;
-  if (!row) back('/admin/motiv', 'Licence not found.');
+  if (!row) fail('/admin/motiv', 'Licence not found.');
   if (!canDelete(row.complimentary, row.status, row.period_ended)) {
-    back(to, 'Only a complimentary licence that is revoked or cancelled can be deleted. Archive paid licences instead.');
+    fail(to, 'Only a complimentary licence that is revoked or cancelled can be deleted. Archive paid licences instead.');
   }
   // The record of the deletion stays in the history; the licence's link to it is cleared by the database
   await logEvent('deleted', { customer_email: row.customer_email, plan: row.plan }, { subscriptionId: id, actor });
@@ -181,7 +189,7 @@ export async function grant(form: FormData) {
   const plan = String(form.get('plan')) as Plan;
   const months = Number(form.get('months') || 12);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !PLANS.includes(plan)) {
-    back(`/admin/motiv/grant?email=${encodeURIComponent(email)}`, 'Enter an email and plan.');
+    fail(`/admin/motiv/grant?email=${encodeURIComponent(email)}`, 'Enter an email and plan.');
   }
   const accountId = await accountForEmail(email);
   const subscriptionId = newSubscriptionId();

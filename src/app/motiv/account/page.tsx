@@ -5,6 +5,7 @@ import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { PROVIDERS, providerConfigured, providerLabel } from '@/lib/server/oauth';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
+import { REVOKE_CUSTOMER_TEXT, type RevokeCategory } from '@/lib/server/revocation';
 import { isAdmin, requireAccount } from '@/lib/server/session';
 import { removeDevice, unlinkIdentity } from './actions';
 
@@ -61,6 +62,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                         {s.complimentary && <span className="ml-2 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">Complimentary</span>}
                       </h3>
                       <p className={`text-sm mt-1 ${s.usable ? 'text-gray-600' : 'text-red-700'}`}>{statusLabel(s)}</p>
+                      {s.status === 'revoked' && s.revoke_category && (
+                        <p className="text-sm mt-1 text-gray-700">{REVOKE_CUSTOMER_TEXT[s.revoke_category as RevokeCategory] ?? 'Ended.'}</p>
+                      )}
                       <p className="mt-3 text-sm text-gray-500">Subscription ID</p>
                       <p className="font-mono text-lg text-gray-900 select-all">{s.subscription_id}</p>
                     </div>

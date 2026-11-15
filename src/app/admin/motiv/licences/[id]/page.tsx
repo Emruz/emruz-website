@@ -16,7 +16,7 @@ export default async function LicencePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ msg?: string }>;
+  searchParams: Promise<{ msg?: string; err?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -29,6 +29,8 @@ export default async function LicencePage({
     select at, kind, actor, detail from events where subscription_id = ${id} order by at desc limit 200`;
   const here = `/admin/motiv/licences/${id}`;
   const revoked = s.status === 'revoked';
+  // Same rules the server enforces in reinstate()
+  const canReinstate = !s.stripe_subscription_id && s.revoke_category !== 'refund' && s.revoke_category !== 'chargeback';
 
   return (
     <>
@@ -45,7 +47,7 @@ export default async function LicencePage({
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-lg border border-gray-200 p-5 space-y-3 text-sm">
@@ -99,15 +101,17 @@ export default async function LicencePage({
 
           <div className="mt-6 rounded-lg border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Actions</h2>
-            {revoked ? (
+            {revoked && canReinstate ? (
               <form action={reinstate} className="mt-3">
                 <input type="hidden" name="id" value={s.id} />
                 <input type="hidden" name="return" value={here} />
                 <button className={btn}>Reinstate</button>
-                <p className="mt-2 text-xs text-gray-500">
-                  Not available if billing was cancelled or the licence ended with a refund or chargeback.
-                </p>
               </form>
+            ) : revoked ? (
+              <p className="mt-3 text-sm text-gray-600">
+                This licence cannot be reinstated, because {s.stripe_subscription_id ? 'its billing was cancelled' : 'it ended with a refund or chargeback'}.
+                Grant a complimentary licence instead.
+              </p>
             ) : (
               <form action={revoke} className="mt-3 flex flex-wrap items-start gap-3">
                 <input type="hidden" name="id" value={s.id} />

@@ -10,7 +10,7 @@ export const metadata = { title: 'Motiv support', robots: { index: false } };
 
 const dayInput = (d: Date | null) => (d ? new Date(d).toISOString().slice(0, 10) : '');
 
-export default async function SupportPage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
+export default async function SupportPage({ searchParams }: { searchParams: Promise<{ msg?: string; err?: string }> }) {
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv/support');
   if (!isAdmin(account)) notFound();
@@ -30,7 +30,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <form action={setSupport} className="max-w-xl space-y-5 rounded-lg border border-gray-200 p-6">
             <label className="block text-sm">

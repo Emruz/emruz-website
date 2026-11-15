@@ -9,7 +9,7 @@ import { btn, input, Notice } from './ui';
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
 
-export default async function MotivAdmin({ searchParams }: { searchParams: Promise<{ q?: string; msg?: string }> }) {
+export default async function MotivAdmin({ searchParams }: { searchParams: Promise<{ q?: string; msg?: string; err?: string }> }) {
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv');
   if (!isAdmin(account)) notFound();
@@ -34,7 +34,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <Link
             href="/admin/motiv/support"

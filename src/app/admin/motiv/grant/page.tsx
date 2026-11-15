@@ -6,7 +6,7 @@ import { btn, input, Notice } from '../ui';
 
 export const metadata = { title: 'Grant a Motiv licence', robots: { index: false } };
 
-export default async function GrantPage({ searchParams }: { searchParams: Promise<{ email?: string; msg?: string }> }) {
+export default async function GrantPage({ searchParams }: { searchParams: Promise<{ email?: string; msg?: string; err?: string }> }) {
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv/grant');
   if (!isAdmin(account)) notFound();
@@ -20,7 +20,7 @@ export default async function GrantPage({ searchParams }: { searchParams: Promis
       />
       <section className="py-8">
         <Container>
-          <Notice msg={sp.msg} />
+          <Notice msg={sp.msg} error={sp.err === '1'} />
           <form action={grant} className="max-w-xl space-y-5 rounded-lg border border-gray-200 p-6">
             <label className="block text-sm">
               <span className="font-semibold text-gray-900">Email</span>

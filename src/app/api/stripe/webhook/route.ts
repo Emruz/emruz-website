@@ -6,8 +6,8 @@ import {
   onCheckoutCompleted,
   onInvoiceFailed,
   onInvoicePaid,
-  onPaymentReversed,
   onSubscriptionChanged,
+  revokeForCharge,
 } from '@/lib/server/stripe';
 import { securityEvent } from '@/lib/server/alerts';
 
@@ -46,12 +46,16 @@ export async function POST(req: Request) {
         break;
       case 'charge.refunded': {
         const charge = event.data.object;
-        if (charge.refunded) await onPaymentReversed(pi(charge.payment_intent), 'refunded');
+        if (charge.refunded) await revokeForCharge(charge.id, 'refund');
         break;
       }
       case 'charge.dispute.closed': {
         const dispute = event.data.object;
-        if (dispute.status === 'lost') await onPaymentReversed(pi(dispute.payment_intent), 'dispute lost');
+        if (dispute.status === 'lost') {
+          const chargeId = pi(dispute.charge);
+          if (!chargeId) throw new Error(`Dispute ${dispute.id} has no charge`);
+          await revokeForCharge(chargeId, 'chargeback');
+        }
         break;
       }
     }

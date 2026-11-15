@@ -150,7 +150,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'EDR-ST',
     family: 'EDR',
-    name: 'Endpoint Detection & Response, Standard',
+    name: 'Endpoint Detection & Response, Starter',
     tagline: 'Essential endpoint protection',
     summary: 'Next-generation protection that stops known and unknown malware on every device.',
     bestFor: 'Organizations replacing legacy antivirus.',
@@ -160,7 +160,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'EDR-ES',
     family: 'EDR',
-    name: 'Endpoint Detection & Response, Enterprise',
+    name: 'Endpoint Detection & Response, Essentials',
     tagline: 'See and stop what gets through',
     summary: 'Full endpoint detection and response: records activity so attacks can be detected, contained and rolled back.',
     bestFor: 'Organizations that need visibility into what happened on a device, not just prevention.',
@@ -170,7 +170,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'EDR-PM',
     family: 'EDR',
-    name: 'Endpoint Detection & Response, Premier',
+    name: 'Endpoint Detection & Response, Premium',
     tagline: 'Endpoint defense with expert hunting',
     summary: 'Endpoint detection and response plus proactive threat hunting by experienced analysts.',
     bestFor: 'Organizations with valuable endpoints and capable adversaries.',
@@ -190,7 +190,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'XDR-ST',
     family: 'XDR',
-    name: 'Extended Detection & Response, Standard',
+    name: 'Extended Detection & Response, Starter',
     tagline: 'Visibility beyond the endpoint',
     summary: 'Managed detection and response with email, collaboration and internet threat protection, so attacks are stopped before they reach a device.',
     bestFor: 'Organizations where phishing and web threats are the main risk.',
@@ -200,7 +200,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'XDR-ES',
     family: 'XDR',
-    name: 'Extended Detection & Response, Enterprise',
+    name: 'Extended Detection & Response, Essentials',
     tagline: 'Full endpoint detection and response',
     summary: 'Upgrades endpoint protection to full detection and response, alongside email, collaboration and internet threat protection.',
     bestFor: 'Organizations that need to investigate and contain attacks on endpoints, not just block them.',
@@ -210,7 +210,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'XDR-PM',
     family: 'XDR',
-    name: 'Extended Detection & Response, Premier',
+    name: 'Extended Detection & Response, Premium',
     tagline: 'Add threat hunting',
     summary: 'Adds basic threat hunting: regular hunts across your environment for common attacker techniques.',
     bestFor: 'Organizations that want full endpoint response alongside email and web protection.',
@@ -220,7 +220,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-ST',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Standard',
+    name: 'Detect, Defend & Respond, Starter',
     tagline: 'Active defense with data and compliance in view',
     summary: 'Moves from detection to active defense, and adds data security posture management and compliance reporting.',
     bestFor: 'Organizations with sensitive data and audit obligations.',
@@ -230,7 +230,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-ES',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Enterprise',
+    name: 'Detect, Defend & Respond, Essentials',
     tagline: 'Identity and DNS covered',
     summary: 'Adds identity security posture management and DNS security posture, protecting accounts, domains and DNS.',
     bestFor: 'Enterprises where identities and domains are prime targets.',
@@ -240,7 +240,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-PM',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Premier',
+    name: 'Detect, Defend & Respond, Premium',
     tagline: 'Cloud files covered too',
     summary: 'Adds security for files stored and shared in cloud platforms.',
     bestFor: 'Organizations that collaborate heavily in cloud storage.',
@@ -250,7 +250,7 @@ export const packages: ServicePackage[] = [
   {
     code: 'DDR-CP',
     family: 'DDR',
-    name: 'Detect, Defend & Respond, Compliance Plus',
+    name: 'Detect, Defend & Respond, Complete',
     tagline: 'Maximum protection, identity attacks stopped',
     summary: 'Adds identity threat detection and response to stop account takeover as it happens.',
     bestFor: 'Regulated organizations that need the complete portfolio.',

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import type { TransactionSql } from 'postgres';
 import { db, logEvent } from './db';
 import { motiv } from './config';
+import { PERPETUAL_LEASE_EXPIRES } from './revocation';
 import {
   iso,
   newUserCode,
@@ -93,7 +94,8 @@ export function entitlementProblem(s: SubscriptionRow, now = Date.now()): Licens
 
 export function issueLease(s: SubscriptionRow, deviceId: string, now = Date.now()): string {
   const { key, kid } = signingKey();
-  let end = now + motiv.leaseDays * DAY;
+  // Lifetime leases never expire; monthly and annual leases renew at each check-in
+  let end = s.plan === 'lifetime' ? PERPETUAL_LEASE_EXPIRES : now + motiv.leaseDays * DAY;
   if (s.period_end) end = Math.min(end, s.period_end.getTime() + motiv.pastDueGraceDays * DAY);
   return signLease(key, kid, {
     v: 2,
@@ -107,6 +109,7 @@ export function issueLease(s: SubscriptionRow, deviceId: string, now = Date.now(
     lease_expires: iso(end),
     period_end: s.period_end ? iso(s.period_end) : null,
     server_time: iso(now),
+    perpetual: s.plan === 'lifetime',
   });
 }
 

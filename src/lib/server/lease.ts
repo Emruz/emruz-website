@@ -54,6 +54,8 @@ export interface LeasePayload {
   lease_expires: string;
   period_end: string | null;
   server_time: string;
+  /** Lifetime licences: valid offline without a check-in; revocation applies at the next check-in. */
+  perpetual?: boolean;
 }
 
 /** MOTIV2.<kid>.<base64url payload>.<base64url signature> */

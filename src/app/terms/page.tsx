@@ -95,26 +95,34 @@ export default function TermsPage() {
 
       <h3>Lifetime plan</h3>
       <p>
-        A lifetime plan includes Premium for as long as Emruz offers Motiv, including updates we release during that
-        time, without further payment. It is subject to the same rules as other plans, including the limits below.
+        A lifetime plan is a perpetual licence. Premium does not expire and keeps working after Emruz ends support
+        for Motiv, without a check-in. While Motiv is supported, Emruz releases updates for it without further payment.
+        Emruz will give at least 12 months&apos; written notice before ending support. If Emruz stops trading, it will
+        give as much notice as it reasonably can. After support ends, Motiv receives no further updates or security
+        fixes. A lifetime plan is subject to the same rules as other plans, including the limits below.
       </p>
 
       <h3>Computers and check-in</h3>
       <p>
         Each subscription can be used on up to two computers at a time unless your plan says otherwise. You can
         remove a computer from your account page to free its place. Motiv checks in with emruz.com about once a day to
-        keep Premium on; if it can&apos;t reach us, Premium keeps working for a while and then pauses until it
-        connects again. Subscription IDs are personal to the subscriber and must not be shared beyond your computers.
+        keep Premium on. For monthly and annual plans, if it can&apos;t reach us, Premium keeps working for a while and
+        then pauses until it connects again. Lifetime Premium does not pause. Subscription IDs are personal to the subscriber and must not be shared beyond your computers.
       </p>
 
       <h3>Suspension and revocation</h3>
-      <p>We may suspend or revoke a subscription, including a lifetime plan, without refund if:</p>
+      <p>We may end a subscription or a lifetime licence, without refund, if:</p>
       <ul>
         <li>it is shared, resold or used on more computers than allowed;</li>
         <li>someone tries to get around Motiv&apos;s license checks;</li>
-        <li>a payment is reversed, charged back or obtained by fraud; or</li>
+        <li>a payment is obtained by fraud; or</li>
         <li>it is used in serious breach of these terms or the EULA.</li>
       </ul>
+      <p>
+        A lifetime licence can be ended for misuse only while Motiv support runs. A refund or a chargeback ends the
+        licence, and any subscription is cancelled. When we end a subscription for misuse, we cancel it so that it
+        does not renew, and no refund is due.
+      </p>
       <p>
         Where it&apos;s reasonable, we&apos;ll tell you first and give you a chance to fix the problem. Revoking
         Premium never deletes your meetings; free features keep working.

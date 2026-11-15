@@ -2,6 +2,24 @@
 
 Branch `launch-audit`, base `4353b05`. Newest first. Only files changed by this run are listed.
 
+## Since the audit: merged to main (2026-11-15)
+
+| PR | Change | Notes |
+|---|---|---|
+| #22 | Motiv: Lifetime is a perpetual licence (never-expiring lease, `perpetual` flag). Revocation by reason (refund, chargeback, EULA misuse, admin error); refunds and chargebacks always end a licence; misuse and admin error only while support runs. Support dates stored in the database (migration 015). Admin split into customers, licences, support, grant and archive pages. Archive and delete for complimentary licences. Admin pages lock until a recent sign-in (60 min; idle session 2 h). Terms, pricing and account wording, and the launch-audit legal and privacy fixes. | Migrations 015 and 016 applied on deploy. Server change is safe before the desktop app update. |
+| #24 | `ship.sh` no longer rewrites the lockfile after a merge; `npm ci` runs only when dependencies changed. | |
+| #25 | `npm run stripe:preview -- <PR>` forwards Stripe test events to a preview; `npm run preview -- "Title" --stripe` does the same. | Local only. Needs the Stripe CLI. |
+| #26 | PSA renamed to PSAT (Phishing Simulations & Awareness Training) in the nav, footer and product name. Internal codes, the `/products/psa` URL and SKU `WD-PSA-CP-02` are unchanged. | |
+| #27 | Products menu reduced to two entries: Motiv and Managed Security. | |
+
+Preview testing for #22 covered: a monthly misuse revoke with billing cancelled and the buyer emailed; a refund on a monthly subscription; a Lifetime refund (revoked, no Reinstate offered); the support end date blocking a Lifetime misuse revoke; archive, restore and delete; pricing, terms, account and button layout. The admin lock on production is still to be checked.
+
+Cleanup: the local branches `chore/replace-arctic` and `launch-audit` were deleted once their commits were confirmed in PR #22.
+
+## Drift check (2026-11-15)
+
+Release update since the launch baseline. Full report: `LAUNCH/drift-2026-11-15.md`. Found: a new permissive dependency tree behind `/database` (27 packages), a stale `arctic` lock entry, Lifetime and refund wording changes, AI-tool metadata in the logo files, and a possible Neon sub-processor. No new trackers, scripts, cookies or AI calls. A full re-audit is not needed.
+
 ## Commits
 
 | Commit | Group | Files | Why |

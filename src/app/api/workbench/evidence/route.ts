@@ -1,6 +1,6 @@
 import { db, rateLimit } from '@/lib/server/db';
 import { currentAccount } from '@/lib/server/session';
-import { isUuid } from '@/lib/server/api';
+import { isUuid, sameOrigin } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
 import { canAccessEngagement, getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
@@ -12,6 +12,7 @@ const bad = (error: string, status = 400) => Response.json({ ok: false, error },
 
 /** Upload an evidence file. Staff, or a client contact of the engagement. */
 export async function POST(req: Request) {
+  if (!sameOrigin(req)) return bad('Forbidden', 403);
   const account = await currentAccount();
   if (!account) return bad('Sign in first', 401);
   if (!(await rateLimit(`evidence-upload:${account.id}`, 60, 3600))) return bad('Too many uploads, try again later', 429);

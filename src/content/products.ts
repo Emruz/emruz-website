@@ -20,7 +20,7 @@ export const products: Product[] = [
     description:
       'A private AI meeting assistant. Records Teams, Zoom and Google Meet calls, transcribes them on your computer, and turns them into summaries, action items and answers.',
     platforms: 'macOS and Windows',
-    status: 'Coming soon',
+    status: 'Available',
   },
 ];
 

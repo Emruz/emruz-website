@@ -191,7 +191,7 @@ export default function Home() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/motiv/motiv-logo.svg" alt="" width={64} height={64} className="w-16 h-16 flex-shrink-0 drop-shadow-lg" />
             <div className="flex-grow">
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-100">New from Emruz · Coming soon</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-100">New from Emruz · Now available</p>
               <h2 className="text-2xl md:text-3xl font-bold mt-1">Motiv, the private AI meeting assistant</h2>
               <p className="text-indigo-100 mt-1">Meetings recorded, transcribed and understood on your own computer. Your audio never leaves it.</p>
             </div>

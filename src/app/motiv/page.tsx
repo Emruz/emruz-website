@@ -45,7 +45,7 @@ export default function MotivPage() {
         <Container className="py-10 md:py-14 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
           <div className="max-w-2xl">
             <p className="inline-block text-xs font-semibold uppercase tracking-widest bg-white/15 rounded-full px-3 py-1 mb-4">
-              Coming soon · macOS and Windows
+              Now available · macOS and Windows
             </p>
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
               Otter-style notes, without giving a cloud service your audio.
@@ -146,8 +146,7 @@ export default function MotivPage() {
           {salesOpen && (
             <p className="mt-4 text-sm text-gray-500">
               By buying you agree to the <Link href="/terms" className="underline">terms of service</Link> and the{' '}
-              <Link href="/motiv/eula" className="underline">Motiv license agreement</Link>. Full refund within 14 days of
-              your first purchase.
+              <Link href="/motiv/eula" className="underline">Motiv license agreement</Link>.
             </p>
           )}
           <p className="mt-6 text-sm text-gray-500">

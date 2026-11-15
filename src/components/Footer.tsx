@@ -30,7 +30,7 @@ export default function Footer() {
     addOns: [
       { label: 'SPM', href: '/products/spm' },
       { label: 'ZTI', href: '/products/zti' },
-      { label: 'PSA', href: '/products/psa' },
+      { label: 'PSAT', href: '/products/psa' },
       { label: 'DRM', href: '/products/drm' },
       { label: 'DSB', href: '/products/dsb' },
     ],

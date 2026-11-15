@@ -4,6 +4,16 @@ export const input = 'px-3 py-2 border border-gray-300 rounded-md text-sm';
 export const btn = 'px-3 py-2 rounded-md text-sm font-semibold border border-gray-300 hover:bg-gray-50';
 export const danger = 'px-3 py-2 rounded-md text-sm font-semibold border border-red-300 text-red-700 hover:bg-red-50';
 
+/** Shown when the admin must sign in again before making changes. The page is read-only until then. */
+export function ReauthBanner({ next }: { next: string }) {
+  return (
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+      <span>For security, this page is read-only until you sign in again.</span>
+      <a href={`/signin?reauth=1&next=${encodeURIComponent(next)}`} className="font-semibold underline">Sign in again</a>
+    </div>
+  );
+}
+
 /** One-line result of an action: green for success, red for an error. */
 export function Notice({ msg, error = false }: { msg?: string; error?: boolean }) {
   if (!msg) return null;

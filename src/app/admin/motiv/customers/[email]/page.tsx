@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
-import { isAdmin, requireAccount } from '@/lib/server/session';
-import { btn, licenceTone, Notice, StatusPill } from '../../ui';
+import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
+import { btn, licenceTone, Notice, ReauthBanner, StatusPill } from '../../ui';
 
 export const metadata = { title: 'Motiv customer', robots: { index: false } };
 
@@ -19,6 +19,7 @@ export default async function CustomerPage({
   const email = decodeURIComponent(raw).toLowerCase();
   const account = await requireAccount(`/admin/motiv/customers/${raw}`);
   if (!isAdmin(account)) notFound();
+  const locked = needsStepUp(account);
   const all = await subscriptionsFor({ email });
   if (all.length === 0) notFound();
   const licences = all.filter((s) => !s.archived_at);
@@ -32,8 +33,9 @@ export default async function CustomerPage({
         summary={`${licences.length} licence${licences.length === 1 ? '' : 's'}`}
         secondaryCta={{ label: 'Grant another', href: `/admin/motiv/grant?email=${encodeURIComponent(email)}` }}
       />
-      <section className="py-8">
+      <fieldset disabled={locked} className="contents"><section className="py-8">
         <Container>
+          {locked && <ReauthBanner next={`/admin/motiv/customers/${raw}`} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full text-sm">
@@ -88,7 +90,7 @@ export default async function CustomerPage({
             </div>
           )}
         </Container>
-      </section>
+      </section></fieldset>
     </>
   );
 }

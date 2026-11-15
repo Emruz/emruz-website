@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { fmtDate } from '@/lib/server/queries';
-import { isAdmin, requireAccount } from '@/lib/server/session';
+import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
 import { setSupport } from '../actions';
-import { btn, input, Notice } from '../ui';
+import { btn, input, Notice, ReauthBanner } from '../ui';
 
 export const metadata = { title: 'Motiv support', robots: { index: false } };
 
@@ -14,6 +14,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv/support');
   if (!isAdmin(account)) notFound();
+  const locked = needsStepUp(account);
   const [support] = await db()<{ notice_given_at: Date | null; support_ends_at: Date | null; ended: boolean }[]>`
     select notice_given_at, support_ends_at, (support_ends_at is not null and support_ends_at <= now()) as ended
     from motiv_support where id = 1`;
@@ -28,8 +29,9 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
         title="Motiv support"
         summary={!supportEnds ? 'Active, with no end date set' : support?.ended ? `Ended ${fmtDate(supportEnds)}` : `Ends ${fmtDate(supportEnds)}`}
       />
-      <section className="py-8">
+      <fieldset disabled={locked} className="contents"><section className="py-8">
         <Container>
+          {locked && <ReauthBanner next={'/admin/motiv/support'} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <form action={setSupport} className="max-w-xl space-y-5 rounded-lg border border-gray-200 p-6">
@@ -59,7 +61,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             </ul>
           )}
         </Container>
-      </section>
+      </section></fieldset>
     </>
   );
 }

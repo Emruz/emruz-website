@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { archivedLicences, fmtDate, planLabel } from '@/lib/server/queries';
-import { isAdmin, requireAccount } from '@/lib/server/session';
-import { btn, input, Notice } from '../ui';
+import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
+import { btn, input, Notice, ReauthBanner } from '../ui';
 
 export const metadata = { title: 'Motiv archive', robots: { index: false } };
 
@@ -13,6 +13,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv/archive');
   if (!isAdmin(account)) notFound();
+  const locked = needsStepUp(account);
   const q = sp.q?.trim() || '';
   const rows = await archivedLicences(q);
 
@@ -23,8 +24,9 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
         title="Archived licences"
         summary={`${rows.length} shown · hidden from the lists, kept for records`}
       />
-      <section className="py-8">
+      <fieldset disabled={locked} className="contents"><section className="py-8">
         <Container>
+          {locked && <ReauthBanner next={'/admin/motiv/archive'} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <form method="get" className="mb-6 flex gap-2 max-w-xl">
@@ -71,7 +73,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
             </div>
           )}
         </Container>
-      </section>
+      </section></fieldset>
     </>
   );
 }

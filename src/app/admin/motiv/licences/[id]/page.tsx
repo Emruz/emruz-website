@@ -5,9 +5,9 @@ import { isUuid } from '@/lib/server/api';
 import { db } from '@/lib/server/db';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
 import { canArchive, canDelete, REVOKE_CATEGORIES, REVOKE_LABELS } from '@/lib/server/revocation';
-import { isAdmin, requireAccount } from '@/lib/server/session';
+import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
 import { adminRemoveDevice, archiveLicence, deleteLicence, reinstate, restoreLicence, revoke, setSeats } from '../../actions';
-import { btn, danger, input, licenceTone, Notice, StatusPill } from '../../ui';
+import { btn, danger, input, licenceTone, Notice, ReauthBanner, StatusPill } from '../../ui';
 
 export const metadata = { title: 'Motiv licence', robots: { index: false } };
 
@@ -23,6 +23,7 @@ export default async function LicencePage({
   if (!isUuid(id)) notFound();
   const account = await requireAccount(`/admin/motiv/licences/${id}`);
   if (!isAdmin(account)) notFound();
+  const locked = needsStepUp(account);
   const [s] = await subscriptionsFor({ id });
   if (!s) notFound();
   const history = await db()<{ at: Date; kind: string; actor: string | null; detail: Record<string, unknown> }[]>`
@@ -45,8 +46,9 @@ export default async function LicencePage({
         title={`${planLabel[s.plan]} licence`}
         summary={`${s.customer_email} · bought ${fmtDate(s.created_at)}`}
       />
-      <section className="py-8">
+      <fieldset disabled={locked} className="contents"><section className="py-8">
         <Container>
+          {locked && <ReauthBanner next={`/admin/motiv/licences/${id}`} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -189,7 +191,7 @@ export default async function LicencePage({
             </Link>
           </p>
         </Container>
-      </section>
+      </section></fieldset>
     </>
   );
 }

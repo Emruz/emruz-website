@@ -4,8 +4,8 @@ import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { systemChecks } from '@/lib/server/health';
 import { customerSummaries, fmtDate } from '@/lib/server/queries';
-import { isAdmin, requireAccount } from '@/lib/server/session';
-import { btn, input, Notice } from './ui';
+import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
+import { btn, input, Notice, ReauthBanner } from './ui';
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
 
@@ -13,6 +13,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const account = await requireAccount('/admin/motiv');
   if (!isAdmin(account)) notFound();
+  const locked = needsStepUp(account);
   const q = sp.q?.trim() || '';
   const customers = await customerSummaries(q);
   const [totals] = await db()<{ active: number; devices: number }[]>`
@@ -32,8 +33,9 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
         summary={`${totals.active} active licences · ${totals.devices} registered computers`}
         secondaryCta={{ label: 'Switch user', href: '/admin/users' }}
       />
-      <section className="py-8">
+      <fieldset disabled={locked} className="contents"><section className="py-8">
         <Container>
+          {locked && <ReauthBanner next={'/admin/motiv'} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <Link
@@ -117,7 +119,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
             Revoking for EULA misuse does not refund anything.
           </p>
         </Container>
-      </section>
+      </section></fieldset>
     </>
   );
 }

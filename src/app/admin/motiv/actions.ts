@@ -12,11 +12,13 @@ import { canArchive, canDelete, isRevokeCategory, revocationProblem } from '@/li
 import { revokeLicence, type RevocableRow } from '@/lib/server/stripe';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
+/** An admin action needs a live admin session and a recent sign-in. Otherwise the admin signs in again. */
 async function admin() {
   const a = await currentAccount();
+  if (!a) redirect('/signin?reauth=1&next=%2Fadmin%2Fmotiv');
   if (!isAdmin(a)) notFound();
-  requireRecentSignIn(a!, '/admin/motiv');
-  return `admin:${a!.email}`;
+  requireRecentSignIn(a, '/admin/motiv');
+  return `admin:${a.email}`;
 }
 
 /** Only admin pages are valid return targets. */

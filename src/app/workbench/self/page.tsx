@@ -88,6 +88,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                     <tr key={r.id} className="border-b border-gray-100 last:border-0 align-top hover:bg-gray-50">
                       <td className="p-3">
                         <Link href={`/workbench/self/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.company}</Link>
+                        {r.partner_name && <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">via {r.partner_name}</span>}
                         <p className="text-gray-700">
                           {r.performed_by_label ? (
                             <>

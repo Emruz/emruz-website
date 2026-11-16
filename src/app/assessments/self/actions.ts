@@ -11,6 +11,7 @@ import {
   currentAssessment,
   getAssessment,
   getRegistration,
+  notifyAssessmentStarted,
 } from '@/lib/server/assessments';
 import {
   CONSENT_TEXT,
@@ -75,6 +76,7 @@ export async function saveProgress(id: string, data: { step: unknown; profile: u
     update assessments set step = ${step}, profile = ${db().json(cleanProfile(data.profile) as never)},
       answers = ${db().json(cleanAnswers(data.answers) as never)}, updated_at = now()
     where id = ${a.id}`;
+  await notifyAssessmentStarted(a.id);
   return { ok: true };
 }
 
@@ -93,9 +95,9 @@ export async function finish(id: string, data: { profile: unknown; answers: unkn
 /** Reopen a completed assessment to change answers. */
 export async function reopen(form: FormData) {
   const { a } = await owned(form.get('id'));
-  await db()`update assessments set status = 'in_progress', step = 1, updated_at = now() where id = ${a.id}`;
-  // Only one assessment in progress at a time
+  // Only one assessment in progress at a time (assessments_one_open), so clear any draft first
   await db()`delete from assessments where account_id = ${a.account_id} and status = 'in_progress' and id <> ${a.id}`;
+  await db()`update assessments set status = 'in_progress', step = 1, updated_at = now() where id = ${a.id}`;
   redirect('/assessments/self');
 }
 
@@ -122,7 +124,7 @@ export async function withdraw() {
   if (!account) redirect('/signin?next=/assessments/self/history');
   await db()`delete from assessments where account_id = ${account.id}`;
   await db()`
-    update assessment_registrations set withdrawn_at = now(), full_name = '', company = '', job_title = null, phone = null
+    update assessment_registrations set withdrawn_at = now(), full_name = '', company = '', job_title = null, phone = null, partner_id = null
     where account_id = ${account.id}`;
   await logEvent('assessment_consent_withdrawn', {}, { accountId: account.id });
   redirect('/assessments/self?withdrawn=1');

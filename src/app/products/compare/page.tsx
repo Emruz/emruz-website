@@ -1,7 +1,7 @@
 import { DetailHeader, Container, CTABanner } from '@/components';
 import { POWERED_BY } from '@/content/packages';
 import PackagePortfolio from '@/components/PackagePortfolio';
-import { capabilities, type CapabilityCode } from '@/content/packages';
+import { alphabetical, capabilities, type CapabilityCode } from '@/content/packages';
 
 export const metadata = {
   title: 'Compare managed security: EDR, MDR, XDR and ΔDR',
@@ -10,7 +10,7 @@ export const metadata = {
 };
 
 export default function ComparePage() {
-  const codes = Object.keys(capabilities) as CapabilityCode[];
+  const codes = alphabetical(Object.keys(capabilities) as CapabilityCode[]);
 
   return (
     <>

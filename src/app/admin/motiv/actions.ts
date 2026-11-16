@@ -66,7 +66,7 @@ export async function revoke(form: FormData) {
     // Not swallowed: the licence is unchanged and the admin sees why
     fail(to, `Not revoked. Stripe refused the cancellation: ${errorText(e)}`);
   }
-  back(to, 'Revoked. Billing is cancelled and Premium turns off at the next check-in.');
+  back(to, 'Revoked. Billing is cancelled and Pro turns off at the next check-in.');
 }
 
 export async function reinstate(form: FormData) {
@@ -78,7 +78,7 @@ export async function reinstate(form: FormData) {
     select stripe_subscription_id, revoke_category from subscriptions where id = ${id}`;
   if (!row) fail('/admin/motiv', 'Licence not found.');
   // Billing was cancelled with this subscription, and a refund or chargeback has returned the money,
-  // so reinstating either would give Premium for free. Use a complimentary grant instead.
+  // so reinstating either would give Pro for free. Use a complimentary grant instead.
   if (row.stripe_subscription_id) {
     fail(to, 'Billing was cancelled for this subscription, so it cannot be reinstated. Grant a complimentary subscription instead.');
   }
@@ -204,8 +204,8 @@ export async function grant(form: FormData) {
   if (form.get('notify') === 'on') {
     await sendEmail(
       email,
-      'Your Motiv Premium subscription',
-      `You've been given Motiv Premium.\n\nSubscription ID: ${subscriptionId}\n\nIn Motiv, open Settings > Premium and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email. Or paste the subscription ID.\n\nManage it at ${SITE_URL}/motiv/account\n\nEmruz`,
+      'Your Motiv Pro subscription',
+      `You've been given Motiv Pro.\n\nSubscription ID: ${subscriptionId}\n\nIn Motiv, open Settings > License and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email. Or paste the subscription ID.\n\nManage it at ${SITE_URL}/motiv/account\n\nEmruz`,
     ).catch((e) => console.error('grant email failed', e));
   }
   back(`/admin/motiv/customers/${encodeURIComponent(email)}`, `Granted ${plan} subscription ${subscriptionId}.`);

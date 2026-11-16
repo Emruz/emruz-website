@@ -58,7 +58,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">
-                        Motiv Premium · {planLabel[s.plan]}
+                        Motiv Pro · {planLabel[s.plan]}
                         {s.complimentary && <span className="ml-2 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">Complimentary</span>}
                       </h3>
                       <p className={`text-sm mt-1 ${s.usable ? 'text-gray-600' : 'text-red-700'}`}>{statusLabel(s)}</p>
@@ -83,7 +83,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   </h4>
                   {s.devices.length === 0 ? (
                     <p className="mt-2 text-sm text-gray-600">
-                      None yet. In Motiv, open Settings &gt; Premium and choose Register this computer.
+                      None yet. In Motiv, open Settings &gt; License and choose Register this computer.
                     </p>
                   ) : (
                     <ul className="mt-2 divide-y divide-gray-100">
@@ -114,7 +114,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
           )}
           <p className="mt-6 text-sm text-gray-500">
-            <a href={MOTIV_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-semibold">Download Motiv</a> for macOS or Windows. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
+            <a href={MOTIV_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-semibold">Download Motiv</a> for macOS, Windows or Linux. Questions? <Link href="/contact?topic=motiv" className="text-blue-700">Contact us</Link>.
           </p>
         </Container>
       </section>

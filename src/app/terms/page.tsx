@@ -11,7 +11,7 @@ export default function TermsPage() {
     <LegalPage
       title="Terms of service"
       summary="The terms for using emruz.com, your Emruz account and Motiv subscriptions."
-      updated="9 November 2026"
+      updated="15 November 2026"
       path="/terms"
     >
       <p>
@@ -80,22 +80,22 @@ export default function TermsPage() {
 
       <h3>Cancelling</h3>
       <p>
-        Cancel any time from your <Link href="/motiv/account">account page</Link> (Billing &amp; receipts). Premium
+        Cancel any time from your <Link href="/motiv/account">account page</Link> (Billing &amp; receipts). Pro
         stays on until the end of the period you&apos;ve paid for, then stops. Cancelling doesn&apos;t delete
         anything in Motiv; free features and your meetings keep working.
       </p>
 
       <h3>Refunds</h3>
       <p>
-        If Motiv Premium isn&apos;t right for you, email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>{' '}
+        If Motiv Pro isn&apos;t right for you, email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a>{' '}
         within 14 days of your first purchase of a plan for a full refund. Renewals aren&apos;t refunded, but you can
-        cancel at any time to stop the next one. A refund ends the subscription and Premium stops. Nothing here limits
+        cancel at any time to stop the next one. A refund ends the subscription and Pro stops. Nothing here limits
         a refund right you have under the law where you live.
       </p>
 
       <h3>Lifetime plan</h3>
       <p>
-        A lifetime plan is a perpetual licence. Premium does not expire and keeps working after Emruz ends support
+        A lifetime plan is a perpetual licence. Pro does not expire and keeps working after Emruz ends support
         for Motiv, without a check-in. While Motiv is supported, Emruz releases updates for it without further payment.
         Emruz will give at least 12 months&apos; written notice before ending support. If Emruz stops trading, it will
         give as much notice as it reasonably can. After support ends, Motiv receives no further updates or security
@@ -106,8 +106,8 @@ export default function TermsPage() {
       <p>
         Each subscription can be used on up to two computers at a time unless your plan says otherwise. You can
         remove a computer from your account page to free its place. Motiv checks in with emruz.com about once a day to
-        keep Premium on. For monthly and annual plans, if it can&apos;t reach us, Premium keeps working for a while and
-        then pauses until it connects again. Lifetime Premium does not pause. Subscription IDs are personal to the subscriber and must not be shared beyond your computers.
+        keep Pro on. For monthly and annual plans, if it can&apos;t reach us, Pro keeps working for a while and
+        then pauses until it connects again. Lifetime Pro does not pause. Subscription IDs are personal to the subscriber and must not be shared beyond your computers.
       </p>
 
       <h3>Suspension and revocation</h3>
@@ -125,12 +125,12 @@ export default function TermsPage() {
       </p>
       <p>
         Where it&apos;s reasonable, we&apos;ll tell you first and give you a chance to fix the problem. Revoking
-        Premium never deletes your meetings; free features keep working.
+        Pro never deletes your meetings; free features keep working.
       </p>
 
       <h3>Changes to Motiv</h3>
       <p>
-        We improve Motiv over time and may add, change or remove features. If we stop offering Motiv Premium, we&apos;ll
+        We improve Motiv over time and may add, change or remove features. If we stop offering Motiv Pro, we&apos;ll
         give subscribers at least 60 days&apos; notice and refund the unused part of any prepaid monthly or annual
         period.
       </p>

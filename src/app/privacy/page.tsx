@@ -11,12 +11,12 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy policy"
       summary="What we collect on emruz.com, why, who helps us run it, and the choices you have."
-      updated="10 November 2026"
+      updated="15 November 2026"
       path="/privacy"
     >
       <p>
         This policy covers emruz.com, including the contact form, the Insights newsletter, your Emruz account, Motiv purchases and the
-        licensing service Motiv uses to keep Premium on. It is published by {LEGAL_PARTY} (&quot;Emruz&quot;,
+        licensing service Motiv uses to keep Pro on. It is published by {LEGAL_PARTY} (&quot;Emruz&quot;,
         &quot;we&quot;, &quot;us&quot;). The Motiv desktop app has its own{' '}
         <Link href="/motiv/privacy">Motiv privacy policy</Link>, which explains what happens on your computer.
       </p>
@@ -82,14 +82,14 @@ export default function PrivacyPage() {
 
       <h3>When Motiv checks in</h3>
       <p>
-        With Motiv Premium, the app contacts emruz.com when you register a computer and about once a day afterwards.
+        With Motiv Pro, the app contacts emruz.com when you register a computer and about once a day afterwards.
         We receive and keep:
       </p>
       <ul>
         <li>your subscription ID;</li>
         <li>a random ID Motiv creates for the computer (not derived from its hardware);</li>
         <li>the computer&apos;s name, only if you choose to share it in Motiv;</li>
-        <li>the Motiv version and operating system family (macOS or Windows);</li>
+        <li>the Motiv version and operating system family (macOS, Windows or Linux);</li>
         <li>when the computer was registered and last checked in.</li>
       </ul>
       <p>
@@ -114,7 +114,7 @@ export default function PrivacyPage() {
       <ul>
         <li>To provide your account, sign you in and keep it secure.</li>
         <li>To sell, deliver and manage Motiv subscriptions, including tax, receipts, renewals and refunds.</li>
-        <li>To confirm that a computer is entitled to Motiv Premium and to enforce the number of computers per subscription.</li>
+        <li>To confirm that a computer is entitled to Motiv Pro and to enforce the number of computers per subscription.</li>
         <li>To send emails you need: sign-in links, purchase confirmations and important account notices.</li>
         <li>To answer questions and give support.</li>
         <li>To send you your self-assessment results and contact you about them, with your consent.</li>

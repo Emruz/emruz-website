@@ -7,7 +7,7 @@ import { motiv } from '@/lib/server/config';
 export const metadata = {
   title: 'Motiv: private AI meeting assistant',
   description:
-    'Motiv records your meetings, transcribes them on your own computer, and turns them into summaries, action items and answers. For macOS and Windows.',
+    'Motiv records your meetings, transcribes them on your own computer, and turns them into summaries, action items and answers. For macOS, Windows and Linux.',
 };
 
 const privacyIcons = [Lock, Cpu, EyeOff, CalendarCheck];
@@ -15,7 +15,7 @@ const privacyIcons = [Lock, Cpu, EyeOff, CalendarCheck];
 const plans = [
   { plan: 'monthly', name: 'Monthly', price: '$9', period: 'per month', note: 'Renews every month until you cancel. Cancel any time.' },
   { plan: 'annual', name: 'Annual', price: '$99', period: 'per year', note: 'Renews every year until you cancel. One month free compared with monthly.' },
-  { plan: 'lifetime', name: 'Lifetime', price: '$299', period: 'one time', note: 'One payment. Premium never expires, and keeps working after support ends. Updates while Emruz offers Motiv.' },
+  { plan: 'lifetime', name: 'Lifetime', price: '$299', period: 'one time', note: 'One payment. Pro never expires, and keeps working after support ends. Updates while Emruz offers Motiv.' },
 ];
 
 export default function MotivPage() {
@@ -30,12 +30,12 @@ export default function MotivPage() {
         ]}
         title="Motiv"
         summary="Your meetings, recorded, transcribed and understood, without sending your audio anywhere."
-        primaryCta={salesOpen ? { label: 'Get Premium', href: '#plans' } : { label: 'Get notified at launch', href: '/contact?topic=motiv' }}
+        primaryCta={salesOpen ? { label: 'Get Pro', href: '#plans' } : { label: 'Get notified at launch', href: '/contact?topic=motiv' }}
         secondaryCta={salesOpen ? { label: 'Download', href: MOTIV_DOWNLOAD_URL } : { label: 'Your account', href: '/motiv/account' }}
         sections={[
           { label: 'Overview', href: '#overview' },
           { label: 'Privacy', href: '#privacy' },
-          { label: 'Free vs Premium', href: '#features' },
+          { label: 'Free vs Pro', href: '#features' },
           { label: 'Plans', href: '#plans' },
         ]}
       />
@@ -45,7 +45,7 @@ export default function MotivPage() {
         <Container className="py-10 md:py-14 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
           <div className="max-w-2xl">
             <p className="inline-block text-xs font-semibold uppercase tracking-widest bg-white/15 rounded-full px-3 py-1 mb-4">
-              Coming soon · macOS and Windows
+              Now available · macOS, Windows and Linux
             </p>
             <h2 className="text-3xl md:text-4xl font-bold leading-tight">
               Otter-style notes, without giving a cloud service your audio.
@@ -88,7 +88,7 @@ export default function MotivPage() {
       {/* Features */}
       <section id="features" className="scroll-mt-20 py-12 md:py-16 bg-gray-50 border-y border-gray-200">
         <Container>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Free vs Premium</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Free vs Pro</h2>
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-xl font-bold text-gray-900">Free</h3>
@@ -103,7 +103,7 @@ export default function MotivPage() {
               </ul>
             </div>
             <div className="bg-white rounded-xl border-2 border-[#4F46E5] p-6">
-              <h3 className="text-xl font-bold text-gray-900">Premium</h3>
+              <h3 className="text-xl font-bold text-gray-900">Pro</h3>
               <p className="text-sm text-gray-500 mb-4">Everything in Free, plus:</p>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 {motivPremium.map((f) => (
@@ -121,7 +121,7 @@ export default function MotivPage() {
       {/* Plans */}
       <section id="plans" className="scroll-mt-20 py-12 md:py-16">
         <Container>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Premium plans</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Pro plans</h2>
           <p className="mt-2 text-gray-600 mb-8">Prices in USD. Sales tax or VAT is added at checkout where it applies.{!salesOpen && ' Available when Motiv launches.'}</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => (
@@ -146,8 +146,7 @@ export default function MotivPage() {
           {salesOpen && (
             <p className="mt-4 text-sm text-gray-500">
               By buying you agree to the <Link href="/terms" className="underline">terms of service</Link> and the{' '}
-              <Link href="/motiv/eula" className="underline">Motiv license agreement</Link>. Full refund within 14 days of
-              your first purchase.
+              <Link href="/motiv/eula" className="underline">Motiv license agreement</Link>.
             </p>
           )}
           <p className="mt-6 text-sm text-gray-500">

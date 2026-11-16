@@ -42,7 +42,9 @@ import {
 } from '@/content/workbench';
 import { csfSubcategories, subcategoryById } from '@/content/csf';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
-import { completeAssessment, getRegistration, notifyAssessmentStarted, type AssessmentRow } from '@/lib/server/assessments';
+import { completeAssessment, getRegistration, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
+import { addPartnerStaffMember, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
+import { detectType } from '@/lib/server/filetype';
 import type { Answers, IG, Profile } from '@/content/cis-assessment';
 
 const str = (v: FormDataEntryValue | null, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -558,6 +560,9 @@ export async function addStaff(form: FormData) {
   const r = str(form.get('role'), 20) === 'lead' ? 'lead' : 'assessor';
   if (!EMAIL_RE.test(email)) redirect('/workbench/staff?error=email');
   const id = await accountForEmail(email, name || null);
+  // One role per person: partner staff can't also be Emruz staff
+  const [partnerMember] = await db()`select 1 from partner_staff where account_id = ${id}`;
+  if (partnerMember) redirect('/workbench/staff?error=partner');
   if (name) await db()`update accounts set name = ${name} where id = ${id}`;
   const makeAdmin = form.get('admin') === 'on';
   await db()`
@@ -680,38 +685,39 @@ export async function createGuided(form: FormData) {
   const company = str(form.get('company'), 160);
   if (!EMAIL_RE.test(email) || !fullName || !company) redirect('/workbench/self/new?error=fields');
   if (form.get('consent') !== 'yes') redirect('/workbench/self/new?error=consent');
-  const customerId = await accountForEmail(email, fullName);
-  await db()`update accounts set name = coalesce(name, ${fullName}) where id = ${customerId}`;
-  const existing = await getRegistration(customerId);
-  if (!existing || existing.withdrawn_at) {
-    await db()`
-      insert into assessment_registrations (account_id, full_name, company, job_title, phone, consent_version, consent_text)
-      values (${customerId}, ${fullName}, ${company}, ${str(form.get('job_title'), 120) || null}, ${str(form.get('phone'), 40) || null},
-              ${`guided-${CONSENT_VERSION}`}, ${`${CONSENT_TEXT} (Given to ${account.email}, who recorded it on the customer's behalf.)`})
-      on conflict (account_id) do update set
-        full_name = excluded.full_name, company = excluded.company, job_title = excluded.job_title, phone = excluded.phone,
-        consent_version = excluded.consent_version, consent_text = excluded.consent_text, consented_at = now(), withdrawn_at = null`;
-  }
-  // If the customer already has an open draft, the guided session takes it over
-  // (assessments_one_open allows only one open assessment per account).
-  const [a] = await db()<{ id: string }[]>`
-    insert into assessments (account_id, performed_by, assigned_to) values (${customerId}, ${account.id}, ${account.id})
-    on conflict (account_id) where status = 'in_progress' and deleted_at is null
-    do update set performed_by = excluded.performed_by, assigned_to = excluded.assigned_to, updated_at = now()
-    returning id`;
-  await logEvent('assessment_guided_started', { by: account.email }, { accountId: customerId });
-  await notifyAssessmentStarted(a.id);
-  redirect(`/workbench/self/${a.id}/take`);
+  const r = await startGuidedAssessment({
+    by: account,
+    partnerId: null,
+    consentVersion: `guided-${CONSENT_VERSION}`,
+    consentText: `${CONSENT_TEXT} (Given to ${account.email}, who recorded it on the customer's behalf.)`,
+    email,
+    fullName,
+    company,
+    jobTitle: str(form.get('job_title'), 120) || null,
+    phone: str(form.get('phone'), 40) || null,
+  });
+  if ('error' in r) throw new Error('Not allowed');
+  redirect(`/workbench/self/${r.id}/take`);
 }
 
+/** One in-progress guided assessment: Emruz staff, or staff of its partner. */
 async function guidedOn(id: string) {
-  const ctx = await staff();
+  const account = await currentAccount();
+  if (!account) throw new Error('Not authorized');
+  const role = await staffRole(account);
+  const partner = role ? null : await partnerRole(account);
+  if (!role && !partner) throw new Error('Not authorized');
   if (!isUuid(id)) throw new Error('Not found');
   const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null`;
   const row = a as AssessmentRow & { performed_by?: string | null; assigned_to?: string | null };
   if (!a || a.status !== 'in_progress') throw new Error('Not found');
-  if (ctx.role !== 'admin' && row.performed_by !== ctx.account.id && row.assigned_to !== ctx.account.id) throw new Error('Not found');
-  return { ...ctx, a };
+  if (partner) {
+    if (a.partner_id !== partner.partnerId) throw new Error('Not found');
+    if (!partner.admin && row.performed_by !== account.id && row.assigned_to !== account.id) throw new Error('Not found');
+  } else if (role !== 'admin' && row.performed_by !== account.id && row.assigned_to !== account.id) {
+    throw new Error('Not found');
+  }
+  return { account, role, partner, a };
 }
 
 export async function guidedSave(id: string, data: { step: unknown; profile: unknown; answers: unknown }) {
@@ -725,7 +731,8 @@ export async function guidedSave(id: string, data: { step: unknown; profile: unk
 }
 
 export async function guidedFinish(id: string, data: { profile: unknown; answers: unknown }) {
-  const { a } = await guidedOn(id);
+  const ctx = await guidedOn(id);
+  const { a } = ctx;
   const profile = cleanProfile(data.profile);
   const answers = cleanAnswers(data.answers);
   if (!isComplete(profile, answers)) return { ok: false, error: 'Some questions are not answered yet.' };
@@ -733,5 +740,83 @@ export async function guidedFinish(id: string, data: { profile: unknown; answers
   const [customer] = await db()<{ id: string; email: string }[]>`select id, email from accounts where id = ${a.account_id}`;
   const reg = (await getRegistration(a.account_id))!;
   await completeAssessment({ ...a, profile, answers }, customer, reg);
-  redirect(`/workbench/self/${a.id}`);
+  redirect(ctx.partner ? `/assessments/self/report/${a.id}` : `/workbench/self/${a.id}`);
+}
+
+/* ---------- Partners (Emruz admins) ---------- */
+
+export async function createPartner(form: FormData) {
+  const { account } = await adminOnly();
+  const name = str(form.get('name'), 160);
+  const notify = str(form.get('notify_email'), 254).toLowerCase();
+  if (!name) redirect('/workbench/partners?error=name');
+  if (notify && !EMAIL_RE.test(notify)) redirect('/workbench/partners?error=email');
+  const [p] = await db()<{ id: string }[]>`
+    insert into partners (name, notify_email, created_by) values (${name}, ${notify || null}, ${account.email}) returning id`;
+  await logEvent('partner_created', { partner: p.id, name, by: account.email });
+  redirect(`/workbench/partners/${p.id}`);
+}
+
+export async function updatePartner(form: FormData) {
+  const { account } = await adminOnly();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const name = str(form.get('name'), 160);
+  const notify = str(form.get('notify_email'), 254).toLowerCase();
+  if (!name) redirect(`/workbench/partners/${id}?error=name`);
+  if (notify && !EMAIL_RE.test(notify)) redirect(`/workbench/partners/${id}?error=email`);
+  const active = form.get('active') === 'on';
+  await db()`update partners set name = ${name}, notify_email = ${notify || null}, active = ${active}, updated_at = now() where id = ${id}`;
+  await logEvent('partner_updated', { partner: id, active, by: account.email });
+  revalidatePath(`/workbench/partners/${id}`);
+  redirect(`/workbench/partners/${id}?saved=1`);
+}
+
+export async function setPartnerLogo(form: FormData) {
+  await adminOnly();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const file = form.get('logo');
+  if (!(file instanceof File) || !file.size) redirect(`/workbench/partners/${id}?error=logo`);
+  if (file.size > 1024 * 1024) redirect(`/workbench/partners/${id}?error=logo-size`);
+  const data = await file.arrayBuffer();
+  const type = await detectType(data);
+  if (type !== 'image/jpeg' && type !== 'image/png' && type !== 'image/webp') redirect(`/workbench/partners/${id}?error=logo`);
+  await putPartnerLogo(id as string, data);
+  await db()`update partners set logo_version = ${Date.now()}, updated_at = now() where id = ${id}`;
+  revalidatePath(`/workbench/partners/${id}`);
+  redirect(`/workbench/partners/${id}?saved=1`);
+}
+
+export async function adminAddPartnerStaff(form: FormData) {
+  const { account } = await adminOnly();
+  const partnerId = form.get('partner_id');
+  if (!isUuid(partnerId)) throw new Error('Not found');
+  const email = str(form.get('email'), 254).toLowerCase();
+  if (!EMAIL_RE.test(email)) redirect(`/workbench/partners/${partnerId}?error=staff-email`);
+  const r = await addPartnerStaffMember({
+    partnerId: partnerId as string,
+    email,
+    name: str(form.get('name'), 120) || null,
+    admin: form.get('admin') === 'on',
+    addedBy: account.email,
+  });
+  if (r.error) redirect(`/workbench/partners/${partnerId}?error=${r.error}`);
+  const [p] = await db()<{ name: string }[]>`select name from partners where id = ${partnerId}`;
+  await sendPartnerInvite(email, str(form.get('name'), 120) || null, p?.name ?? 'your organization', account.name || account.email);
+  revalidatePath(`/workbench/partners/${partnerId}`);
+  redirect(`/workbench/partners/${partnerId}?added=1`);
+}
+
+export async function adminSetPartnerStaff(form: FormData) {
+  await adminOnly();
+  const partnerId = form.get('partner_id');
+  const accountId = form.get('account_id');
+  if (!isUuid(partnerId) || !isUuid(accountId)) throw new Error('Not found');
+  await setPartnerStaffMember(partnerId as string, accountId as string, {
+    admin: form.has('set_admin') ? form.get('set_admin') === 'on' : undefined,
+    active: form.has('set_active') ? form.get('set_active') === 'on' : undefined,
+  });
+  revalidatePath(`/workbench/partners/${partnerId}`);
+  redirect(`/workbench/partners/${partnerId}?saved=1`);
 }

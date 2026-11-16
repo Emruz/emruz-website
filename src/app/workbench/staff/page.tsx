@@ -80,6 +80,7 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
             <form action={addStaff} className={`${card} p-5 space-y-3 h-fit`}>
               <h2 className="font-bold text-gray-900">Add staff</h2>
               {sp.error === 'email' && <p className="text-sm text-red-700">Enter a valid email.</p>}
+              {sp.error === 'partner' && <p className="text-sm text-red-700">That person is on a partner&apos;s team. Remove them there first.</p>}
               <div><label className={label} htmlFor="name">Full name</label><input id="name" name="name" required className={input} /></div>
               <div><label className={label} htmlFor="email">Email</label><input id="email" name="email" type="email" required className={input} /></div>
               <div><label className={label} htmlFor="title">Title</label><input id="title" name="title" className={input} placeholder="Security Analyst" /></div>

@@ -124,7 +124,7 @@ export async function withdraw() {
   if (!account) redirect('/signin?next=/assessments/self/history');
   await db()`delete from assessments where account_id = ${account.id}`;
   await db()`
-    update assessment_registrations set withdrawn_at = now(), full_name = '', company = '', job_title = null, phone = null
+    update assessment_registrations set withdrawn_at = now(), full_name = '', company = '', job_title = null, phone = null, partner_id = null
     where account_id = ${account.id}`;
   await logEvent('assessment_consent_withdrawn', {}, { accountId: account.id });
   redirect('/assessments/self?withdrawn=1');

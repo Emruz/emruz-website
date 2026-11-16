@@ -12,6 +12,7 @@ export interface Me {
   account: { email: string; name: string | null; avatar?: string | null } | null;
   isAdmin?: boolean;
   isStaff?: boolean;
+  isPartner?: boolean;
   isClient?: boolean;
   impersonatedBy?: string | null;
 }
@@ -72,6 +73,7 @@ export function accountLinks(me: Me) {
     ...(me.isClient ? [{ label: 'Client portal', href: '/portal' }] : []),
     // Assessors and leads; admins reach it from the Admin menu
     ...(me.isStaff && !me.isAdmin ? [{ label: 'My workbench', href: '/workbench' }] : []),
+    ...(me.isPartner ? [{ label: 'Partner workbench', href: '/partner' }] : []),
   ];
   return { links };
 }
@@ -90,6 +92,7 @@ export function adminLinks(me: Me | null): AdminLink[] {
     { label: 'Workbench', href: '/workbench', description: 'Assessments, engagements and reports' },
     { label: 'Clients', href: '/workbench/clients', description: 'Client organizations and portal contacts' },
     { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench and who is an admin' },
+    { label: 'Partners', href: '/workbench/partners', description: 'Partner organizations and their teams' },
     { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
     { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
     { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },

@@ -29,22 +29,30 @@ export interface SelfRow {
   step: number;
   performed_by: string | null;
   performed_by_label: string | null;
+  partner_id: string | null;
+  partner_name: string | null;
 }
 
-/** Self-assessments of people whose consent is active. Analysts see only those assigned to them. */
-export async function selfAssessments(opts: { accountId: string; all: boolean; id?: string }) {
+/**
+ * Self-assessments of people whose consent is active. Emruz analysts see only
+ * those assigned to them; with partnerId set, only that partner's tenant.
+ */
+export async function selfAssessments(opts: { accountId: string; all: boolean; id?: string; partnerId?: string }) {
   return db()<SelfRow[]>`
     select s.id, s.account_id, s.status, s.score, s.target_ig, s.recommended_package, s.profile, s.answers,
            s.assigned_to, coalesce(st.name, st.email) as assigned_label, s.followed_up_at, s.followed_up_by,
            s.updated_at, s.completed_at, s.deleted_at, s.deleted_by, s.step, s.performed_by,
-           coalesce(pb.name, pb.email) as performed_by_label, a.email, r.full_name, r.company, r.job_title, r.phone, r.consented_at,
+           coalesce(pb.name, pb.email) as performed_by_label, s.partner_id, pn.name as partner_name,
+           a.email, r.full_name, r.company, r.job_title, r.phone, r.consented_at,
            (select e.id from engagements e where e.self_assessment_id = s.id order by e.created_at desc limit 1) as engagement_id
     from assessments s
     join assessment_registrations r on r.account_id = s.account_id and r.withdrawn_at is null
     join accounts a on a.id = s.account_id
     left join accounts st on st.id = s.assigned_to
     left join accounts pb on pb.id = s.performed_by
-    where (${opts.all} or s.assigned_to = ${opts.accountId})
+    left join partners pn on pn.id = s.partner_id
+    where (${opts.partnerId ?? null}::uuid is null or s.partner_id = ${opts.partnerId ?? null})
+      and (${opts.all} or s.assigned_to = ${opts.accountId} or s.performed_by = ${opts.accountId})
       and (${opts.id ?? null}::uuid is null or s.id = ${opts.id ?? null})
     order by coalesce(s.completed_at, s.updated_at) desc
     limit 500`;

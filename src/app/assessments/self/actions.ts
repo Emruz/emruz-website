@@ -12,7 +12,9 @@ import {
   getAssessment,
   getRegistration,
   notifyAssessmentStarted,
+  reopenForEdit,
 } from '@/lib/server/assessments';
+import { acceptInvite, inviteFor } from '@/lib/server/invites';
 import {
   CONSENT_TEXT,
   CONSENT_VERSION,
@@ -43,13 +45,18 @@ export async function register(_prev: RegisterState, form: FormData): Promise<Re
   const h = await headers();
   const ip = h.get('x-nf-client-connection-ip') || h.get('x-forwarded-for')?.split(',')[0].trim() || null;
 
+  // Invited by a partner: the registration (and every assessment) belongs to them
+  const invite = await inviteFor(account.id);
   await db()`
-    insert into assessment_registrations (account_id, full_name, company, job_title, phone, consent_version, consent_text, consent_ip)
-    values (${account.id}, ${fullName}, ${company}, ${jobTitle || null}, ${phone || null}, ${CONSENT_VERSION}, ${CONSENT_TEXT}, ${ip})
+    insert into assessment_registrations (account_id, full_name, company, job_title, phone, consent_version, consent_text, consent_ip, partner_id)
+    values (${account.id}, ${fullName}, ${company}, ${jobTitle || null}, ${phone || null}, ${CONSENT_VERSION}, ${CONSENT_TEXT}, ${ip},
+            ${invite?.partner_id ?? null})
     on conflict (account_id) do update set
       full_name = excluded.full_name, company = excluded.company, job_title = excluded.job_title, phone = excluded.phone,
       consent_version = excluded.consent_version, consent_text = excluded.consent_text,
-      consented_at = now(), consent_ip = excluded.consent_ip, withdrawn_at = null`;
+      consented_at = now(), consent_ip = excluded.consent_ip, withdrawn_at = null,
+      partner_id = coalesce(excluded.partner_id, assessment_registrations.partner_id)`;
+  if (invite) await acceptInvite(invite.id, account.id);
   if (!account.name) await db()`update accounts set name = ${fullName} where id = ${account.id}`;
   await logEvent('assessment_registered', { consent: CONSENT_VERSION }, { accountId: account.id });
   redirect('/assessments/self');
@@ -95,10 +102,8 @@ export async function finish(id: string, data: { profile: unknown; answers: unkn
 /** Reopen a completed assessment to change answers. */
 export async function reopen(form: FormData) {
   const { a } = await owned(form.get('id'));
-  // Only one assessment in progress at a time (assessments_one_open), so clear any draft first
-  await db()`delete from assessments where account_id = ${a.account_id} and status = 'in_progress' and id <> ${a.id}`;
-  await db()`update assessments set status = 'in_progress', step = 1, updated_at = now() where id = ${a.id}`;
-  redirect('/assessments/self');
+  await reopenForEdit(a, { replaceDraft: true });
+  redirect('/assessments/self?for=me');
 }
 
 /** Start a fresh assessment (earlier ones are kept). */

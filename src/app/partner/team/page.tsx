@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
-import { partnerStaffList, requirePartner } from '@/lib/server/partners';
+import { getPartner, partnerStaffList, requirePartner } from '@/lib/server/partners';
 import { addTeamMember, setTeamMember } from '../actions';
 import { PartnerNav } from '../ui';
 import { btn, card, fmtDate, input, label } from '@/app/workbench/ui';
@@ -11,13 +11,16 @@ const errors: Record<string, string> = {
   email: 'Enter a valid email address.',
   'emruz-staff': 'That person is Emruz staff and cannot also be partner staff.',
   'other-partner': 'That person already belongs to another partner.',
+  'no-domains': 'Your organization has no email domains set yet. Ask Emruz to add them.',
+  domain: 'Only addresses on your organization’s email domains can be added.',
 };
 
 export default async function PartnerTeam({ searchParams }: { searchParams: Promise<{ error?: string; added?: string; saved?: string }> }) {
   const { account, partner } = await requirePartner('/partner/team');
   if (!partner.admin) notFound();
   const sp = await searchParams;
-  const rows = await partnerStaffList(partner.partnerId);
+  const [rows, org] = await Promise.all([partnerStaffList(partner.partnerId), getPartner(partner.partnerId)]);
+  const domains = org?.email_domains ?? [];
 
   return (
     <>
@@ -80,7 +83,10 @@ export default async function PartnerTeam({ searchParams }: { searchParams: Prom
                 <input type="checkbox" name="admin" className="w-4 h-4 accent-blue-600" /> Admin: can manage this team
               </label>
               <button className={btn}>Add</button>
-              <p className="text-xs text-gray-500">They sign in with this email address at emruz.com to use the partner workbench.</p>
+              <p className="text-xs text-gray-500">
+                {domains.length ? `Addresses on ${domains.map((d) => `@${d}`).join(' or ')} only. ` : ''}
+                They sign in with this email address at emruz.com to use the partner workbench.
+              </p>
             </form>
           </div>
         </Container>

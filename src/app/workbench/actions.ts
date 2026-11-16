@@ -42,8 +42,8 @@ import {
 } from '@/content/workbench';
 import { csfSubcategories, subcategoryById } from '@/content/csf';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
-import { completeAssessment, getRegistration, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
-import { addPartnerStaffMember, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
+import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
+import { addPartnerStaffMember, parseDomains, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
 import { detectType } from '@/lib/server/filetype';
 import type { Answers, IG, Profile } from '@/content/cis-assessment';
 
@@ -714,7 +714,7 @@ async function guidedOn(id: string) {
   if (partner) {
     if (a.partner_id !== partner.partnerId) throw new Error('Not found');
     if (!partner.admin && row.performed_by !== account.id && row.assigned_to !== account.id) throw new Error('Not found');
-  } else if (role !== 'admin' && row.performed_by !== account.id && row.assigned_to !== account.id) {
+  } else if (!seesAll(role) && row.performed_by !== account.id && row.assigned_to !== account.id) {
     throw new Error('Not found');
   }
   return { account, role, partner, a };
@@ -749,10 +749,13 @@ export async function createPartner(form: FormData) {
   const { account } = await adminOnly();
   const name = str(form.get('name'), 160);
   const notify = str(form.get('notify_email'), 254).toLowerCase();
+  const domains = parseDomains(str(form.get('email_domains'), 1000));
   if (!name) redirect('/workbench/partners?error=name');
   if (notify && !EMAIL_RE.test(notify)) redirect('/workbench/partners?error=email');
+  if (!domains?.length) redirect('/workbench/partners?error=domains');
   const [p] = await db()<{ id: string }[]>`
-    insert into partners (name, notify_email, created_by) values (${name}, ${notify || null}, ${account.email}) returning id`;
+    insert into partners (name, notify_email, email_domains, created_by)
+    values (${name}, ${notify || null}, ${domains}, ${account.email}) returning id`;
   await logEvent('partner_created', { partner: p.id, name, by: account.email });
   redirect(`/workbench/partners/${p.id}`);
 }
@@ -765,8 +768,12 @@ export async function updatePartner(form: FormData) {
   const notify = str(form.get('notify_email'), 254).toLowerCase();
   if (!name) redirect(`/workbench/partners/${id}?error=name`);
   if (notify && !EMAIL_RE.test(notify)) redirect(`/workbench/partners/${id}?error=email`);
+  const domains = parseDomains(str(form.get('email_domains'), 1000));
+  if (!domains?.length) redirect(`/workbench/partners/${id}?error=domains`);
   const active = form.get('active') === 'on';
-  await db()`update partners set name = ${name}, notify_email = ${notify || null}, active = ${active}, updated_at = now() where id = ${id}`;
+  await db()`
+    update partners set name = ${name}, notify_email = ${notify || null}, email_domains = ${domains}, active = ${active}, updated_at = now()
+    where id = ${id}`;
   await logEvent('partner_updated', { partner: id, active, by: account.email });
   revalidatePath(`/workbench/partners/${id}`);
   redirect(`/workbench/partners/${id}?saved=1`);
@@ -819,4 +826,44 @@ export async function adminSetPartnerStaff(form: FormData) {
   });
   revalidatePath(`/workbench/partners/${partnerId}`);
   redirect(`/workbench/partners/${partnerId}?saved=1`);
+}
+
+/** Reopen a completed self-assessment so staff can change its profile or answers with the customer. */
+export async function editSelf(form: FormData) {
+  const { account, role } = await staff();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const a = (await getAssessment(id)) as (AssessmentRow & { performed_by?: string | null; assigned_to?: string | null }) | null;
+  if (!a || a.status !== 'completed') throw new Error('Not found');
+  if (!seesAll(role) && a.performed_by !== account.id && a.assigned_to !== account.id) throw new Error('Not found');
+  const r = await reopenForEdit(a, { replaceDraft: false });
+  if (r.error) redirect(`/workbench/self/${a.id}?error=draft`);
+  // Staff continue it as a guided session
+  await db()`update assessments set performed_by = coalesce(performed_by, ${account.id}), assigned_to = coalesce(assigned_to, ${account.id}) where id = ${a.id}`;
+  redirect(`/workbench/self/${a.id}/take`);
+}
+
+/**
+ * Move a customer to a partner, or back to Emruz: their registration and all
+ * their self-assessments go together, and future ones follow.
+ */
+export async function moveSelfToPartner(form: FormData) {
+  const { account, role } = await staff();
+  if (!seesAll(role)) throw new Error('Not authorized');
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const raw = form.get('partner_id');
+  const partnerId = raw ? (isUuid(raw) ? (raw as string) : null) : null;
+  if (raw && !partnerId) throw new Error('Not found');
+  if (partnerId) {
+    const [p] = await db()`select 1 from partners where id = ${partnerId}`;
+    if (!p) throw new Error('Not found');
+  }
+  const [a] = await db()<{ account_id: string }[]>`select account_id from assessments where id = ${id}`;
+  if (!a) throw new Error('Not found');
+  await db()`update assessment_registrations set partner_id = ${partnerId} where account_id = ${a.account_id}`;
+  await db()`update assessments set partner_id = ${partnerId} where account_id = ${a.account_id}`;
+  await logEvent('assessment_customer_moved', { partner: partnerId ?? 'emruz', by: account.email }, { accountId: a.account_id });
+  revalidatePath(`/workbench/self/${id}`);
+  redirect(`/workbench/self/${id}?moved=1`);
 }

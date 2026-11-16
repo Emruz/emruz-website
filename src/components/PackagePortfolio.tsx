@@ -9,6 +9,7 @@ import {
   families,
   familyBySlug,
   displayCode,
+  alphabetical,
   includedCapabilities,
   newInEdition,
   packageHref,
@@ -109,7 +110,7 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                 )}
               </div>
               <h3 className="text-2xl font-bold text-gray-900">{displayCode(pkg.code)}</h3>
-              <p className="text-sm text-gray-500">{pkg.name.replace(/^Detect, Defend & Respond/, 'ΔDR')}</p>
+              <p className="text-sm text-gray-500">{pkg.name}</p>
               <p className="mt-3 font-semibold text-gray-900">{pkg.tagline}</p>
               <p className="mt-1 text-sm text-gray-600">{pkg.summary}</p>
 
@@ -179,7 +180,7 @@ export default function PackagePortfolio({ preview = false, family, filters = fa
                   <div>
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">What&apos;s included</h4>
                     <dl className="space-y-2">
-                      {included.map((c) => (
+                      {alphabetical(included).map((c) => (
                         <div key={c} className="text-sm">
                           <dt className="font-semibold text-gray-900">
                             {capabilities[c].name} <span className="text-gray-400 font-normal">({c})</span>

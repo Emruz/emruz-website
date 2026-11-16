@@ -12,7 +12,7 @@ export default async function ThanksPage() {
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Motiv', href: '/motiv' }, { label: 'Thank you' }]}
-        title="Thanks for buying Motiv Premium"
+        title="Thanks for buying Motiv Pro"
         summary="Your subscription ID is on its way to your email."
       />
       <section className="py-10 md:py-12">
@@ -23,7 +23,7 @@ export default async function ThanksPage() {
               <a href={MOTIV_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="text-blue-700 font-semibold">Download Motiv</a> for your Mac or PC
               and install it, if you have not already.
             </li>
-            <li>Open Motiv, then Settings &gt; Premium.</li>
+            <li>Open Motiv, then Settings &gt; License.</li>
             <li>Choose <strong>Register this computer</strong>.</li>
             <li>
               Sign in at <Link href="/activate" className="text-blue-700 font-semibold">emruz.com/activate</Link> with the email you

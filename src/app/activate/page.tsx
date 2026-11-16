@@ -29,7 +29,7 @@ export default async function ActivatePage({
           { label: 'Register a computer' },
         ]}
         title="Register a computer"
-        summary={`Signed in as ${account.email}. Enter the code Motiv shows to unlock Premium on that computer.`}
+        summary={`Signed in as ${account.email}. Enter the code Motiv shows to unlock Pro on that computer.`}
       />
       <section className="py-10 md:py-12">
         <Container>
@@ -43,7 +43,7 @@ export default async function ActivatePage({
             {sp.done === 'approved' && (
               <div className="p-6 rounded-xl bg-green-50 border border-green-300 text-green-900">
                 <CheckCircle2 className="w-6 h-6 mb-2" />
-                <p className="font-semibold">Approved. Motiv will unlock Premium in a few seconds.</p>
+                <p className="font-semibold">Approved. Motiv will unlock Pro in a few seconds.</p>
                 <p className="text-sm mt-1">You can close this page.</p>
               </div>
             )}
@@ -74,7 +74,7 @@ export default async function ActivatePage({
                   </button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  In Motiv, open Settings &gt; Premium and choose Register this computer to get a code.
+                  In Motiv, open Settings &gt; License and choose Register this computer to get a code.
                 </p>
               </form>
             )}
@@ -97,7 +97,7 @@ export default async function ActivatePage({
                   <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 text-amber-900">
                     <p className="font-semibold">No active Motiv subscription on this account.</p>
                     <p className="text-sm mt-1">
-                      <Link href="/motiv#plans" className="underline">Get Premium</Link>, or if you bought with a different email,{' '}
+                      <Link href="/motiv#plans" className="underline">Get Pro</Link>, or if you bought with a different email,{' '}
                       <Link href="/motiv/account" className="underline">add that email to your account</Link>. The code stays valid
                       for a few minutes.
                     </p>

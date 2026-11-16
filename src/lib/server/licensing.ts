@@ -41,12 +41,12 @@ export interface ApiResult {
 }
 
 const messages: Partial<Record<LicenseError, string>> = {
-  not_found: 'That subscription ID was not found.',
-  expired: 'This subscription has expired.',
-  canceled: 'This subscription has been canceled.',
-  revoked: 'This subscription has been revoked.',
-  past_due: 'Payment for this subscription is overdue.',
-  seat_limit: 'This subscription is already in use on its maximum number of computers.',
+  not_found: 'That Motiv Pro subscription ID was not found.',
+  expired: 'This Motiv Pro subscription has expired.',
+  canceled: 'This Motiv Pro subscription has been canceled.',
+  revoked: 'This Motiv Pro subscription has been revoked.',
+  past_due: 'Payment for this Motiv Pro subscription is overdue.',
+  seat_limit: 'This Motiv Pro subscription is already in use on its maximum number of computers.',
   rate_limited: 'Too many requests. Try again shortly.',
   invalid_request: 'The request was not valid.',
   server_error: 'Something went wrong on our side.',
@@ -191,7 +191,7 @@ export async function entitle(
         deactivated_at = null`;
     return isActiveSeat ? ('existing' as const) : ('added' as const);
   });
-  if (outcome === 'not_registered') return fail('not_found', 'This computer is not registered to that subscription.');
+  if (outcome === 'not_registered') return fail('not_found', 'This computer is not registered to that Motiv Pro subscription.');
   if (outcome === 'seat_limit') {
     return fail('seat_limit', `This subscription is in use on ${s.seats} computers. Remove one from your account to add this one.`);
   }

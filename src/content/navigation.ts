@@ -35,7 +35,7 @@ export const mainNav: NavGroup[] = [
     label: 'Products',
     href: '/products',
     children: [
-      { label: 'Motiv', href: '/motiv', description: 'Private AI meeting assistant for Mac and Windows' },
+      { label: 'Motiv', href: '/motiv', description: 'Private AI meeting assistant for Mac, Windows and Linux' },
       { label: 'Managed Security', href: '/products', description: 'EDR, MDR, XDR, ΔDR and add-on services. Powered by WhiteDog Cyber.' },
     ],
     footer: { label: 'All products', href: '/products' },

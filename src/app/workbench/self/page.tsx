@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { DetailHeader, Container } from '@/components';
 import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { controls, inScope, maturity, recommend, targetIG } from '@/content/cis-assessment';
-import { displayCode } from '@/content/packages';
+import { addOnLabel, displayCode } from '@/content/packages';
 import { frameworks } from '@/content/crosswalk';
 import { WorkbenchNav, btn, card, fmtDate } from '../ui';
 import { Plus } from 'lucide-react';
@@ -116,7 +116,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                       </td>
                       <td className="p-3 text-xs">
                         {rec?.pkg && <p className="font-semibold text-gray-900">{displayCode(rec.pkg.code)}</p>}
-                        {rec && rec.addOns.length > 0 && <p className="text-indigo-700">+ {rec.addOns.map((a) => a.code).join(', ')}</p>}
+                        {rec && rec.addOns.length > 0 && <p className="text-indigo-700">+ {rec.addOns.map((a) => addOnLabel(a)).join(', ')}</p>}
                         {!rec && <span className="text-gray-400">–</span>}
                       </td>
                       <td className="p-3 text-xs text-gray-700">

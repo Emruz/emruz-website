@@ -17,7 +17,7 @@ import {
   type Profile,
   type IG,
 } from '@/content/cis-assessment';
-import { addOnHref, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
+import { addOnHref, addOnLabel, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
 import Crosswalk from './Crosswalk';
 
 /** Results of one assessment. No hooks, so it renders on the server. */
@@ -128,7 +128,7 @@ export default function ResultsView({
                       <span className="block font-extrabold text-xs leading-tight">{extras.map((a, i) => (
                         <Fragment key={a.code}>
                           {i > 0 && ' + '}
-                          <span className="whitespace-nowrap">{a.code}</span>
+                          <span className="whitespace-nowrap">{addOnLabel(a)}</span>
                         </Fragment>
                       ))}</span>
                     </th>
@@ -187,7 +187,7 @@ export default function ResultsView({
             <p className="text-xs text-gray-500 mt-4">
               Shaded columns show your score with the suggested services in place. Overall {score}%
               {rec.pkg && <> → {after}% with {displayCode(rec.pkg.code)}</>}
-              {extras.length > 0 && <> → {afterAll}% adding {extras.map((a) => a.code).join(', ')}</>}. Process work such as
+              {extras.length > 0 && <> → {afterAll}% adding {extras.map((a) => addOnLabel(a)).join(', ')}</>}. Process work such as
               supplier management and secure development is not included.
             </p>
           )}
@@ -221,7 +221,7 @@ export default function ResultsView({
               <ul className="space-y-4">
                 {extras.map((a) => (
                   <li key={a.code}>
-                    <p className="font-bold">{a.code} <span className="font-normal text-indigo-200 text-sm">· {a.name}</span></p>
+                    <p className="font-bold">{addOnLabel(a)} <span className="font-normal text-indigo-200 text-sm">· {a.name}</span></p>
                     <p className="text-sm text-indigo-100">{a.summary}</p>
                     <Link href={addOnHref(a)} className="text-sm font-semibold text-indigo-200 hover:text-white print:hidden">Learn more →</Link>
                   </li>
@@ -253,7 +253,7 @@ export default function ResultsView({
         ig={ig}
         profile={profile}
         withPkg={rec.pkg ? { label: displayCode(rec.pkg.code), answers: projected } : null}
-        withAll={extras.length ? { codes: extras.map((a) => a.code), plus: !!rec.pkg, answers: projectedAll } : null}
+        withAll={extras.length ? { codes: extras.map((a) => addOnLabel(a)), plus: !!rec.pkg, answers: projectedAll } : null}
       />
 
       {!staffView && (

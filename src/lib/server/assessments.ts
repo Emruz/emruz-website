@@ -15,7 +15,7 @@ import {
   type Profile,
   type IG,
 } from '@/content/cis-assessment';
-import { displayCode, capabilities } from '@/content/packages';
+import { addOnLabel, displayCode, capabilities } from '@/content/packages';
 import { frameworks, frameworkResult } from '@/content/crosswalk';
 
 export interface Registration {
@@ -180,7 +180,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
         ]
       : []),
     ...(rec.addOns.length
-      ? [`Add-on services for the remaining gaps: ${rec.addOns.map((x) => `${x.code} (${x.name})`).join('; ')}`, '']
+      ? [`Add-on services for the remaining gaps: ${rec.addOns.map((x) => `${addOnLabel(x)} (${x.name})`).join('; ')}`, '']
       : []),
     a.profile.frameworks?.length ? 'Framework readiness (indicative, not a compliance finding; * marks your focus):' : 'Framework readiness (indicative, not a compliance finding):',
     ...frameworks.map((f) => {

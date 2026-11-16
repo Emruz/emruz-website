@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { DetailHeader } from '@/components';
 import { isUuid } from '@/lib/server/api';
-import { requireStaff } from '@/lib/server/workbench';
+import { requireStaff, seesAll } from '@/lib/server/workbench';
 import SelfAssessment from '@/app/assessments/self/client';
 import { guidedFinish, guidedSave } from '../../../actions';
 import { selfAssessments } from '../../data';
@@ -14,7 +14,7 @@ export default async function TakeGuided({ params }: { params: Promise<{ id: str
   if (!isUuid(id)) notFound();
   const [r] = await selfAssessments({ accountId: account.id, all: role === 'admin' || role === 'lead', id });
   if (!r || r.deleted_at || r.status !== 'in_progress') notFound();
-  if (role !== 'admin' && r.performed_by !== account.id && r.assigned_to !== account.id) notFound();
+  if (!seesAll(role) && r.performed_by !== account.id && r.assigned_to !== account.id) notFound();
   return (
     <>
       <DetailHeader

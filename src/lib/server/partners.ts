@@ -13,6 +13,7 @@ export interface Partner {
   name: string;
   notify_email: string | null;
   logo_version: number | null;
+  email_domains: string[];
   active: boolean;
   created_by: string | null;
   created_at: Date;
@@ -84,6 +85,21 @@ export async function partnerStaffList(partnerId: string): Promise<PartnerStaffR
     order by s.active desc, coalesce(a.name, a.email)`;
 }
 
+/** Turn "@DataEndure.com, gocmt.com" into ['dataendure.com', 'gocmt.com']; null if any entry is not a domain. */
+export function parseDomains(input: string): string[] | null {
+  const parts = input
+    .split(/[\s,;]+/)
+    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean);
+  if (parts.some((d) => !/^(?=.{3,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(d))) return null;
+  return [...new Set(parts)];
+}
+
+export const emailDomain = (email: string) => email.trim().toLowerCase().split('@').pop() ?? '';
+
+/** Whether an address is on one of the partner's domains. */
+export const onPartnerDomain = (email: string, domains: string[]) => domains.includes(emailDomain(email));
+
 /**
  * Put someone on a partner's staff. Refuses Emruz staff and members of other
  * partners, so nobody holds two roles at once.
@@ -94,7 +110,11 @@ export async function addPartnerStaffMember(opts: {
   name: string | null;
   admin: boolean;
   addedBy: string;
-}): Promise<{ error?: 'emruz-staff' | 'other-partner' }> {
+}): Promise<{ error?: 'emruz-staff' | 'other-partner' | 'no-domains' | 'domain' }> {
+  // Staff must have an address on one of the partner's domains
+  const [p] = await db()<{ email_domains: string[] }[]>`select email_domains from partners where id = ${opts.partnerId}`;
+  if (!p?.email_domains.length) return { error: 'no-domains' };
+  if (!onPartnerDomain(opts.email, p.email_domains)) return { error: 'domain' };
   const accountId = await accountForEmail(opts.email, opts.name);
   if (opts.name) await db()`update accounts set name = coalesce(name, ${opts.name}) where id = ${accountId}`;
   const [emruz] = await db()`select 1 from staff where account_id = ${accountId}`;
@@ -166,3 +186,8 @@ export const partnerLogoUrl = (p: { id: string; logo_version?: number | null; lo
   const v = p.logo_version ?? p.logoVersion;
   return v ? `/api/partner-logo/${p.id}?v=${v}` : null;
 };
+
+/** Partners to choose from when moving a customer. */
+export async function partnerOptions(): Promise<{ id: string; name: string; active: boolean }[]> {
+  return db()<{ id: string; name: string; active: boolean }[]>`select id, name, active from partners order by active desc, name`;
+}

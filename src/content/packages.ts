@@ -29,6 +29,7 @@ export type CapabilityCode =
   | 'MDE'
   | 'PSA'
   | 'DSB'
+  | 'ZTNA'
   | 'AVM'
   | 'VM';
 
@@ -54,6 +55,7 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   ITDR: { name: 'Identity Threat Detection & Response', description: 'Detects and responds to account takeover and identity attacks.' },
   MDE: { name: 'Managed Data Encryption', description: 'Policy-driven AES-256 file-level encryption of sensitive data, deployed and managed for you. Add-on.' },
   PSA: { name: 'Phishing Simulations & Awareness Training', description: 'Monthly end-user training with advanced phishing and threat simulations. Add-on.' },
+  ZTNA: { name: 'Zero Trust Network Access', description: 'Replaces VPN with per-app access that checks the user, device trust and posture on every connection. Add-on.' },
   DSB: { name: 'Distributed SaaS Backup', description: 'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with granular restore. Add-on.' },
   CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use, such as NIST CSF, ISO 27001, SOC 2 and CMMC.' },
 };
@@ -289,7 +291,7 @@ export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
 
 /* ---------- Add-on services ---------- */
 
-export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI' | 'SPM';
+export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI' | 'ZTNA' | 'SPM';
 
 export interface AddOn {
   code: string;
@@ -317,6 +319,21 @@ export const addOns: AddOn[] = [
       'Detection of credential theft, privilege escalation, Kerberoasting and lateral movement',
       'Active deception for identity reconnaissance',
       'Automated response: disable accounts, force password resets, block sessions, isolate endpoints',
+    ],
+  },
+  {
+    code: 'ZTA-PM',
+    sku: 'WD-ZTA-PM-02',
+    family: 'ZTNA',
+    name: 'Zero Trust Network Access, Premium',
+    summary: 'Replaces VPN with one-click, per-app access that checks every user and device, with a secure web gateway built in.',
+    includes: ['ZTNA'],
+    features: [
+      'Desktop and mobile (iOS and Android) apps with device trust scoring',
+      'One-click access to apps and infrastructure, with tunnels that replace VPN',
+      'UEM, EDR and UEBA integration',
+      'Zero trust policies, enterprise SSO with your identity provider, audit and reporting',
+      'Cloud resource discovery, rogue device prevention and a secure web gateway',
     ],
   },
   {
@@ -504,6 +521,53 @@ export const addOnLines: AddOnLine[] = [
           { label: 'Disable compromised identities and force password resets', in: ['ZTI'] },
           { label: 'Session blocking and conditional access response', in: ['ZTI'] },
           { label: 'Endpoint isolation tied to identity incidents', in: ['ZTI'] },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'ZTNA',
+    path: 'ztna',
+    label: 'ZTNA',
+    name: 'Zero Trust Network Access',
+    tagline: 'Retire the VPN. Grant access one app at a time.',
+    summary:
+      'Per-app access to applications and infrastructure that checks the user, the device and its posture on every connection, with tunnels that replace VPN and a secure web gateway built in.',
+    bestFor: 'Organizations still relying on VPN for remote access, or with staff, contractors and devices reaching cloud and on-premises apps from anywhere.',
+    outcomes: [
+      'VPN replaced by one-click access to only the apps each person needs',
+      'Untrusted, unmanaged and rogue devices kept out',
+      'Access policies, audit trails and SSO that satisfy auditors',
+    ],
+    columns: [{ code: 'ZTA-PM', label: 'Premium' }],
+    groups: [
+      {
+        title: 'Zero Trust Network Access',
+        rows: [
+          { label: 'Desktop app with trust score integration', in: ['ZTA-PM'] },
+          { label: 'One-click access to apps and infrastructure', in: ['ZTA-PM'] },
+          { label: 'Mobile app (iOS and Android)', in: ['ZTA-PM'] },
+          { label: 'UEM integration', in: ['ZTA-PM'] },
+          { label: 'EDR integration', in: ['ZTA-PM'] },
+          { label: 'UEBA integration', in: ['ZTA-PM'] },
+        ],
+      },
+      {
+        title: 'Accelerate compliance',
+        rows: [
+          { label: 'Zero trust policies', in: ['ZTA-PM'] },
+          { label: 'Audit and reporting', in: ['ZTA-PM'] },
+          { label: 'Enterprise SSO integration with identity providers', in: ['ZTA-PM'] },
+          { label: 'Self-hosted edge for access tiers', in: ['ZTA-PM'] },
+        ],
+      },
+      {
+        title: 'Adopt cloud and PaaS securely',
+        rows: [
+          { label: 'Cloud resource discovery', in: ['ZTA-PM'] },
+          { label: 'Tunnel capabilities to replace VPN', in: ['ZTA-PM'] },
+          { label: 'Prevent rogue device access', in: ['ZTA-PM'] },
+          { label: 'Secure web gateway', in: ['ZTA-PM'] },
         ],
       },
     ],

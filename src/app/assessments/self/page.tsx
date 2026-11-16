@@ -7,6 +7,7 @@ import { maturity } from '@/content/cis-assessment';
 import { startNew } from './actions';
 import SelfAssessment from './client';
 import RegisterForm from './RegisterForm';
+import { inviteFor } from '@/lib/server/invites';
 import { CheckCircle2, User, Users } from 'lucide-react';
 import { staffRole } from '@/lib/server/workbench';
 
@@ -59,6 +60,7 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
   const account = await currentAccount();
   const reg = account ? await getRegistration(account.id) : null;
   const registered = activeRegistration(reg);
+  const invite = account && !registered ? await inviteFor(account.id) : null;
   const isStaff = !!(await staffRole(account));
   const forMe = sp.for === 'me';
 
@@ -153,7 +155,14 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
                   <p className="text-xs font-semibold uppercase tracking-widest text-blue-700 mb-1">Step 2 of 2</p>
                   <h2 className="text-2xl font-bold text-gray-900 mb-1">Register for the assessment</h2>
                   <p className="text-gray-600 mb-6">Signed in as {account.email}.</p>
-                  <RegisterForm defaultName={account.name ?? ''} />
+                  {invite && (
+                    <p className="mb-6 rounded-lg bg-blue-50 border border-blue-100 p-3 text-sm text-blue-900">
+                      {invite.partner_name
+                        ? <>You were invited by {invite.invited_by_email} at <strong>{invite.partner_name}</strong>. Your results are shared with {invite.partner_name} and Emruz.</>
+                        : <>You were invited by {invite.invited_by_email} at Emruz.</>}
+                    </p>
+                  )}
+                  <RegisterForm defaultName={account.name ?? invite?.full_name ?? ''} defaultCompany={invite?.company ?? ''} />
                 </>
               )}
             </div>

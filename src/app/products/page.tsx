@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, CloudUpload, Fingerprint, GraduationCap, Lock, Radar, Shield } from 'lucide-react';
+import { ArrowRight, CloudUpload, Fingerprint, GraduationCap, Lock, Network, Radar, Shield } from 'lucide-react';
 import { PageHeader, Container } from '@/components';
 import { products } from '@/content/products';
 import { addOnLines, families, packages, POWERED_BY, SOC_LINE } from '@/content/packages';
@@ -89,7 +89,7 @@ export default function ProductsPage() {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <span className="w-12 h-12 flex-shrink-0 rounded-xl bg-indigo-800 text-white flex items-center justify-center">
-                    {l.slug === 'SPM' ? <Radar className="w-6 h-6" aria-hidden /> : l.slug === 'ZTI' ? <Fingerprint className="w-6 h-6" aria-hidden /> : l.slug === 'PSA' ? <GraduationCap className="w-6 h-6" aria-hidden /> : l.slug === 'DRM' ? <Lock className="w-6 h-6" aria-hidden /> : <CloudUpload className="w-6 h-6" aria-hidden />}
+                    {l.slug === 'SPM' ? <Radar className="w-6 h-6" aria-hidden /> : l.slug === 'ZTI' ? <Fingerprint className="w-6 h-6" aria-hidden /> : l.slug === 'ZTNA' ? <Network className="w-6 h-6" aria-hidden /> : l.slug === 'PSA' ? <GraduationCap className="w-6 h-6" aria-hidden /> : l.slug === 'DRM' ? <Lock className="w-6 h-6" aria-hidden /> : <CloudUpload className="w-6 h-6" aria-hidden />}
                   </span>
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{l.label}</h3>

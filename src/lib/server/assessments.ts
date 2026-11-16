@@ -287,6 +287,24 @@ export async function startGuidedAssessment(opts: {
   return { id: a.id };
 }
 
+/**
+ * Reopen a completed assessment so its profile (frameworks, size, scope) and
+ * answers can be changed; finishing again re-scores it and resends the report.
+ * Only one assessment can be open per account: the customer's own edit
+ * replaces their draft, but staff and partners won't discard work the
+ * customer has started.
+ */
+export async function reopenForEdit(a: { id: string; account_id: string }, opts: { replaceDraft: boolean }) {
+  const [other] = await db()<{ id: string; answers: Answers }[]>`
+    select id, answers from assessments
+    where account_id = ${a.account_id} and status = 'in_progress' and deleted_at is null and id <> ${a.id}`;
+  if (other && !opts.replaceDraft && Object.keys(other.answers ?? {}).length) return { error: 'draft' as const };
+  if (other) await db()`delete from assessments where id = ${other.id}`;
+  await db()`update assessments set status = 'in_progress', step = 0, updated_at = now() where id = ${a.id}`;
+  await logEvent('assessment_reopened', { assessment: a.id }, { accountId: a.account_id });
+  return {};
+}
+
 /** Per-control scores for a stored assessment (report and admin pages). */
 export function scoresFor(a: AssessmentRow) {
   const ig = (a.target_ig ?? targetIG(a.profile)) as IG;

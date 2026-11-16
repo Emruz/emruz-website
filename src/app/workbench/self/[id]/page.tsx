@@ -7,14 +7,15 @@ import { controls, inScope, profileSummary, targetIG } from '@/content/cis-asses
 import { frameworks } from '@/content/crosswalk';
 import ResultsView from '@/app/assessments/self/ResultsView';
 import PrintButton from '@/app/assessments/self/PrintButton';
-import { engagementFromSelf, markSelfDeleted, restoreSelf, toggleSelfFollowUp } from '../../actions';
+import { editSelf, engagementFromSelf, markSelfDeleted, moveSelfToPartner, restoreSelf, toggleSelfFollowUp } from '../../actions';
+import { partnerOptions } from '@/lib/server/partners';
 import AssignSelect from '../../AssignSelect';
 import { btn, btnGhost, card, fmtDate, fmtTime } from '../../ui';
 import { selfAssessments } from '../data';
 
 export const metadata = { title: 'Self-assessment', robots: { index: false } };
 
-export default async function SelfAssessmentDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
+export default async function SelfAssessmentDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; moved?: string }> }) {
   const { id } = await params;
   const { account, role } = await requireStaff(`/workbench/self/${id}`);
   if (!isUuid(id)) notFound();
@@ -22,7 +23,7 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
   const [r] = await selfAssessments({ accountId: account.id, all, id });
   if (!r) notFound();
   const sp = await searchParams;
-  const staff = all ? await staffList() : [];
+  const [staff, partners] = all ? await Promise.all([staffList(), partnerOptions()]) : [[], []];
   const people = [{ account_id: account.id, label: account.name || account.email }, ...staff.filter((s) => s.account_id !== account.id).map((s) => ({ account_id: s.account_id, label: s.name || s.email }))];
   const ig = r.target_ig ?? targetIG(r.profile);
   const qs = controls.flatMap((c) => inScope(c, ig, r.profile));
@@ -52,6 +53,12 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
             </div>
           )}
           {sp.error === 'incomplete' && <p role="alert" className="mb-4 text-red-700 font-semibold">The assessment must be completed before starting an engagement.</p>}
+          {sp.error === 'draft' && (
+            <p role="alert" className="mb-4 text-red-700 font-semibold">
+              {r.full_name} has another assessment in progress. Finish or delete it before editing this one.
+            </p>
+          )}
+          {sp.moved && <p role="status" className="mb-4 text-emerald-700 font-semibold">Customer moved.</p>}
           <div className={`${card} p-5 mb-6 grid md:grid-cols-4 gap-5 text-sm print:hidden`}>
             <div>
               <p className="text-gray-500">Customer</p>
@@ -60,6 +67,21 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
               {r.phone && <p className="text-gray-700">{r.phone}</p>}
               <p className="text-xs text-gray-500 mt-1">Consent given {fmtTime(r.consented_at)}</p>
               {r.performed_by_label && <p className="text-xs text-gray-500">Performed by {r.performed_by_label}</p>}
+              {all ? (
+                <form action={moveSelfToPartner} className="mt-3 flex items-center gap-2">
+                  <input type="hidden" name="id" value={r.id} />
+                  <label htmlFor="move-partner" className="text-xs text-gray-500">Partner</label>
+                  <select id="move-partner" name="partner_id" defaultValue={r.partner_id ?? ''} className="text-xs border border-gray-300 rounded px-1 py-0.5">
+                    <option value="">None (Emruz)</option>
+                    {partners.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' (deactivated)'}</option>
+                    ))}
+                  </select>
+                  <button className="text-xs font-semibold text-blue-700">Move</button>
+                </form>
+              ) : (
+                r.partner_name && <p className="text-xs text-gray-500 mt-1">Partner: {r.partner_name}</p>
+              )}
             </div>
             <div>
               <p className="text-gray-500">Profile</p>
@@ -89,6 +111,12 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
                 </form>
               ) : null}
               {r.status === 'completed' && <PrintButton />}
+              {r.status === 'completed' && !r.deleted_at && (all || r.performed_by === account.id || r.assigned_to === account.id) && (
+                <form action={editSelf}>
+                  <input type="hidden" name="id" value={r.id} />
+                  <button className={btnGhost}>Edit assessment</button>
+                </form>
+              )}
               {!r.deleted_at && (role === 'admin' || r.assigned_to === account.id) && (
                 <form action={markSelfDeleted}>
                   <input type="hidden" name="id" value={r.id} />

@@ -171,11 +171,11 @@ export const controls: Control[] = [
     id: 12,
     title: 'Network Infrastructure Management',
     summary: 'Keep network devices current, segmented and securely managed.',
-    capabilities: ['NSPM'],
+    capabilities: ['NSPM', 'ZTNA'],
     questions: [
       { id: '12a', ig: 1, closes: ['NSPM'], needs: 'network', text: 'Firewalls, routers and switches run supported, up-to-date firmware.' },
       { id: '12b', ig: 2, raises: ['NSPM'], needs: 'network', text: 'The network is segmented, and admin interfaces are reachable only from management networks.' },
-      { id: '12c', ig: 2, text: 'Remote access uses VPN or zero-trust access with MFA, and the network architecture is documented.' },
+      { id: '12c', ig: 2, closes: ['ZTNA'], text: 'Remote access uses VPN or zero-trust access with MFA, and the network architecture is documented.' },
     ],
   },
   {
@@ -451,6 +451,8 @@ export function recommend(answers: Answers, ig: IG, p: Profile = {}): Recommenda
   if (helps(dsb)) chosen.push(dsb);
   const zti = addOns.find((a) => a.code === 'ZTI')!;
   if (helps(zti)) chosen.unshift(zti);
+  const ztna = addOns.find((a) => a.code === 'ZTA-PM')!;
+  if (helps(ztna)) chosen.push(ztna);
   // Posture management: network first (internal assets), external when external scanning is the gap
   const nwk = addOns.find((a) => a.code === 'SPM-NWK')!;
   const ext = addOns.find((a) => a.code === 'SPM-EXT')!;

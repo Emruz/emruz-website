@@ -10,18 +10,24 @@ import type { Account } from '@/lib/server/session';
 import ResultsView from '../../ResultsView';
 import PrintButton from '../../PrintButton';
 import { reopen, startNew } from '../../actions';
+import { editSelf } from '@/app/workbench/actions';
+import { editPartnerAssessment } from '@/app/partner/actions';
 
 export const metadata = { title: 'Self-Assessment Report', robots: { index: false } };
 
-/** The customer, Emruz staff who may see it, or staff of the partner it belongs to. */
-async function canView(account: Account, a: AssessmentRow & { performed_by?: string | null; assigned_to?: string | null }) {
-  if (a.account_id === account.id || isAdmin(account)) return true;
+/**
+ * Who is looking: the customer, Emruz staff who may see it, or staff of the
+ * partner it belongs to. Staff and partner viewers who may see it may also edit it.
+ */
+async function viewer(account: Account, a: AssessmentRow & { performed_by?: string | null; assigned_to?: string | null }) {
+  if (a.account_id === account.id) return 'owner' as const;
   const mineToWork = a.performed_by === account.id || a.assigned_to === account.id;
   const role = await staffRole(account);
-  if (role) return seesAll(role) || mineToWork;
+  if (role) return seesAll(role) || mineToWork ? ('staff' as const) : null;
+  if (isAdmin(account)) return 'staff' as const;
   const partner = await partnerRole(account);
-  if (partner && a.partner_id === partner.partnerId) return partner.admin || mineToWork;
-  return false;
+  if (partner && a.partner_id === partner.partnerId && (partner.admin || mineToWork)) return 'partner' as const;
+  return null;
 }
 
 const when = (d: Date) => new Date(d).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'long' });
@@ -31,8 +37,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const account = await requireAccount(`/assessments/self/report/${id}`);
   if (!isUuid(id)) notFound();
   const a = await getAssessment(id);
-  const mine = a?.account_id === account.id;
-  if (!a || !(await canView(account, a))) notFound();
+  const who = a ? await viewer(account, a) : null;
+  if (!a || !who) notFound();
+  const mine = who === 'owner';
   if (a.status !== 'completed') notFound();
   const reg = await getRegistration(a.account_id);
   const partner = a.partner_id ? await getPartner(a.partner_id) : null;
@@ -74,11 +81,17 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             actions={
               <>
                 <PrintButton />
+                {(who === 'staff' || who === 'partner') && (
+                  <form action={who === 'staff' ? editSelf : editPartnerAssessment}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <button className="px-4 py-2.5 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">Edit assessment</button>
+                  </form>
+                )}
                 {mine && (
                   <>
                     <form action={reopen}>
                       <input type="hidden" name="id" value={a.id} />
-                      <button className="px-4 py-2.5 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">Edit answers</button>
+                      <button className="px-4 py-2.5 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">Edit assessment</button>
                     </form>
                     <form action={startNew}>
                       <button className="px-4 py-2.5 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">New assessment</button>

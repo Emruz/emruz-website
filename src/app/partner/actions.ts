@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { currentAccount } from '@/lib/server/session';
 import { EMAIL_RE } from '@/lib/server/newsletter';
 import { isUuid } from '@/lib/server/api';
-import { startGuidedAssessment } from '@/lib/server/assessments';
+import { getAssessment, reopenForEdit, startGuidedAssessment } from '@/lib/server/assessments';
+import { createInvite, resendInvite, revokeInvite } from '@/lib/server/invites';
 import { addPartnerStaffMember, partnerRole, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
 import { CONSENT_TEXT, CONSENT_VERSION } from '@/content/cis-assessment';
 
@@ -70,4 +71,52 @@ export async function setTeamMember(form: FormData) {
   });
   revalidatePath('/partner/team');
   redirect('/partner/team?saved=1');
+}
+
+/** Reopen one of the partner's completed assessments to change its profile or answers. */
+export async function editPartnerAssessment(form: FormData) {
+  const { account, partner } = await partnerCtx();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  const a = (await getAssessment(id)) as (Awaited<ReturnType<typeof getAssessment>> & { performed_by?: string | null; assigned_to?: string | null }) | null;
+  if (!a || a.partner_id !== partner.partnerId || a.status !== 'completed') throw new Error('Not found');
+  if (!partner.admin && a.performed_by !== account.id && a.assigned_to !== account.id) throw new Error('Not found');
+  const r = await reopenForEdit(a, { replaceDraft: false });
+  if (r.error) redirect('/partner?error=draft');
+  redirect(`/partner/${a.id}/take`);
+}
+
+/** Invite a customer to take the self-assessment themselves. */
+export async function invitePartnerCustomer(form: FormData) {
+  const { account, partner } = await partnerCtx();
+  const email = str(form.get('email'), 254).toLowerCase();
+  if (!EMAIL_RE.test(email)) redirect('/partner/new?error=invite-email');
+  const r = await createInvite({
+    partnerId: partner.partnerId,
+    partnerName: partner.partnerName,
+    by: account,
+    email,
+    fullName: str(form.get('full_name'), 120) || null,
+    company: str(form.get('company'), 160) || null,
+  });
+  if ('error' in r) redirect(`/partner/new?error=${r.error}`);
+  revalidatePath('/partner');
+  redirect('/partner?invited=1');
+}
+
+export async function resendPartnerInvite(form: FormData) {
+  const { account, partner } = await partnerCtx();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  await resendInvite(id, partner.partnerId, account, partner.partnerName);
+  redirect('/partner?resent=1');
+}
+
+export async function revokePartnerInvite(form: FormData) {
+  const { partner } = await partnerCtx();
+  const id = form.get('id');
+  if (!isUuid(id)) throw new Error('Not found');
+  await revokeInvite(id, partner.partnerId);
+  revalidatePath('/partner');
+  redirect('/partner');
 }

@@ -11,6 +11,7 @@ export const metadata = { title: 'Partners', robots: { index: false } };
 const errors: Record<string, string> = {
   name: 'Enter the partner’s name.',
   email: 'Enter a valid notification email address.',
+  domains: 'Enter at least one valid email domain, such as dataendure.com.',
 };
 
 export default async function Partners({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
@@ -48,7 +49,7 @@ export default async function Partners({ searchParams }: { searchParams: Promise
                       <td className="p-3">
                         <Link href={`/workbench/partners/${p.id}`} className="font-semibold text-blue-700 hover:underline">{p.name}</Link>
                         {!p.active && <span className="ml-2 text-xs text-red-700 font-semibold">deactivated</span>}
-                        <p className="text-xs text-gray-500">{p.notify_email ?? 'No notification email'} · added {fmtDate(p.created_at)}</p>
+                        <p className="text-xs text-gray-500">{p.email_domains.map((d) => `@${d}`).join(', ') || 'No email domains'} · added {fmtDate(p.created_at)}</p>
                       </td>
                       <td className="p-3 text-right">{p.staff_count}</td>
                       <td className="p-3 text-right">{p.assessments}</td>
@@ -65,6 +66,11 @@ export default async function Partners({ searchParams }: { searchParams: Promise
                 <label className={label} htmlFor="p-notify">Notification email <span className="font-normal text-gray-500">(optional)</span></label>
                 <input id="p-notify" name="notify_email" type="email" className={input} />
                 <p className="text-xs text-gray-500 mt-1">Gets a copy of the started and completed notices for their customers.</p>
+              </div>
+              <div>
+                <label className={label} htmlFor="p-domains">Email domains</label>
+                <input id="p-domains" name="email_domains" required placeholder="dataendure.com, gocmt.com" className={input} />
+                <p className="text-xs text-gray-500 mt-1">Only addresses on these domains can be added as their staff.</p>
               </div>
               <button className={btn}>Add partner</button>
             </form>

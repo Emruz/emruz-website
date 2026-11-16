@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
 import { requireStaff } from '@/lib/server/workbench';
-import { getPartner, partnerLogoUrl, partnerStaffList } from '@/lib/server/partners';
+import { getPartner, onPartnerDomain, partnerLogoUrl, partnerStaffList } from '@/lib/server/partners';
 import { adminAddPartnerStaff, adminSetPartnerStaff, setPartnerLogo, updatePartner } from '../../actions';
 import { WorkbenchNav, btn, btnGhost, card, fmtDate, input, label } from '../../ui';
 
@@ -17,6 +17,9 @@ const errors: Record<string, string> = {
   'other-partner': 'That person already belongs to another partner.',
   logo: 'Upload a JPEG, PNG or WebP image.',
   'logo-size': 'The logo must be 1 MB or smaller.',
+  domains: 'Enter at least one valid email domain, such as dataendure.com.',
+  'no-domains': 'Add the partner’s email domains before adding staff.',
+  domain: 'That address isn’t on one of the partner’s email domains.',
 };
 
 export default async function PartnerDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; added?: string; saved?: string }> }) {
@@ -61,6 +64,9 @@ export default async function PartnerDetail({ params, searchParams }: { params: 
                         <td className="p-3">
                           <p className="font-semibold text-gray-900">{s.name || s.email}</p>
                           <p className="text-xs text-gray-500">{s.email} · added {fmtDate(s.added_at)} by {s.added_by}</p>
+                          {!onPartnerDomain(s.email, p.email_domains) && (
+                            <p className="text-xs font-semibold text-amber-700">Not on the partner’s email domains</p>
+                          )}
                         </td>
                         <td className="p-3">{s.is_admin ? 'Admin' : 'Member'}{!s.active && ' · deactivated'}</td>
                         <td className="p-3 text-right">{s.assessments}</td>
@@ -102,6 +108,11 @@ export default async function PartnerDetail({ params, searchParams }: { params: 
                   <label className={label} htmlFor="e-notify">Notification email</label>
                   <input id="e-notify" name="notify_email" type="email" defaultValue={p.notify_email ?? ''} className={input} />
                   <p className="text-xs text-gray-500 mt-1">Gets a copy of the started and completed notices for their customers.</p>
+                </div>
+                <div>
+                  <label className={label} htmlFor="e-domains">Email domains</label>
+                  <input id="e-domains" name="email_domains" defaultValue={p.email_domains.join(', ')} required placeholder="dataendure.com, gocmt.com" className={input} />
+                  <p className="text-xs text-gray-500 mt-1">Only addresses on these domains can be added as their staff. Separate with commas.</p>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-800">
                   <input type="checkbox" name="active" defaultChecked={p.active} className="w-4 h-4 accent-blue-600" /> Active: staff can sign in and run assessments

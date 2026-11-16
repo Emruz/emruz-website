@@ -8,7 +8,7 @@ import { register, type RegisterState } from './actions';
 const input =
   'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100';
 
-export default function RegisterForm({ defaultName }: { defaultName: string }) {
+export default function RegisterForm({ defaultName, defaultCompany = '' }: { defaultName: string; defaultCompany?: string }) {
   const [state, action, pending] = useActionState<RegisterState, FormData>(register, {});
   return (
     <form action={action} className="space-y-4 max-w-lg">
@@ -19,7 +19,7 @@ export default function RegisterForm({ defaultName }: { defaultName: string }) {
         </div>
         <div>
           <label htmlFor="company" className="block text-sm font-semibold text-gray-900 mb-1">Company</label>
-          <input id="company" name="company" required autoComplete="organization" className={input} />
+          <input id="company" name="company" required defaultValue={defaultCompany} autoComplete="organization" className={input} />
         </div>
         <div>
           <label htmlFor="job_title" className="block text-sm font-semibold text-gray-900 mb-1">

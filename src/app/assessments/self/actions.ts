@@ -95,9 +95,9 @@ export async function finish(id: string, data: { profile: unknown; answers: unkn
 /** Reopen a completed assessment to change answers. */
 export async function reopen(form: FormData) {
   const { a } = await owned(form.get('id'));
-  await db()`update assessments set status = 'in_progress', step = 1, updated_at = now() where id = ${a.id}`;
-  // Only one assessment in progress at a time
+  // Only one assessment in progress at a time (assessments_one_open), so clear any draft first
   await db()`delete from assessments where account_id = ${a.account_id} and status = 'in_progress' and id <> ${a.id}`;
+  await db()`update assessments set status = 'in_progress', step = 1, updated_at = now() where id = ${a.id}`;
   redirect('/assessments/self');
 }
 

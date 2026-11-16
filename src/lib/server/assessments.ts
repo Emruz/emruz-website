@@ -77,11 +77,54 @@ export async function currentAssessment(accountId: string): Promise<AssessmentRo
   // Start from the last profile so returning users don't answer it again
   const [last] = await db()<{ profile: Profile }[]>`
     select profile from assessments where account_id = ${accountId} order by created_at desc limit 1`;
+  // This runs while the page renders, so a prefetch can race the real visit;
+  // the assessments_one_open index makes sure they share one draft.
   const [created] = await db()<AssessmentRow[]>`
     insert into assessments (account_id, profile) values (${accountId}, ${db().json((last?.profile ?? {}) as never)})
+    on conflict (account_id) where status = 'in_progress' and deleted_at is null do nothing
     returning *`;
+  if (!created) return (await openAssessment(accountId))!;
   await logEvent('assessment_started', {}, { accountId });
   return created;
+}
+
+/** Where assessment notices go. */
+const NOTIFY_TO = process.env.ASSESSMENT_NOTIFY_TO || 'sales@emruz.com';
+
+/** Tell sales once, when someone actually begins working on an assessment. */
+export async function notifyAssessmentStarted(assessmentId: string) {
+  const [claimed] = await db()<{ account_id: string; performed_by: string | null }[]>`
+    update assessments set started_notice_at = now()
+    where id = ${assessmentId} and started_notice_at is null
+    returning account_id, performed_by`;
+  if (!claimed) return;
+  try {
+    const [c] = await db()<{ email: string; full_name: string; company: string; job_title: string | null; phone: string | null; guided_by: string | null }[]>`
+      select a.email, r.full_name, r.company, r.job_title, r.phone, g.email as guided_by
+      from accounts a
+      join assessment_registrations r on r.account_id = a.id
+      left join accounts g on g.id = ${claimed.performed_by}
+      where a.id = ${claimed.account_id}`;
+    if (!c) return;
+    await sendEmail(
+      NOTIFY_TO,
+      `Self-assessment started: ${c.company}`,
+      [
+        `${c.full_name}${c.job_title ? `, ${c.job_title}` : ''}`,
+        c.company,
+        c.email,
+        c.phone || '',
+        c.guided_by ? `Guided by ${c.guided_by}` : '',
+        '',
+        `${SITE_URL}/workbench/self/${assessmentId}`,
+      ]
+        .filter((l, i, arr) => l !== '' || arr[i - 1] !== '')
+        .join('\n'),
+      { replyTo: c.email },
+    );
+  } catch (e) {
+    console.error('assessment started email failed', e);
+  }
 }
 
 /** Score, store and email the report. */
@@ -145,7 +188,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
 
   try {
     await sendEmail(
-      process.env.CONTACT_TO || 'info@emruz.com',
+      NOTIFY_TO,
       `Self-assessment completed: ${reg.company} (${score}%)`,
       [
         `${reg.full_name}${reg.job_title ? `, ${reg.job_title}` : ''}`,

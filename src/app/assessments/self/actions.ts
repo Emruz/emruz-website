@@ -11,6 +11,7 @@ import {
   currentAssessment,
   getAssessment,
   getRegistration,
+  notifyAssessmentStarted,
 } from '@/lib/server/assessments';
 import {
   CONSENT_TEXT,
@@ -75,6 +76,7 @@ export async function saveProgress(id: string, data: { step: unknown; profile: u
     update assessments set step = ${step}, profile = ${db().json(cleanProfile(data.profile) as never)},
       answers = ${db().json(cleanAnswers(data.answers) as never)}, updated_at = now()
     where id = ${a.id}`;
+  await notifyAssessmentStarted(a.id);
   return { ok: true };
 }
 

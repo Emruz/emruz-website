@@ -42,7 +42,7 @@ import {
 } from '@/content/workbench';
 import { csfSubcategories, subcategoryById } from '@/content/csf';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
-import { completeAssessment, getRegistration, type AssessmentRow } from '@/lib/server/assessments';
+import { completeAssessment, getRegistration, notifyAssessmentStarted, type AssessmentRow } from '@/lib/server/assessments';
 import type { Answers, IG, Profile } from '@/content/cis-assessment';
 
 const str = (v: FormDataEntryValue | null, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -692,9 +692,15 @@ export async function createGuided(form: FormData) {
         full_name = excluded.full_name, company = excluded.company, job_title = excluded.job_title, phone = excluded.phone,
         consent_version = excluded.consent_version, consent_text = excluded.consent_text, consented_at = now(), withdrawn_at = null`;
   }
+  // If the customer already has an open draft, the guided session takes it over
+  // (assessments_one_open allows only one open assessment per account).
   const [a] = await db()<{ id: string }[]>`
-    insert into assessments (account_id, performed_by, assigned_to) values (${customerId}, ${account.id}, ${account.id}) returning id`;
+    insert into assessments (account_id, performed_by, assigned_to) values (${customerId}, ${account.id}, ${account.id})
+    on conflict (account_id) where status = 'in_progress' and deleted_at is null
+    do update set performed_by = excluded.performed_by, assigned_to = excluded.assigned_to, updated_at = now()
+    returning id`;
   await logEvent('assessment_guided_started', { by: account.email }, { accountId: customerId });
+  await notifyAssessmentStarted(a.id);
   redirect(`/workbench/self/${a.id}/take`);
 }
 

@@ -40,7 +40,8 @@ import {
   EVIDENCE_REQUIRED_AT,
   type EngagementStatus,
 } from '@/content/workbench';
-import { csfSubcategories, subcategoryById } from '@/content/csf';
+import { frameworkFor } from '@/content/frameworks';
+import { assessmentType, isAssessmentType, type AssessmentType } from '@/content/engagement-types';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
 import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
 import { addPartnerStaffMember, parseDomains, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
@@ -65,6 +66,9 @@ async function staffOn(engagementId: unknown) {
   if (!seesAll(ctx.role) && e.lead_account_id !== ctx.account.id) throw new Error('Not found');
   return { ...ctx, e };
 }
+
+/** True when the item ID belongs to the engagement's assessment type. */
+const hasItem = (e: { assessment_type: string }, id: string) => frameworkFor(e.assessment_type).items.some((s) => s.id === id);
 
 const ePath = (id: string, tab = '') => `/workbench/e/${id}${tab ? `/${tab}` : ''}`;
 
@@ -126,6 +130,7 @@ export async function removeContact(form: FormData) {
 /** Create an engagement with a rating row per CSF subcategory, pre-filled from a self-assessment if given. */
 async function newEngagement(o: {
   clientId: string;
+  type: AssessmentType;
   title: string;
   lead: string;
   ig: IG;
@@ -134,18 +139,19 @@ async function newEngagement(o: {
   selfId: string | null;
   actor: { id: string; email: string };
 }) {
+  const fw = frameworkFor(o.type);
   const [e] = await db()<{ id: string }[]>`
-    insert into engagements (client_id, title, lead_account_id, target_ig, start_date, due_date, created_by, self_assessment_id)
-    values (${o.clientId}, ${o.title}, ${o.lead}, ${o.ig}, ${o.start}, ${o.due}, ${o.actor.id}, ${o.selfId})
+    insert into engagements (client_id, kind, assessment_type, title, lead_account_id, target_ig, start_date, due_date, created_by, self_assessment_id)
+    values (${o.clientId}, 'assessment', ${o.type}, ${o.title}, ${o.lead}, ${o.ig}, ${o.start}, ${o.due}, ${o.actor.id}, ${fw.usesIg ? o.selfId : null})
     returning id`;
-  const target = defaultTarget(o.ig);
+  const target = fw.usesIg ? defaultTarget(o.ig) : 3;
   let prefill: Record<string, number> = {};
-  if (o.selfId) {
+  if (o.selfId && fw.usesIg) {
     const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: IG | null }[]>`
       select answers, profile, target_ig from assessments where id = ${o.selfId} and status = 'completed'`;
     if (s) prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
   }
-  const rows = csfSubcategories.map((s) => ({
+  const rows = fw.items.map((s) => ({
     engagement_id: e.id,
     subcategory: s.id,
     target_level: target,
@@ -153,7 +159,10 @@ async function newEngagement(o: {
     prefilled: s.id in prefill,
   }));
   await db()`insert into engagement_ratings ${db()(rows, 'engagement_id', 'subcategory', 'target_level', 'current_level', 'prefilled')}`;
-  await logActivity(e.id, o.actor.email, 'created', { prefilled: Object.keys(prefill).length });
+  // Standard document requests for this assessment type
+  const docs = assessmentType(o.type).documents.map((text) => ({ engagement_id: e.id, text, created_by: o.actor.id }));
+  if (docs.length) await db()`insert into evidence_requests ${db()(docs, 'engagement_id', 'text', 'created_by')}`;
+  await logActivity(e.id, o.actor.email, 'created', { type: o.type, prefilled: Object.keys(prefill).length, requests: docs.length });
   return e.id;
 }
 
@@ -202,9 +211,12 @@ export async function createEngagement(form: FormData) {
   const ig = (Number(form.get('target_ig')) || 2) as IG;
   const lead = form.get('lead');
   const selfId = form.get('self_assessment_id');
+  const typeIn = form.get('assessment_type');
+  const type: AssessmentType = isAssessmentType(typeIn) ? typeIn : 'security';
   const id = await newEngagement({
     clientId,
-    title: str(form.get('title'), 200) || 'NIST CSF 2.0 Assessment',
+    type,
+    title: str(form.get('title'), 200) || assessmentType(type).title,
     lead: isUuid(lead) ? lead : account.id,
     ig: [1, 2, 3].includes(ig) ? ig : 2,
     start: date(form.get('start_date')),
@@ -270,7 +282,8 @@ export async function engagementFromSelf(form: FormData) {
     on conflict (client_id, account_id) do nothing`;
   const id = await newEngagement({
     clientId: client.id,
-    title: 'NIST CSF 2.0 Assessment',
+    type: 'security',
+    title: assessmentType('security').title,
     lead: a.assigned_to ?? account.id,
     ig: a.target_ig ?? 2,
     start: null,
@@ -304,7 +317,7 @@ export async function updateEngagement(form: FormData) {
 
 export async function saveIntake(id: string, data: unknown) {
   const { account, e } = await staffOn(id);
-  const intake = cleanIntake(data);
+  const intake = cleanIntake(data, e.assessment_type);
   await db()`update engagements set intake = ${db().json(intake as never)}, updated_at = now() where id = ${e.id}`;
   await db()`
     insert into engagement_events (engagement_id, actor, kind)
@@ -339,7 +352,7 @@ export async function saveRating(
   },
 ) {
   const { account, e } = await staffOn(id);
-  if (!subcategoryById.has(subcategory)) throw new Error('Unknown subcategory');
+  if (!hasItem(e, subcategory)) throw new Error('Unknown item');
   const t = (v: unknown) => (typeof v === 'string' ? v.slice(0, 5000) : null);
   const cur = 'current_level' in patch ? level(patch.current_level) : undefined;
   const tgt = 'target_level' in patch ? level(patch.target_level) : undefined;
@@ -375,14 +388,14 @@ export async function addEvidenceLink(form: FormData) {
   const [ev] = await db()<{ id: string }[]>`
     insert into evidence (engagement_id, kind, title, url, uploaded_by) values (${e.id}, 'link', ${title}, ${url}, ${account.id}) returning id`;
   const sub = str(form.get('subcategory'), 20);
-  if (subcategoryById.has(sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
+  if (hasItem(e, sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'link' });
   revalidatePath(ePath(e.id, 'evidence'));
 }
 
 export async function setEvidenceLink(id: string, evidenceId: string, subcategory: string, on: boolean) {
   const { e } = await staffOn(id);
-  if (!isUuid(evidenceId) || !subcategoryById.has(subcategory)) throw new Error('Not found');
+  if (!isUuid(evidenceId) || !hasItem(e, subcategory)) throw new Error('Not found');
   const [ev] = await db()`select 1 from evidence where id = ${evidenceId} and engagement_id = ${e.id}`;
   if (!ev) throw new Error('Not found');
   if (on) await db()`insert into evidence_links (evidence_id, subcategory) values (${evidenceId}, ${subcategory}) on conflict do nothing`;
@@ -408,7 +421,7 @@ export async function createRequest(form: FormData) {
   const sub = str(form.get('subcategory'), 20);
   await db()`
     insert into evidence_requests (engagement_id, subcategory, text, created_by)
-    values (${e.id}, ${subcategoryById.has(sub) ? sub : null}, ${text}, ${account.id})`;
+    values (${e.id}, ${hasItem(e, sub) ? sub : null}, ${text}, ${account.id})`;
   await logActivity(e.id, account.email, 'request_created', { text: text.slice(0, 120), subcategory: sub || null });
   if (form.get('notify') === 'on') {
     const sent = await emailClientContacts(
@@ -441,8 +454,10 @@ export async function generateReport(form: FormData) {
   const bySub = new Map<string, typeof evidence>();
   for (const ev of evidence) for (const s of ev.subcategories) bySub.set(s, [...(bySub.get(s) ?? []), ev]);
 
+  const fw = frameworkFor(e.assessment_type);
   const content: ReportContent = {
     generatedAt: new Date().toISOString(),
+    assessmentType: fw.type,
     client: e.client_name,
     title: e.title,
     assessor: e.lead_name || e.lead_email,
@@ -450,8 +465,8 @@ export async function generateReport(form: FormData) {
     targetIg: e.target_ig,
     summary: e.summary,
     intake: e.intake,
-    rollup: rollup(ratings),
-    findings: csfSubcategories.map((s) => {
+    rollup: rollup(ratings, fw),
+    findings: fw.items.map((s) => {
       const r = ratings[s.id];
       const evs = bySub.get(s.id) ?? [];
       return {
@@ -468,10 +483,10 @@ export async function generateReport(form: FormData) {
         unverified: !r?.na && (r?.current_level ?? 0) >= EVIDENCE_REQUIRED_AT && evs.length === 0,
         overrideReason: r?.override_reason ?? null,
         evidence: evs.map((x) => ({ id: x.id, title: x.title, kind: x.kind })),
-        related: relatedFor(s.id),
+        related: fw.crosswalk ? relatedFor(s.id) : {},
       };
     }),
-    flags: csfSubcategories
+    flags: fw.items
       .map((s) => ({ id: s.id, flags: flagsFor(ratings[s.id], (bySub.get(s.id) ?? []).length) }))
       .filter((f) => f.flags.length),
     evidenceIndex: evidence.map((x) => ({

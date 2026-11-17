@@ -1,18 +1,18 @@
 import { Link2, FileText } from 'lucide-react';
-import { getEvidence, getRequests, requireEngagementAccess } from '@/lib/server/workbench';
-import { csfSubcategories } from '@/content/csf';
+import { getEngagement, getEvidence, getRequests, requireEngagementAccess } from '@/lib/server/workbench';
+import { frameworkFor } from '@/content/frameworks';
 import EvidenceUpload from '@/components/assessment/EvidenceUpload';
 import { addEvidenceLink, createRequest, deleteEvidence, setRequestStatus } from '../../../actions';
 import { btn, card, input, label, fmtDate } from '../../../ui';
-
-const subs = csfSubcategories.map((s) => ({ id: s.id, text: s.text }));
 
 export default async function EvidencePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ sub?: string; error?: string }> }) {
   const { id } = await params;
   await requireEngagementAccess(id, `/workbench/e/${id}/evidence`);
   const sp = await searchParams;
-  const sub = csfSubcategories.some((s) => s.id === sp.sub) ? sp.sub : undefined;
-  const [evidence, requests] = await Promise.all([getEvidence(id), getRequests(id)]);
+  const [e, evidence, requests] = await Promise.all([getEngagement(id), getEvidence(id), getRequests(id)]);
+  const fw = frameworkFor(e?.assessment_type);
+  const subs = fw.items.map((s) => ({ id: s.id, text: s.text }));
+  const sub = subs.some((s) => s.id === sp.sub) ? sp.sub : undefined;
 
   const subSelect = (name: string) => (
     <select name={name} defaultValue={sub ?? ''} className={input}>

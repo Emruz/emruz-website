@@ -4,7 +4,8 @@ import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { purgeDate, purgeDeleted, requireStaff, seesAll } from '@/lib/server/workbench';
 import { engagementStatuses, statusLabel, type EngagementStatus, type ReportStatus, EVIDENCE_REQUIRED_AT } from '@/content/workbench';
-import { csfSubcategories } from '@/content/csf';
+import { frameworkFor } from '@/content/frameworks';
+import { assessmentType } from '@/content/engagement-types';
 import { StatusBadge, ReportBadge, WorkbenchNav, Meter, fmtDate, btn, card } from './ui';
 
 export const metadata = { title: 'Workbench', robots: { index: false } };
@@ -12,6 +13,7 @@ export const metadata = { title: 'Workbench', robots: { index: false } };
 interface Row {
   id: string;
   title: string;
+  assessment_type: string;
   client_name: string;
   status: EngagementStatus;
   lead: string | null;
@@ -34,7 +36,7 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
   await purgeDeleted();
 
   const rows = await db()<Row[]>`
-    select e.id, e.title, c.name as client_name, e.status, coalesce(a.name, a.email) as lead,
+    select e.id, e.title, e.assessment_type, c.name as client_name, e.status, coalesce(a.name, a.email) as lead,
            to_char(e.due_date, 'YYYY-MM-DD') as due_date, e.updated_at,
            (select count(*)::int from engagement_ratings r where r.engagement_id = e.id and (r.na or r.current_level is not null)) as rated,
            (select count(*)::int from engagement_ratings r where r.engagement_id = e.id and not r.na
@@ -127,6 +129,7 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
                       <td className="p-3">
                         <Link href={`/workbench/e/${r.id}`} className="font-semibold text-blue-700 hover:underline">{r.client_name}</Link>
                         <p className="text-gray-500">{r.title}</p>
+                        <p className="text-xs text-gray-400">{assessmentType(r.assessment_type).name}</p>
                       </td>
                       <td className="p-3">
                         {r.deleted_at ? <span className="text-xs font-semibold text-red-700">Deletes {fmtDate(purgeDate(r.deleted_at))}</span> : <StatusBadge status={r.status} />}
@@ -134,8 +137,8 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
                       <td className="p-3 text-gray-700">{r.lead}</td>
                       <td className={`p-3 whitespace-nowrap ${overdue ? 'text-red-700 font-semibold' : 'text-gray-700'}`}>{fmtDate(r.due_date)}</td>
                       <td className="p-3">
-                        <p className="text-xs text-gray-600 mb-1">{r.rated} of {csfSubcategories.length}</p>
-                        <Meter value={r.rated} total={csfSubcategories.length} />
+                        <p className="text-xs text-gray-600 mb-1">{r.rated} of {frameworkFor(r.assessment_type).items.length}</p>
+                        <Meter value={r.rated} total={frameworkFor(r.assessment_type).items.length} />
                       </td>
                       <td className="p-3 text-xs whitespace-nowrap">
                         {r.missing_evidence > 0 && <p className="text-red-700 font-semibold">{r.missing_evidence} missing evidence</p>}

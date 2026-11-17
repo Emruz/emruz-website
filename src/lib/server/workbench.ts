@@ -104,6 +104,8 @@ export interface Engagement {
   client_id: string;
   client_name: string;
   title: string;
+  kind: 'assessment';
+  assessment_type: import('@/content/engagement-types').AssessmentType;
   status: EngagementStatus;
   lead_account_id: string | null;
   lead_email: string | null;
@@ -352,6 +354,8 @@ export interface ReportFinding {
 
 export interface ReportContent {
   generatedAt: string;
+  /** Missing on reports made before assessment types; those are security. */
+  assessmentType?: string;
   client: string;
   title: string;
   assessor: string | null;

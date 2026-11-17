@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { db } from '@/lib/server/db';
 import { clientContacts, getEngagement, getEvidence, getRatings, getReports, getRequests, requireEngagementAccess, staffList } from '@/lib/server/workbench';
-import { engagementStatuses, flagsFor, flagInfo, intakeCompleteness, rollup, statusLabel, tierFor } from '@/content/workbench';
-import { csfSubcategories } from '@/content/csf';
+import { engagementStatuses, flagsFor, flagInfo, intakeCompleteness, rollup, statusLabel } from '@/content/workbench';
+import { frameworkFor, tierFor } from '@/content/frameworks';
+import { assessmentType } from '@/content/engagement-types';
 import { markEngagementDeleted, updateEngagement } from '../../actions';
 import { ReportBadge, Meter, btn, card, input, label, fmtTime } from '../../ui';
 
 const eventText: Record<string, (d: Record<string, unknown>) => string> = {
-  created: (d) => `Created the engagement${d.prefilled ? `, ${d.prefilled} ratings pre-filled from the self-assessment` : ''}`,
+  created: (d) => `Created the ${d.type ? `${assessmentType(String(d.type)).name} ` : ''}engagement${d.requests ? ` with ${d.requests} document requests` : ''}${d.prefilled ? `, ${d.prefilled} ratings pre-filled from the self-assessment` : ''}`,
   status: (d) => `Moved from ${statusLabel[d.from as keyof typeof statusLabel] ?? d.from} to ${statusLabel[d.to as keyof typeof statusLabel] ?? d.to}`,
   details_updated: () => 'Updated engagement details',
   intake_saved: () => 'Edited the intake',
@@ -44,10 +45,11 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
   ]);
   const linked = new Map<string, number>();
   for (const ev of evidence) for (const s of ev.subcategories) linked.set(s, (linked.get(s) ?? 0) + 1);
-  const flags = csfSubcategories.flatMap((s) => flagsFor(ratings[s.id], linked.get(s.id) ?? 0));
+  const fw = frameworkFor(e.assessment_type);
+  const flags = fw.items.flatMap((s) => flagsFor(ratings[s.id], linked.get(s.id) ?? 0));
   const count = (f: keyof typeof flagInfo) => flags.filter((x) => x === f).length;
-  const r = rollup(ratings);
-  const intake = intakeCompleteness(e.intake);
+  const r = rollup(ratings, fw);
+  const intake = intakeCompleteness(e.intake, e.assessment_type);
   const latest = reports[0];
   const leads = [{ account_id: account.id, email: account.email, name: account.name }, ...staff.filter((s) => s.account_id !== account.id)];
   if (e.lead_account_id && !leads.some((l) => l.account_id === e.lead_account_id)) leads.push({ account_id: e.lead_account_id, email: e.lead_email ?? '', name: e.lead_name });
@@ -76,7 +78,7 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="font-bold text-gray-900">Current profile</h2>
             <p className="text-sm text-gray-600">
-              Overall {r.overall.current ?? '–'} of 5 · <span className="font-semibold">{tierFor(r.overall.current).label}</span>
+              Overall {r.overall.current ?? '–'} of 5 · <span className="font-semibold">{tierFor(fw, r.overall.current).label}</span>
             </p>
           </div>
           <ul className="space-y-3">
@@ -144,11 +146,17 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
             </select>
           </div>
           <div>
+            <p className={label}>Type</p>
+            <p className="text-sm text-gray-800">Assessment: {assessmentType(e.assessment_type).name}</p>
+          </div>
+          {fw.usesIg && (
+          <div>
             <label className={label} htmlFor="target_ig">Target</label>
             <select id="target_ig" name="target_ig" defaultValue={String(e.target_ig)} className={input}>
               <option value="1">IG1</option><option value="2">IG2</option><option value="3">IG3</option>
             </select>
           </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div><label className={label} htmlFor="start_date">Start</label><input id="start_date" name="start_date" type="date" defaultValue={e.start_date ?? ''} className={input} /></div>
             <div><label className={label} htmlFor="due_date">Due</label><input id="due_date" name="due_date" type="date" defaultValue={e.due_date ?? ''} className={input} /></div>

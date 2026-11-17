@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getEngagement, getEvidence, getRatings, getReports, requireEngagementAccess } from '@/lib/server/workbench';
 import { flagsFor, flagInfo, type Flag } from '@/content/workbench';
-import { csfSubcategories } from '@/content/csf';
+import { frameworkFor } from '@/content/frameworks';
 import { generateReport, saveSummary } from '../../../actions';
 import { ReportBadge, FlagBadge, btn, btnGhost, card, input, fmtTime } from '../../../ui';
 
@@ -11,7 +11,7 @@ export default async function ReportTab({ params }: { params: Promise<{ id: stri
   const [e, ratings, evidence, reports] = await Promise.all([getEngagement(id), getRatings(id), getEvidence(id), getReports(id)]);
   const linked = new Map<string, number>();
   for (const ev of evidence) for (const s of ev.subcategories) linked.set(s, (linked.get(s) ?? 0) + 1);
-  const flagged = csfSubcategories.map((s) => ({ s, flags: flagsFor(ratings[s.id], linked.get(s.id) ?? 0) })).filter((x) => x.flags.length);
+  const flagged = frameworkFor(e?.assessment_type).items.map((s) => ({ s, flags: flagsFor(ratings[s.id], linked.get(s.id) ?? 0) })).filter((x) => x.flags.length);
   const byFlag = (Object.keys(flagInfo) as Flag[]).map((f) => ({ f, items: flagged.filter((x) => x.flags.includes(f)) })).filter((x) => x.items.length);
 
   return (

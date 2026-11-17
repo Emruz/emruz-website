@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { intakeSections, intakeCompleteness } from '@/content/workbench';
+import { intakeSectionsFor, intakeCompleteness } from '@/content/workbench';
 import { saveIntake } from '../../../actions';
 import { card, input, label } from '../../../ui';
 
-export default function IntakeForm({ id, initial }: { id: string; initial: Record<string, string> }) {
+export default function IntakeForm({ id, type, initial }: { id: string; type: string; initial: Record<string, string> }) {
+  const intakeSections = intakeSectionsFor(type);
   const [data, setData] = useState<Record<string, string>>(initial);
   const [state, setState] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
@@ -24,7 +25,7 @@ export default function IntakeForm({ id, initial }: { id: string; initial: Recor
     return () => clearTimeout(t);
   }, [id, data]);
 
-  const c = intakeCompleteness(data);
+  const c = intakeCompleteness(data, type);
 
   return (
     <div className="grid lg:grid-cols-4 gap-6">

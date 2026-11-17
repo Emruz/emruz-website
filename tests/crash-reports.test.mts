@@ -40,14 +40,15 @@ assert.ok(commentBody(r).startsWith('Happened again: **Motiv 0.27.1**'));
 
 // Filing: new issue, then a comment on the open one with the same signature
 function fakeGitHub(existing: boolean, labelFails = false) {
-  const calls: Array<{ url: string; method: string; body: any }> = [];
-  const f = (async (url: string, init: any) => {
-    const body = init.body ? JSON.parse(init.body) : undefined;
+  type Body = { title?: string; body?: string; labels?: string[] };
+  const calls: Array<{ url: string; method?: string; body?: Body }> = [];
+  const f = (async (url: string, init: RequestInit) => {
+    const body = init.body ? (JSON.parse(init.body as string) as Body) : undefined;
     calls.push({ url, method: init.method, body });
     const reply = (status: number, json: unknown) => new Response(JSON.stringify(json), { status });
     if (url.includes('/search/issues')) return reply(200, { items: existing ? [{ number: 7, html_url: 'https://github.com/Emruz/motiv-releases/issues/7' }] : [] });
     if (url.endsWith('/comments')) return reply(201, {});
-    if (url.endsWith('/issues')) return labelFails && body.labels ? reply(422, {}) : reply(201, { html_url: 'https://github.com/Emruz/motiv-releases/issues/8' });
+    if (url.endsWith('/issues')) return labelFails && body?.labels ? reply(422, {}) : reply(201, { html_url: 'https://github.com/Emruz/motiv-releases/issues/8' });
     return reply(404, {});
   }) as typeof fetch;
   return { f, calls };
@@ -58,7 +59,7 @@ function fakeGitHub(existing: boolean, labelFails = false) {
   const out = await fileCrashReport(r, 't', f);
   assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv-releases/issues/8', duplicate: false });
   assert.ok(decodeURIComponent(calls[0].url).includes('repo:Emruz/motiv-releases is:issue is:open in:body "crash-signature: a1b2c3d4e5f6"'));
-  assert.deepEqual(calls[1].body.labels, ['crash']);
+  assert.deepEqual(calls[1].body?.labels, ['crash']);
 }
 {
   const { f, calls } = fakeGitHub(true);
@@ -70,7 +71,7 @@ function fakeGitHub(existing: boolean, labelFails = false) {
   const { f, calls } = fakeGitHub(false, true);
   await fileCrashReport(r, 't', f);
   assert.equal(calls.length, 3);
-  assert.equal(calls[2].body.labels, undefined);
+  assert.equal(calls[2].body?.labels, undefined);
 }
 
 console.log('crash report tests passed');

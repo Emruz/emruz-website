@@ -36,10 +36,14 @@ Redirect URIs are `https://emruz.com/auth/callback/<provider>`. A provider's but
 ## 6. Admin
 Set `ADMIN_EMAILS` to your email. Sign in and open `/admin/motiv` (also linked from your account page) to search, grant complimentary subscriptions, revoke, reinstate, change seats and remove computers.
 
+## 7. Crash reports
+Create a fine-grained GitHub token (resource owner Emruz, repository Emruz/motiv-releases only, permission Issues: Read and write) and set it as `MOTIV_CRASH_GITHUB_TOKEN`. Create a `crash` label in that repo. Without the token, `/api/motiv/v1/crash-reports` answers `server_error` and the app says it couldn't send.
+
 ## How it fits together
 - **Purchase:** /motiv Buy > Stripe Checkout > webhook creates the subscription, attaches it to the account with that email (creating one if needed) and emails the subscription ID.
 - **Register a computer:** Motiv calls `/api/motiv/v1/pair/start` and shows a code > the customer signs in at `/activate`, picks a subscription and approves > Motiv's next poll receives the lease.
 - **Check-in:** Motiv calls `/api/motiv/v1/checkin` daily and gets a fresh 14-day lease, or an error (revoked, canceled, expired, past due) that turns Pro off.
+- **Crash reports:** when the user chooses Send, Motiv posts to `/api/motiv/v1/crash-reports`. The server checks and scrubs it, then comments on the open issue with the same `crash-signature` in Emruz/motiv-releases or opens a new one. Rate limited per IP (5/min, 20/hour) and overall (200/hour).
 - **Refunds:** a full refund or lost dispute on a lifetime purchase revokes it automatically. For monthly and annual, cancel in Stripe (or revoke in admin).
 - **Apple Hide My Email:** the account page lets a signed-in user prove a purchase email by link, which moves those purchases to their account.
 

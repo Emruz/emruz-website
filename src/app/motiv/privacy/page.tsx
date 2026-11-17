@@ -11,7 +11,7 @@ export default function MotivPrivacyPage() {
     <LegalPage
       title="Motiv privacy policy"
       summary="What the Motiv app keeps on your computer, and what leaves it only when you choose."
-      updated="15 November 2026"
+      updated="17 November 2026"
       path="/motiv/privacy"
       parent={{ label: 'Motiv', href: '/motiv' }}
     >
@@ -83,6 +83,15 @@ export default function MotivPrivacyPage() {
           <strong>Email.</strong> &quot;Send by email&quot; opens your own email app with the summary; nothing is sent
           until you send it.
         </li>
+        <li>
+          <strong>Crash reports.</strong> After Motiv quits unexpectedly or hits an error, it asks whether to send a
+          crash report, and shows what will be sent. Only if you choose Send, the report goes to emruz.com and is
+          posted as a public issue in the Emruz/motiv-releases repository on GitHub. It contains the Motiv version,
+          operating system version and computer model, the error and the program code locations involved, and the
+          note you write, if any. Your home folder, user name and email addresses are removed. It never contains
+          recordings, transcripts, summaries, meeting details, account details or a computer ID. If you choose
+          Don&apos;t send, the report is deleted from your computer.
+        </li>
       </ul>
 
       <h2>Motiv Pro check-in</h2>
@@ -91,7 +100,7 @@ export default function MotivPrivacyPage() {
         Pro on. It sends only your subscription ID, a random ID created for the computer (not derived from its
         hardware), the Motiv version and the operating system family (macOS, Windows or Linux), plus the computer&apos;s name
         only if you choose to share it. It never sends recordings, transcripts, summaries, meeting details or how you
-        use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com.
+        use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com, except to send a crash report you chose to send.
       </p>
 
       <h2>Google user data</h2>

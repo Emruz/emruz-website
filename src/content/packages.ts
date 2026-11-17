@@ -298,11 +298,16 @@ export interface AddOn {
   /** WhiteDog product code */
   sku: string;
   family: AddOnFamily;
+  /** Short name in self-assessment results, when it differs from code */
+  label?: string;
   name: string;
   summary: string;
   includes: CapabilityCode[];
   features: string[];
 }
+
+/** How an add-on is named in self-assessment results. */
+export const addOnLabel = (a: { code: string; label?: string }) => a.label ?? a.code;
 
 /** Services that can be added to any edition to close specific gaps. */
 export const addOns: AddOn[] = [
@@ -325,6 +330,7 @@ export const addOns: AddOn[] = [
     code: 'ZTA-PM',
     sku: 'WD-ZTA-PM-02',
     family: 'ZTNA',
+    label: 'ZTNA',
     name: 'Zero Trust Network Access, Premium',
     summary: 'Replaces VPN with one-click, per-app access that checks every user and device, with a secure web gateway built in.',
     includes: ['ZTNA'],
@@ -378,6 +384,7 @@ export const addOns: AddOn[] = [
     code: 'DRM-CP',
     sku: 'WD-DRM-CP-01',
     family: 'DRM',
+    label: 'DRM',
     name: 'Data Risk Management, Complete',
     summary: 'Finds and classifies sensitive data everywhere it lives, values the risk, and encrypts it automatically.',
     includes: ['DSPM', 'MDE'],

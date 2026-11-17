@@ -2,12 +2,12 @@ import 'server-only';
 
 /**
  * Motiv crash reports: the app posts a report the user chose to send, and it
- * becomes an issue in the public releases repo (or a comment on the open
- * issue with the same signature). Everything posted is public, so reports
- * are checked and scrubbed here as well as in the app.
+ * becomes an issue in the private Emruz/motiv repo (or a comment on the
+ * open issue with the same signature). Reports are checked and scrubbed
+ * here as well as in the app, and the issue URL isn't returned to the app.
  */
 
-export const CRASH_REPO = process.env.MOTIV_CRASH_REPO || 'Emruz/motiv-releases';
+export const CRASH_REPO = process.env.MOTIV_CRASH_REPO || 'Emruz/motiv';
 const LABEL = 'crash';
 const MAX_REPORT = 60_000;
 const MAX_NOTE = 2_000;

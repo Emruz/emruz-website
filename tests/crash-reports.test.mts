@@ -46,9 +46,9 @@ function fakeGitHub(existing: boolean, labelFails = false) {
     const body = init.body ? (JSON.parse(init.body as string) as Body) : undefined;
     calls.push({ url, method: init.method, body });
     const reply = (status: number, json: unknown) => new Response(JSON.stringify(json), { status });
-    if (url.includes('/search/issues')) return reply(200, { items: existing ? [{ number: 7, html_url: 'https://github.com/Emruz/motiv-releases/issues/7' }] : [] });
+    if (url.includes('/search/issues')) return reply(200, { items: existing ? [{ number: 7, html_url: 'https://github.com/Emruz/motiv/issues/7' }] : [] });
     if (url.endsWith('/comments')) return reply(201, {});
-    if (url.endsWith('/issues')) return labelFails && body?.labels ? reply(422, {}) : reply(201, { html_url: 'https://github.com/Emruz/motiv-releases/issues/8' });
+    if (url.endsWith('/issues')) return labelFails && body?.labels ? reply(422, {}) : reply(201, { html_url: 'https://github.com/Emruz/motiv/issues/8' });
     return reply(404, {});
   }) as typeof fetch;
   return { f, calls };
@@ -57,14 +57,14 @@ function fakeGitHub(existing: boolean, labelFails = false) {
 {
   const { f, calls } = fakeGitHub(false);
   const out = await fileCrashReport(r, 't', f);
-  assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv-releases/issues/8', duplicate: false });
-  assert.ok(decodeURIComponent(calls[0].url).includes('repo:Emruz/motiv-releases is:issue is:open in:body "crash-signature: a1b2c3d4e5f6"'));
+  assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv/issues/8', duplicate: false });
+  assert.ok(decodeURIComponent(calls[0].url).includes('repo:Emruz/motiv is:issue is:open in:body "crash-signature: a1b2c3d4e5f6"'));
   assert.deepEqual(calls[1].body?.labels, ['crash']);
 }
 {
   const { f, calls } = fakeGitHub(true);
   const out = await fileCrashReport(r, 't', f);
-  assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv-releases/issues/7', duplicate: true });
+  assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv/issues/7', duplicate: true });
   assert.ok(calls[1].url.endsWith('/issues/7/comments'));
 }
 {

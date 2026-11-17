@@ -1,5 +1,6 @@
 /**
- * Workbench rules: intake structure, NIST CSF 2.0 scoring,
+ * Workbench rules: intake structure, maturity scoring (NIST CSF 2.0 for security,
+ * Emruz question sets for the other assessment types),
  * evidence flags and rollups. Shared by the browser and the server.
  *
  * Scoring rules (shown to assessors and in every report's methodology):
@@ -13,7 +14,8 @@
  *   under 3.5 Repeatable, otherwise Adaptive.
  * - Gap = target minus current. 2 or more is High priority, 1 is Medium.
  */
-import { csfCategories, csfFunctions, csfSubcategories, type FunctionId } from './csf';
+import { frameworkFor, type Framework } from './frameworks';
+import { allIntakeFields, intakeSectionsFor, type IntakeField } from './engagement-types';
 import { controls, inScope, NOT_SURE, type Answers, type IG, type Profile } from './cis-assessment';
 import { crosswalk, type FrameworkKey } from './crosswalk';
 
@@ -82,16 +84,16 @@ const round1 = (x: number | null) => (x === null ? null : Math.round(x * 10) / 1
 
 export interface Rollup {
   overall: { current: number | null; target: number | null };
-  functions: { id: FunctionId; title: string; current: number | null; target: number | null }[];
-  categories: { id: string; fn: FunctionId; title: string; current: number | null; target: number | null }[];
+  functions: { id: string; title: string; current: number | null; target: number | null }[];
+  categories: { id: string; fn: string; title: string; current: number | null; target: number | null }[];
   rated: number;
   na: number;
   total: number;
 }
 
-export function rollup(ratings: Record<string, Rating>): Rollup {
-  const categories = csfCategories.map((c) => {
-    const rs = csfSubcategories
+export function rollup(ratings: Record<string, Rating>, fw: Framework = frameworkFor('security')): Rollup {
+  const categories = fw.categories.map((c) => {
+    const rs = fw.items
       .filter((s) => s.category === c.id)
       .map((s) => ratings[s.id])
       .filter((r): r is Rating => !!r && !r.na && r.current_level !== null);
@@ -103,7 +105,7 @@ export function rollup(ratings: Record<string, Rating>): Rollup {
       target: round1(mean(rs.filter((r) => r.target_level !== null).map((r) => r.target_level!))),
     };
   });
-  const functions = csfFunctions.map((f) => {
+  const functions = fw.functions.map((f) => {
     const cs = categories.filter((c) => c.fn === f.id);
     return {
       id: f.id,
@@ -112,7 +114,8 @@ export function rollup(ratings: Record<string, Rating>): Rollup {
       target: round1(mean(cs.filter((c) => c.target !== null).map((c) => c.target!))),
     };
   });
-  const all = Object.values(ratings);
+  const ids = new Set(fw.items.map((s) => s.id));
+  const all = Object.values(ratings).filter((r) => ids.has(r.subcategory));
   return {
     overall: {
       current: round1(mean(functions.filter((f) => f.current !== null).map((f) => f.current!))),
@@ -122,7 +125,7 @@ export function rollup(ratings: Record<string, Rating>): Rollup {
     categories,
     rated: all.filter((r) => r.na || r.current_level !== null).length,
     na: all.filter((r) => r.na).length,
-    total: csfSubcategories.length,
+    total: fw.items.length,
   };
 }
 
@@ -169,76 +172,25 @@ export function prefillFromSelf(answers: Answers, profile: Profile, ig: IG): Rec
 
 /* ---------- Intake ---------- */
 
-export interface IntakeField {
-  key: string;
-  label: string;
-  type: 'text' | 'textarea' | 'select' | 'number' | 'date';
-  required?: boolean;
-  help?: string;
-  options?: string[];
-}
+export type { IntakeField };
 
-export const intakeSections: { title: string; fields: IntakeField[] }[] = [
-  {
-    title: 'Organization',
-    fields: [
-      { key: 'overview', label: 'What the organization does', type: 'textarea', required: true },
-      { key: 'employees', label: 'Employees', type: 'number', required: true },
-      { key: 'locations', label: 'Locations', type: 'textarea', help: 'Offices, data centers, countries.' },
-      { key: 'industry', label: 'Industry', type: 'text', required: true },
-    ],
-  },
-  {
-    title: 'Scope',
-    fields: [
-      { key: 'in_scope', label: 'In scope', type: 'textarea', required: true, help: 'Business units, systems, environments.' },
-      { key: 'out_of_scope', label: 'Out of scope', type: 'textarea', required: true },
-      { key: 'crown_jewels', label: 'Most critical systems and data', type: 'textarea', required: true },
-    ],
-  },
-  {
-    title: 'Environment',
-    fields: [
-      { key: 'identity', label: 'Identity provider', type: 'text', help: 'Entra ID, Okta, Google...' },
-      { key: 'cloud', label: 'Cloud and SaaS platforms', type: 'textarea' },
-      { key: 'endpoints', label: 'Endpoints (approx.)', type: 'number' },
-      { key: 'servers', label: 'Servers (approx.)', type: 'number' },
-      { key: 'security_tools', label: 'Security tools in place', type: 'textarea', help: 'EDR, SIEM, email security, MFA, backups...' },
-      { key: 'it_model', label: 'IT operating model', type: 'select', options: ['In-house', 'Outsourced (MSP)', 'Hybrid'] },
-    ],
-  },
-  {
-    title: 'Obligations and history',
-    fields: [
-      { key: 'regulations', label: 'Regulations and frameworks', type: 'textarea', required: true, help: 'HIPAA, PCI DSS, CMMC, SOC 2, ISO 27001, state privacy laws...' },
-      { key: 'prior_assessments', label: 'Prior assessments or audits', type: 'textarea' },
-      { key: 'incidents', label: 'Security incidents in the last 24 months', type: 'textarea' },
-      { key: 'insurance', label: 'Cyber insurance requirements', type: 'textarea' },
-    ],
-  },
-  {
-    title: 'Engagement',
-    fields: [
-      { key: 'sponsor', label: 'Executive sponsor', type: 'text', required: true },
-      { key: 'interviewees', label: 'People to interview', type: 'textarea', required: true },
-      { key: 'method', label: 'Method', type: 'select', required: true, options: ['Remote', 'On-site', 'Hybrid'] },
-      { key: 'constraints', label: 'Constraints and assumptions', type: 'textarea' },
-    ],
-  },
-];
+/** Intake sections for an assessment type (security when not given). */
+export const intakeSections = intakeSectionsFor('security');
+export { intakeSectionsFor };
 
-export const intakeFields = intakeSections.flatMap((s) => s.fields);
+/** All intake fields, for labels. */
+export const intakeFields = allIntakeFields;
 
-export function intakeCompleteness(intake: Record<string, string>) {
-  const req = intakeFields.filter((f) => f.required);
+export function intakeCompleteness(intake: Record<string, string>, type?: string | null) {
+  const req = intakeSectionsFor(type).flatMap((s) => s.fields).filter((f) => f.required);
   const missing = req.filter((f) => !String(intake[f.key] ?? '').trim());
   return { done: req.length - missing.length, total: req.length, missing };
 }
 
-export function cleanIntake(input: unknown): Record<string, string> {
+export function cleanIntake(input: unknown, type?: string | null): Record<string, string> {
   const out: Record<string, string> = {};
   if (input && typeof input === 'object') {
-    for (const f of intakeFields) {
+    for (const f of intakeSectionsFor(type).flatMap((s) => s.fields)) {
       const v = (input as Record<string, unknown>)[f.key];
       if (typeof v === 'string' || typeof v === 'number') out[f.key] = String(v).slice(0, 5000);
     }

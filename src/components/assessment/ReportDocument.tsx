@@ -1,5 +1,6 @@
-import { csfCategories, csfFunctions } from '@/content/csf';
-import { intakeFields, maturityLevels, tierFor, EVIDENCE_REQUIRED_AT } from '@/content/workbench';
+import { intakeFields, maturityLevels, EVIDENCE_REQUIRED_AT } from '@/content/workbench';
+import { frameworkFor, tierFor as fwTier } from '@/content/frameworks';
+import { assessmentType } from '@/content/engagement-types';
 import type { ReportContent } from '@/lib/server/workbench';
 
 const fmt = (d: string | null) =>
@@ -31,7 +32,12 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
     .filter((f) => f.priority)
     .sort((a, b) => (a.priority === b.priority ? a.id.localeCompare(b.id) : a.priority === 'High' ? -1 : 1));
   const unverified = c.findings.filter((f) => f.unverified && !f.overrideReason);
-  const scopeKeys = ['overview', 'in_scope', 'out_of_scope', 'crown_jewels', 'regulations', 'method', 'constraints'];
+  const fw = frameworkFor(c.assessmentType);
+  const at = assessmentType(fw.type);
+  const tierFor = (n: number | null) => fwTier(fw, n);
+  const csfFunctions = fw.functions;
+  const csfCategories = fw.categories;
+  const scopeKeys = ['overview', 'in_scope', 'out_of_scope', 'crown_jewels', ...at.intake.fields.filter((f) => f.type !== 'number').map((f) => f.key), 'regulations', 'method', 'constraints'];
   const overall = c.rollup.overall.current;
 
   const evRefs = (evs: { id: string }[]) =>
@@ -50,7 +56,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
       )}
 
       <header className="mb-10 border-b border-gray-200 pb-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Emruz · NIST CSF 2.0 Assessment</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Emruz · {at.reportLabel}</p>
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">{c.client}</h1>
         <p className="text-lg text-gray-600 mt-1">{c.title}</p>
         <dl className="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
@@ -71,7 +77,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Target</p>
             <p className="text-3xl font-bold text-gray-900">{c.rollup.overall.target ?? '–'}<span className="text-base text-gray-500"> / 5</span></p>
-            <p className="text-sm text-gray-600">CIS IG{c.targetIg} profile</p>
+            <p className="text-sm text-gray-600">{fw.usesIg ? `CIS IG${c.targetIg} profile` : 'Agreed target maturity'}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Priority findings</p>
@@ -96,9 +102,9 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
         </dl>
         <h3 className="font-semibold text-gray-900 mb-2">Scoring method</h3>
         <p className="mb-2">
-          We rated each of the {c.rollup.total} NIST CSF 2.0 subcategories on a six-point maturity scale, using interviews,
+          We rated each of the {c.rollup.total} {at.ratedItems} on a six-point maturity scale, using interviews,
           document review and observation. Category scores average their subcategories, function scores average their
-          categories, and the overall score averages the six functions. Items marked not applicable are excluded.
+          categories, and the overall score averages the {csfFunctions.length} areas. Items marked not applicable are excluded.
         </p>
         <table className="w-full text-sm mb-2">
           <tbody>
@@ -112,20 +118,20 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           </tbody>
         </table>
         <p className="text-sm text-gray-600">
-          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Function scores map to CSF
-          tiers: under 1.5 Partial, under 2.5 Risk Informed, under 3.5 Repeatable, otherwise Adaptive.
+          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Scores map to {fw.usesIg ? 'CSF tiers' : 'maturity levels'}:
+          under 1.5 {fw.tiers[0].split(': ')[1]}, under 2.5 {fw.tiers[1].split(': ')[1]}, under 3.5 {fw.tiers[2].split(': ')[1]}, otherwise {fw.tiers[3].split(': ')[1]}.
         </p>
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by function</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by {fw.usesIg ? 'function' : 'area'}</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b border-gray-200">
-              <th className="py-2 pr-3 font-medium">Function</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Function' : 'Area'}</th>
               <th className="py-2 pr-3 font-medium">Current</th>
               <th className="py-2 pr-3 font-medium">Target</th>
-              <th className="py-2 pr-3 font-medium">Tier</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Tier' : 'Level'}</th>
               <th className="py-2 font-medium w-1/3" aria-label="Chart" />
             </tr>
           </thead>
@@ -161,7 +167,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
 
       <section className="mb-10">
         <h2 className="text-xl font-bold text-gray-900 mb-3">4. Priority findings and recommendations</h2>
-        {priority.length === 0 && <p>No subcategory is below its target.</p>}
+        {priority.length === 0 && <p>No {fw.itemLabel} is below its target.</p>}
         <ol className="space-y-5">
           {priority.map((f, i) => (
             <li key={f.id} id={`f-${f.id}`} className="border-l-4 pl-4 break-inside-avoid" style={{ borderColor: f.priority === 'High' ? '#dc2626' : '#f59e0b' }}>
@@ -229,9 +235,8 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
       <section className="mb-10">
         <h2 className="text-xl font-bold text-gray-900 mb-3">6. Limitations</h2>
         <p className="mb-2">
-          This assessment reflects what we observed and the evidence provided during the assessment period. It is not an
-          audit or certification, and it does not guarantee that the organization is secure. Mappings to CIS, CMMC, ISO
-          27001 and SOC 2 are indicative.
+          This assessment reflects what we observed and the evidence provided during the assessment period.{' '}
+          {at.limitations}
         </p>
         {unverified.length > 0 && (
           <p className="text-red-700">

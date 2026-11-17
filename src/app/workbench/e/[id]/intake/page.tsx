@@ -5,5 +5,5 @@ export default async function IntakePage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   await requireEngagementAccess(id, `/workbench/e/${id}/intake`);
   const e = (await getEngagement(id))!;
-  return <IntakeForm id={id} initial={e.intake} />;
+  return <IntakeForm id={id} type={e.assessment_type} initial={e.intake} />;
 }

@@ -4,7 +4,8 @@ import { isUuid } from '@/lib/server/api';
 import { getEngagement, getEvidence, getRatings, getRequests, purgeDate, requireEngagementAccess } from '@/lib/server/workbench';
 import { restoreEngagement } from '../../actions';
 import { flagsFor, flagInfo } from '@/content/workbench';
-import { csfSubcategories } from '@/content/csf';
+import { frameworkFor } from '@/content/frameworks';
+import { assessmentType } from '@/content/engagement-types';
 import Tabs from './Tabs';
 import { StatusBadge, fmtDate } from '../../ui';
 
@@ -17,7 +18,8 @@ export default async function EngagementLayout({ children, params }: { children:
   const [ratings, evidence, requests] = await Promise.all([getRatings(id), getEvidence(id), getRequests(id)]);
   const linked = new Map<string, number>();
   for (const ev of evidence) for (const s of ev.subcategories) linked.set(s, (linked.get(s) ?? 0) + 1);
-  const blocking = csfSubcategories.filter((s) =>
+  const fw = frameworkFor(e.assessment_type);
+  const blocking = fw.items.filter((s) =>
     flagsFor(ratings[s.id], linked.get(s.id) ?? 0).some((f) => flagInfo[f].blocks && f !== 'unrated'),
   ).length;
 
@@ -46,7 +48,8 @@ export default async function EngagementLayout({ children, params }: { children:
           )}
           <div className="flex items-center gap-2 mb-3">
             <StatusBadge status={e.status} />
-            <span className="text-xs text-gray-500">IG{e.target_ig} target</span>
+            <span className="text-xs font-semibold text-gray-700">{assessmentType(e.assessment_type).name}</span>
+            {fw.usesIg && <span className="text-xs text-gray-500">IG{e.target_ig} target</span>}
           </div>
           <Tabs id={id} counts={{ flags: blocking, requests: requests.filter((r) => r.status === 'open').length }} />
           {children}

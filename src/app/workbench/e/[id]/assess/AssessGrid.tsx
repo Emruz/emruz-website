@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Check, Link2, FileText, Paperclip } from 'lucide-react';
-import { csfCategories, csfFunctions, csfSubcategories, type FunctionId } from '@/content/csf';
+import { frameworkFor } from '@/content/frameworks';
 import { flagsFor, flagInfo, maturityLevels, priorityFor, relatedFor, EVIDENCE_REQUIRED_AT, type Flag, type Rating } from '@/content/workbench';
 import { saveRating, setEvidenceLink } from '../../../actions';
 
@@ -37,8 +37,9 @@ const filters: { key: string; label: string; test: (f: Flag[], r: Rating) => boo
 
 const relatedLabel = { cis: 'CIS', cmmc: 'CMMC', iso: 'ISO', soc2: 'SOC 2' } as const;
 
-export default function AssessGrid({ id, initial, evidence: initialEvidence, initialFilter, initialFn }: {
+export default function AssessGrid({ id, type, initial, evidence: initialEvidence, initialFilter, initialFn }: {
   id: string;
+  type: string;
   initial: Record<string, Rating>;
   evidence: Ev[];
   initialFilter: string;
@@ -46,7 +47,11 @@ export default function AssessGrid({ id, initial, evidence: initialEvidence, ini
 }) {
   const [ratings, setRatings] = useState(initial);
   const [evidence, setEvidence] = useState(initialEvidence);
-  const [fn, setFn] = useState<FunctionId | 'ALL'>(initialFilter !== 'all' ? 'ALL' : ((csfFunctions.some((f) => f.id === initialFn) ? initialFn : 'GV') as FunctionId));
+  const fw = frameworkFor(type);
+  const csfFunctions = fw.functions;
+  const csfCategories = fw.categories;
+  const csfSubcategories = fw.items;
+  const [fn, setFn] = useState<string>(initialFilter !== 'all' ? 'ALL' : csfFunctions.some((f) => f.id === initialFn) ? initialFn : csfFunctions[0].id);
   const [filter, setFilter] = useState(filters.some((f) => f.key === initialFilter) ? initialFilter : 'all');
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(0);
@@ -94,9 +99,9 @@ export default function AssessGrid({ id, initial, evidence: initialEvidence, ini
 
   const testFilter = filters.find((f) => f.key === filter)!.test;
   const visible = csfSubcategories.filter((s) => (fn === 'ALL' || s.fn === fn) && testFilter(flagsOf(s.id), ratings[s.id] ?? empty(s.id)));
-  const fnFlags = (f: FunctionId) => csfSubcategories.filter((s) => s.fn === f && flagsOf(s.id).some((x) => flagInfo[x].blocks)).length;
-  const fnRated = (f: FunctionId) => csfSubcategories.filter((s) => s.fn === f && !flagsOf(s.id).includes('unrated')).length;
-  const fnTotal = (f: FunctionId) => csfSubcategories.filter((s) => s.fn === f).length;
+  const fnFlags = (f: string) => csfSubcategories.filter((s) => s.fn === f && flagsOf(s.id).some((x) => flagInfo[x].blocks)).length;
+  const fnRated = (f: string) => csfSubcategories.filter((s) => s.fn === f && !flagsOf(s.id).includes('unrated')).length;
+  const fnTotal = (f: string) => csfSubcategories.filter((s) => s.fn === f).length;
   const toggle = (sid: string) => setOpen((o) => { const n = new Set(o); if (n.has(sid)) n.delete(sid); else n.add(sid); return n; });
 
   return (
@@ -158,7 +163,7 @@ export default function AssessGrid({ id, initial, evidence: initialEvidence, ini
                     const linked = linkedCount.get(s.id) ?? [];
                     const isOpen = open.has(s.id);
                     const prio = r.na ? null : priorityFor(r.current_level, r.target_level);
-                    const rel = relatedFor(s.id);
+                    const rel: ReturnType<typeof relatedFor> = fw.crosswalk ? relatedFor(s.id) : {};
                     return (
                       <li key={s.id} id={s.id} className={`bg-white border rounded-xl ${flags.some((f) => flagInfo[f].tone === 'red') ? 'border-red-200' : 'border-gray-200'}`}>
                         <div className="p-4 flex flex-col lg:flex-row lg:items-start gap-3">
@@ -296,7 +301,7 @@ export default function AssessGrid({ id, initial, evidence: initialEvidence, ini
                               )}
                               {s.examples.length > 0 && (
                                 <div>
-                                  <p className="font-semibold text-gray-900 mb-1">NIST implementation examples</p>
+                                  <p className="font-semibold text-gray-900 mb-1">{fw.crosswalk ? 'NIST implementation examples' : 'Evidence to look for'}</p>
                                   <ul className="list-disc pl-4 text-gray-600 space-y-1">{s.examples.map((x, i) => <li key={i}>{x}</li>)}</ul>
                                 </div>
                               )}

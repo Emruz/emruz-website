@@ -375,6 +375,7 @@ export const addOns: AddOn[] = [
     code: 'PSA',
     sku: 'WD-PSA-CP-02',
     family: 'PSA',
+    label: 'PSAT',
     name: 'Phishing Simulations & Awareness Training',
     summary: 'Keeps people alert with monthly training and realistic phishing and threat simulations.',
     includes: ['PSA'],

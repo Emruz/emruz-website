@@ -13,7 +13,8 @@
     "preview": "bash scripts/preview.sh",
     "pr": "bash scripts/preview.sh",
     "stripe:preview": "bash scripts/stripe-preview.sh",
-    "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts"
+    "test:lease": "node --conditions=react-server --experimental-strip-types tests/lease.test.mts",
+    "test:crash": "node --conditions=react-server --experimental-strip-types tests/crash-reports.test.mts"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.13",

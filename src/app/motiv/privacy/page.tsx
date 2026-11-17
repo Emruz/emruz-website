@@ -86,7 +86,8 @@ export default function MotivPrivacyPage() {
         <li>
           <strong>Crash reports.</strong> After Motiv quits unexpectedly or hits an error, it asks whether to send a
           crash report, and shows what will be sent. Only if you choose Send, the report goes to emruz.com and is
-          posted as a public issue in the Emruz/motiv-releases repository on GitHub. It contains the Motiv version,
+          filed in Emruz&apos;s private issue tracker on GitHub, where only Emruz can see it. It is used only to fix
+          Motiv. It contains the Motiv version,
           operating system version and computer model, the error and the program code locations involved, and the
           note you write, if any. Your home folder, user name and email addresses are removed. It never contains
           recordings, transcripts, summaries, meeting details, account details or a computer ID. If you choose

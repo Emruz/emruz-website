@@ -330,7 +330,7 @@ export const addOns: AddOn[] = [
     code: 'ZTA-PM',
     sku: 'WD-ZTA-PM-02',
     family: 'ZTNA',
-    label: 'ZTA',
+    label: 'ZTNA',
     name: 'Zero Trust Network Access, Premium',
     summary: 'Replaces VPN with one-click, per-app access that checks every user and device, with a secure web gateway built in.',
     includes: ['ZTNA'],

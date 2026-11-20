@@ -10,6 +10,8 @@ interface ServiceCardProps {
   href: string;
   ctaLabel?: string;
   color?: 'blue' | 'teal' | 'purple';
+  /** Small print under the button */
+  note?: string;
 }
 
 const colorMap = {
@@ -26,6 +28,7 @@ export default function ServiceCard({
   href,
   ctaLabel = 'Learn More',
   color = 'blue',
+  note,
 }: ServiceCardProps) {
   return (
     <Card hoverable className="flex flex-col relative overflow-hidden">
@@ -62,6 +65,7 @@ export default function ServiceCard({
       >
         {ctaLabel} →
       </Link>
+      {note && <span className="block mt-3 text-[11px] text-gray-400">{note}</span>}
     </Card>
   );
 }

@@ -30,7 +30,7 @@ export const mainNav: NavGroup[] = [
       { label: 'AI Advisory & Enablement', href: '/services/ai', description: 'AI strategy, governance and team enablement' },
       {
         label: 'Managed Security',
-        href: '/products',
+        href: '/products/compare',
         description: 'EDR, MDR, XDR, ΔDR and add-on services. Powered by WhiteDog Cyber.',
         divider: true,
       },

@@ -43,7 +43,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
   return (
     <>
       <DetailHeader
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: f.label }]}
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: f.label }]}
         title={`${f.label}: ${f.name}`}
         summary={f.summary}
         primaryCta={{ label: `Discuss ${f.label}`, href: `/contact?topic=${encodeURIComponent(f.label)}` }}
@@ -130,7 +130,7 @@ function AddOnPage({ path }: { path: string }) {
   return (
     <>
       <DetailHeader
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Products', href: '/products' }, { label: l.label }]}
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: l.label }]}
         title={`${l.label}: ${l.name}`}
         summary={l.summary}
         primaryCta={{ label: `Discuss ${l.label}`, href: `/contact?topic=${encodeURIComponent(l.label)}` }}

@@ -24,7 +24,7 @@ export default function Footer() {
       { label: 'MDR', href: '/products/mdr' },
       { label: 'XDR', href: '/products/xdr' },
       { label: 'ΔDR', href: '/products/ddr' },
-      { label: 'All managed security', href: '/products' },
+      { label: 'Compare editions', href: '/products/compare' },
     ],
     addOns: [
       { label: 'SPM', href: '/products/spm' },

@@ -74,11 +74,12 @@ function fakeGitHub(existing: boolean, labelFails = false) {
   assert.equal(calls[2].body?.labels, undefined);
 }
 
-// Crash and error from 0.32.x (no labels) and 0.33.0 (labels: bug) are both labelled error
+// Crash and error from 0.32.x (no labels) and 0.33.0 (labels: error) are both labelled error
 assert.deepEqual(r.labels, ['error']);
 assert.deepEqual((parseCrashReport({ ...valid, kind: 'error' }) as CrashReport).labels, ['error']);
-assert.deepEqual((parseCrashReport({ ...valid, labels: ['bug'] }) as CrashReport).labels, ['error']);
-assert.deepEqual((parseCrashReport({ ...valid, kind: 'error', labels: ['enhancement'] }) as CrashReport).labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, labels: ['error'] }) as CrashReport).labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, kind: 'error', labels: ['error'] }) as CrashReport).labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, labels: ['crash'] }) as CrashReport).labels, ['error'], 'old crash label is not allowed');
 assert.equal(issueTitle(parseCrashReport({ ...valid, labels: ['bug'] }) as CrashReport), `[crash] ${valid.title}`);
 
 // Problem and feature reports
@@ -120,10 +121,11 @@ assert.deepEqual(reportLabels('feature', undefined), ['enhancement']);
 assert.deepEqual(reportLabels('problem', undefined), ['bug']);
 assert.deepEqual(reportLabels('crash', []), ['error']);
 assert.deepEqual(reportLabels('error', undefined), ['error']);
-assert.deepEqual(reportLabels('problem', ['error']), ['bug'], 'error is not taken from the app');
+assert.deepEqual(reportLabels('crash', ['error', 'p0']), ['error']);
 assert.deepEqual(reportLabels('feature', ['wontfix', 'security']), ['enhancement']);
 assert.deepEqual(reportLabels('problem', ['bug', 'admin-only', 42]), ['bug']);
 assert.deepEqual(reportLabels('feature', ['enhancement', 'bug']), ['bug', 'enhancement']);
+assert.deepEqual(reportLabels('feature', ['enhancement', 'error', 'x']), ['error', 'enhancement']);
 assert.deepEqual(reportLabels('feature', 'enhancement'), ['enhancement']);
 assert.deepEqual(reportLabels('feature', [' Enhancement ']), ['enhancement']);
 assert.deepEqual((parseCrashReport({ ...feature, labels: undefined }) as CrashReport).labels, ['enhancement']);

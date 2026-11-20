@@ -18,18 +18,18 @@ const MAX_FEEDBACK_REPORT = 5_000;
 
 export type ReportKind = 'crash' | 'error' | 'problem' | 'feature';
 export type ReportLabel = 'error' | 'bug' | 'enhancement';
-const ALLOWED_LABELS: readonly ReportLabel[] = ['bug', 'enhancement'];
+const ALLOWED_LABELS: readonly ReportLabel[] = ['error', 'bug', 'enhancement'];
 
 export const isFeedback = (kind: ReportKind) => kind === 'problem' || kind === 'feature';
-const defaultLabels = (kind: ReportKind): ReportLabel[] => (kind === 'feature' ? ['enhancement'] : ['bug']);
+const defaultLabels = (kind: ReportKind): ReportLabel[] =>
+  kind === 'feature' ? ['enhancement'] : kind === 'problem' ? ['bug'] : ['error'];
 
 /**
- * Crash and error reports are always labelled error, whatever the app sends
- * (0.33.0 sends bug). Problems and features take the allowed labels from the
- * app (bug, enhancement), or bug for a problem and enhancement for a feature.
+ * The allowed labels the app sent (error, bug, enhancement), or the default
+ * for the kind: error for crash and error, bug for a problem, enhancement for
+ * a feature. Older app versions send no labels.
  */
 export function reportLabels(kind: ReportKind, given: unknown): ReportLabel[] {
-  if (!isFeedback(kind)) return ['error'];
   const picked = Array.isArray(given)
     ? ALLOWED_LABELS.filter((l) => given.some((g) => typeof g === 'string' && g.trim().toLowerCase() === l))
     : [];

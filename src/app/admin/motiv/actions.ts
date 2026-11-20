@@ -246,3 +246,24 @@ export async function sendWelcomeToUnregistered(form: FormData) {
   if (failed.length) fail('/admin/motiv', `Sent ${sent}. Failed for ${failed.join(', ')}.`);
   back('/admin/motiv', `Welcome email sent to ${sent} ${sent === 1 ? 'customer' : 'customers'}.`);
 }
+
+/** Sends the welcome email for each active licence a customer has, from the customer list. */
+export async function resendWelcomeToCustomer(form: FormData) {
+  const actor = await admin();
+  const email = String(form.get('email') || '').trim().toLowerCase();
+  const to = returnPath(form, '/admin/motiv');
+  const rows = await db()<{ id: string; subscription_id: string; customer_email: string; account_id: string | null }[]>`
+    select id, subscription_id, customer_email, account_id from subscriptions
+    where lower(customer_email) = ${email} and status in ('active', 'past_due') and archived_at is null
+    order by created_at`;
+  if (!rows.length) fail(to, `${email} has no active licence, so no welcome email was sent.`);
+  try {
+    for (const r of rows) {
+      await sendMotivProEmail(r.customer_email, r.subscription_id);
+      await logEvent('welcome_sent', {}, { subscriptionId: r.id, accountId: r.account_id, actor });
+    }
+  } catch (e) {
+    fail(to, `Not sent to ${email}: ${errorText(e)}`);
+  }
+  back(to, `Welcome email sent to ${email}${rows.length > 1 ? ` for ${rows.length} licences` : ''}.`);
+}

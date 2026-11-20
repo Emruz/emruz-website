@@ -6,7 +6,7 @@ import { db } from '@/lib/server/db';
 import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
 import { canArchive, canDelete, REVOKE_CATEGORIES, REVOKE_LABELS } from '@/lib/server/revocation';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
-import { adminRemoveDevice, archiveLicence, deleteLicence, reinstate, restoreLicence, revoke, setSeats } from '../../actions';
+import { adminRemoveDevice, archiveLicence, deleteLicence, reinstate, resendWelcome, restoreLicence, revoke, setSeats } from '../../actions';
 import { btn, danger, input, licenceTone, Notice, ReauthBanner, StatusPill } from '../../ui';
 
 export const metadata = { title: 'Motiv licence', robots: { index: false } };
@@ -103,6 +103,14 @@ export default async function LicencePage({
 
           <div className="mt-6 rounded-lg border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900">Actions</h2>
+            {!revoked && s.status !== 'canceled' && (
+              <form action={resendWelcome} className="mt-3 flex flex-wrap items-center gap-3">
+                <input type="hidden" name="id" value={s.id} />
+                <input type="hidden" name="return" value={here} />
+                <button className={btn}>Send welcome email</button>
+                <span className="text-xs text-gray-500">Download link, steps and subscription ID, to {s.customer_email}.</span>
+              </form>
+            )}
             {revoked && canReinstate ? (
               <form action={reinstate} className="mt-3">
                 <input type="hidden" name="id" value={s.id} />

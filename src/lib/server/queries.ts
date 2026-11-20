@@ -79,6 +79,9 @@ export interface CustomerRow {
   licences: number;
   active: number;
   revoked: number;
+  /** Registered computers and seats, across licences that are not revoked */
+  computers: number;
+  seats: number;
   last_bought: Date;
 }
 
@@ -90,8 +93,13 @@ export async function customerSummaries(search: string): Promise<CustomerRow[]> 
            count(*)::int as licences,
            count(*) filter (where status <> 'revoked')::int as active,
            count(*) filter (where status = 'revoked')::int as revoked,
+           coalesce(sum(dc.n) filter (where status <> 'revoked'), 0)::int as computers,
+           coalesce(sum(seats) filter (where status <> 'revoked'), 0)::int as seats,
            max(created_at) as last_bought
-    from subscriptions
+    from subscriptions s
+    left join (
+      select subscription_id, count(*) as n from devices where deactivated_at is null group by subscription_id
+    ) dc on dc.subscription_id = s.id
     where archived_at is null and (${q} = '' or lower(customer_email) like ${'%' + q + '%'})
     group by lower(customer_email)
     order by max(created_at) desc
@@ -110,4 +118,14 @@ export function statusLabel(s: SubscriptionView): string {
   if (!s.usable) return 'Expired';
   if (s.plan === 'lifetime') return 'Active';
   return s.cancel_at_period_end ? `Ends ${fmtDate(s.period_end)}` : `Renews ${fmtDate(s.period_end)}`;
+}
+
+/** Active licences with no computer registered yet: the people who may be stuck. */
+export async function unregisteredLicences() {
+  return db()<{ id: string; subscription_id: string; customer_email: string; account_id: string | null }[]>`
+    select s.id, s.subscription_id, s.customer_email, s.account_id
+    from subscriptions s
+    where s.status in ('active', 'past_due') and s.archived_at is null
+      and not exists (select 1 from devices d where d.subscription_id = s.id and d.deactivated_at is null)
+    order by s.created_at`;
 }

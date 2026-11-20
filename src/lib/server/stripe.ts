@@ -1,10 +1,10 @@
 import 'server-only';
-import { MOTIV_DOWNLOAD_URL } from '@/content/products';
 import Stripe from 'stripe';
 import { db, logEvent } from './db';
-import { motiv, SITE_URL, type Plan } from './config';
+import { motiv, type Plan } from './config';
 import { accountForEmail } from './accounts';
 import { sendEmail } from './email';
+import { sendMotivProEmail } from './motiv-emails';
 import { newSubscriptionId } from './lease';
 import { REVOKE_LABELS, type RevokeCategory } from './revocation';
 
@@ -49,19 +49,8 @@ function mapStatus(s: Stripe.Subscription.Status): 'active' | 'past_due' | 'canc
 const id = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : v?.id ?? null);
 
 async function welcomeEmail(email: string, subscriptionId: string, plan: Plan) {
-  const text = `Thanks for buying Motiv Pro (${plan}).
-
-Your subscription ID: ${subscriptionId}
-
-Download Motiv: ${MOTIV_DOWNLOAD_URL}
-
-To unlock Pro, open Motiv > Settings > License and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email address and enter the code Motiv shows. You can also paste the subscription ID instead.
-
-Manage your subscription, computers and receipts at ${SITE_URL}/motiv/account
-
-Emruz`;
   try {
-    await sendEmail(email, 'Your Motiv Pro subscription', text);
+    await sendMotivProEmail(email, subscriptionId, `Thanks for buying Motiv Pro (${plan}).`);
   } catch (e) {
     console.error('welcome email failed', e);
   }

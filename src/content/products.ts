@@ -1,5 +1,7 @@
-/** Release page; asset names vary by version and architecture */
-export const MOTIV_DOWNLOAD_URL = 'https://github.com/Emruz/motiv-releases/releases/';
+/** GitHub release page: every file, checksums and older versions */
+export const MOTIV_RELEASES_URL = 'https://github.com/Emruz/motiv-releases/releases/';
+/** Download page that picks the right installer for the visitor's computer */
+export const MOTIV_DOWNLOAD_URL = '/motiv/download';
 
 export interface Product {
   slug: string;

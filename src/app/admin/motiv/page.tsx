@@ -5,7 +5,8 @@ import { db } from '@/lib/server/db';
 import { systemChecks } from '@/lib/server/health';
 import { customerSummaries, fmtDate, unregisteredLicences } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
-import { sendWelcomeToUnregistered } from './actions';
+import { MoreHorizontal } from 'lucide-react';
+import { resendWelcomeToCustomer, sendWelcomeToUnregistered } from './actions';
 import { btn, input, Notice, ReauthBanner } from './ui';
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
@@ -101,7 +102,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
           {customers.length === 0 ? (
             <p className="text-gray-600">No customers found.</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto md:overflow-visible rounded-lg border border-gray-200">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50 text-left text-gray-600">
                   <tr>
@@ -111,6 +112,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
                     <th className="px-4 py-2 font-semibold">Revoked</th>
                     <th className="px-4 py-2 font-semibold">Computers</th>
                     <th className="px-4 py-2 font-semibold">Latest purchase</th>
+                    <th className="px-2 py-2"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -128,6 +130,33 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
                         {c.computers}/{c.seats}
                       </td>
                       <td className="px-4 py-3 text-gray-600">{fmtDate(c.last_bought)}</td>
+                      <td className="px-2 py-3 text-right">
+                        <details className="relative inline-block text-left">
+                          <summary
+                            aria-label={`Actions for ${c.email}`}
+                            className="list-none cursor-pointer rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 [&::-webkit-details-marker]:hidden"
+                          >
+                            <MoreHorizontal className="w-5 h-5" />
+                          </summary>
+                          <div className="absolute right-0 z-20 mt-1 w-64 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                            {c.active > 0 && (
+                              <form action={resendWelcomeToCustomer}>
+                                <input type="hidden" name="email" value={c.email} />
+                                <input type="hidden" name="return" value={q ? `/admin/motiv?q=${encodeURIComponent(q)}` : '/admin/motiv'} />
+                                <button className="block w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-50 disabled:text-gray-400">
+                                  Resend welcome email with ID
+                                </button>
+                              </form>
+                            )}
+                            <Link href={`/admin/motiv/customers/${encodeURIComponent(c.email)}`} className="block px-4 py-2 text-gray-800 hover:bg-gray-50">
+                              View customer
+                            </Link>
+                            <Link href={`/admin/motiv/grant?email=${encodeURIComponent(c.email)}`} className="block px-4 py-2 text-gray-800 hover:bg-gray-50">
+                              Grant another licence
+                            </Link>
+                          </div>
+                        </details>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

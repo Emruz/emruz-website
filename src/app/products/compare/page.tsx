@@ -17,7 +17,7 @@ export default function ComparePage() {
       <DetailHeader
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          { label: 'Products', href: '/products' },
+          { label: 'Services', href: '/services' },
           { label: 'Compare managed security' },
         ]}
         title="Compare managed security"

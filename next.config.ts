@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
     return [
       // Motiv's "Get Premium" button opens /motiv/pricing
       { source: "/motiv/pricing", destination: "/motiv#plans", permanent: false },
+      // The Products page was folded into Services: managed security and add-ons live there now
+      { source: "/products", destination: "/services", permanent: true },
     ];
   },
 };

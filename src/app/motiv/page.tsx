@@ -25,7 +25,6 @@ export default function MotivPage() {
       <DetailHeader
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          { label: 'Products', href: '/products' },
           { label: 'Motiv' },
         ]}
         title="Motiv"

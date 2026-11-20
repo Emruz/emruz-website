@@ -13,14 +13,30 @@ import {
   BarChart3,
   Brain,
   ArrowRight,
+  ShieldCheck,
+  Radar,
+  Fingerprint,
+  Network,
+  GraduationCap,
+  Lock,
+  CloudUpload,
 } from 'lucide-react';
 import Link from 'next/link';
 import PackagePortfolio from '@/components/PackagePortfolio';
+import { addOnLines, POWERED_BY, SOC_LINE } from '@/content/packages';
+
+const ADD_ON_ICONS: Record<string, typeof Radar> = {
+  SPM: Radar,
+  ZTI: Fingerprint,
+  ZTNA: Network,
+  PSA: GraduationCap,
+  DRM: Lock,
+};
 
 export const metadata = {
   title: 'Services',
   description:
-    'Security, compliance, cloud strategy, data science, and AI advisory programs designed for organizations serious about outcomes.',
+    'Security, compliance, cloud strategy, data science and AI advisory, plus managed security (EDR, MDR, XDR and ΔDR) and add-on security services.',
 };
 
 export default function Services() {
@@ -70,6 +86,16 @@ export default function Services() {
       benefits: ['AI strategy and use cases', 'AI governance', 'Team enablement'],
       color: 'blue' as const,
     },
+    {
+      icon: ShieldCheck,
+      title: 'Managed Security',
+      description: `${SOC_LINE}, at the level of protection you need.`,
+      href: '/products/compare',
+      benefits: ['EDR, MDR, XDR and ΔDR editions', 'Grow from endpoint protection to identity and data risk', 'Compare every edition side by side'],
+      color: 'teal' as const,
+      ctaLabel: 'Compare editions',
+      note: POWERED_BY,
+    },
   ];
 
   const engagementModels = [
@@ -112,10 +138,44 @@ export default function Services() {
                 description={service.description}
                 benefits={service.benefits}
                 href={service.href}
-                ctaLabel="Learn more"
+                ctaLabel={service.ctaLabel ?? 'Learn more'}
                 color={service.color}
+                note={service.note}
               />
             ))}
+          </div>
+
+          <div id="add-ons" className="mt-12 scroll-mt-20">
+            <h2 className="text-2xl font-bold text-gray-900">Add-on security services</h2>
+            <p className="text-gray-600 mt-1 mb-6">Close specific gaps on top of any managed security edition, or use them on their own.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {addOnLines.map((l) => {
+                const Icon = ADD_ON_ICONS[l.slug] ?? CloudUpload;
+                return (
+                  <Link
+                    key={l.slug}
+                    href={`/products/${l.path}`}
+                    className="group flex flex-col bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="w-12 h-12 flex-shrink-0 rounded-xl bg-indigo-800 text-white flex items-center justify-center">
+                        <Icon className="w-6 h-6" aria-hidden />
+                      </span>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">{l.label}</h3>
+                        <p className="text-sm text-gray-500">{l.name}</p>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-gray-900">{l.tagline}</p>
+                    <p className="mt-2 text-gray-600 text-sm flex-1">{l.summary}</p>
+                    <span className="mt-4 inline-flex items-center gap-1 font-semibold text-indigo-700 group-hover:gap-2 transition-all">
+                      Learn more <ArrowRight className="w-4 h-4" />
+                    </span>
+                    <span className="block mt-3 text-[11px] text-gray-400">{POWERED_BY}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-12 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 border border-blue-100">

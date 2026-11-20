@@ -1,6 +1,6 @@
 {
   "name": "emruz-website",
-  "version": "0.2.0",
+  "version": "202611.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "db:migrate": "node scripts/migrate.mjs",
     "local": "bash scripts/local.sh",
     "ship": "bash scripts/ship.sh",
+    "bump": "bash scripts/bump.sh",
     "preview": "bash scripts/preview.sh",
     "pr": "bash scripts/preview.sh",
     "stripe:preview": "bash scripts/stripe-preview.sh",

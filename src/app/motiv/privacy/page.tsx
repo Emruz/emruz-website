@@ -93,6 +93,11 @@ export default function MotivPrivacyPage() {
           recordings, transcripts, summaries, meeting details, account details or a computer ID. If you choose
           Don&apos;t send, the report is deleted from your computer.
         </li>
+        <li>
+          <strong>Problems and feature suggestions.</strong> If you use Report a problem or Suggest a feature, what you
+          write is sent to emruz.com with the Motiv version and operating system version, and filed in the same private
+          issue tracker. Your home folder and user name are removed. Nothing else is sent.
+        </li>
       </ul>
 
       <h2>Motiv Pro check-in</h2>
@@ -101,7 +106,7 @@ export default function MotivPrivacyPage() {
         Pro on. It sends only your subscription ID, a random ID created for the computer (not derived from its
         hardware), the Motiv version and the operating system family (macOS, Windows or Linux), plus the computer&apos;s name
         only if you choose to share it. It never sends recordings, transcripts, summaries, meeting details or how you
-        use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com, except to send a crash report you chose to send.
+        use Motiv. Without Pro, Motiv doesn&apos;t contact emruz.com, except to send a crash report, problem report or feature suggestion you chose to send.
       </p>
 
       <h2>Google user data</h2>

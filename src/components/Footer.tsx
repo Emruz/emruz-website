@@ -24,8 +24,7 @@ export default function Footer() {
       { label: 'MDR', href: '/products/mdr' },
       { label: 'XDR', href: '/products/xdr' },
       { label: 'ΔDR', href: '/products/ddr' },
-      { label: 'Motiv', href: '/motiv' },
-      { label: 'All products', href: '/products' },
+      { label: 'All managed security', href: '/products' },
     ],
     addOns: [
       { label: 'SPM', href: '/products/spm' },
@@ -36,6 +35,7 @@ export default function Footer() {
       { label: 'DSB', href: '/products/dsb' },
     ],
     resources: [
+      { label: 'Motiv', href: '/motiv' },
       { label: 'Assessments', href: '/assessments' },
       { label: 'Insights', href: '/insights' },
     ],
@@ -93,10 +93,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Products: managed security and add-ons */}
+          {/* Managed security and add-ons */}
           <div className="col-span-2 grid grid-cols-2 gap-8">
             <div>
-              <h3 className="font-semibold mb-4">Products</h3>
+              <h3 className="font-semibold mb-4">Managed Security</h3>
               <ul className="space-y-2">
                 {sections.products.map((item) => (
                   <li key={item.href}>

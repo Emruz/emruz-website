@@ -10,6 +10,7 @@ import { newSubscriptionId } from '@/lib/server/lease';
 import { deactivateDevice, type SubscriptionRow } from '@/lib/server/licensing';
 import { canArchive, canDelete, isRevokeCategory, revocationProblem } from '@/lib/server/revocation';
 import { revokeLicence, type RevocableRow } from '@/lib/server/stripe';
+import { unregisteredLicences } from '@/lib/server/queries';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
 /** An admin action needs a live admin session and a recent sign-in. Otherwise the admin signs in again. */
@@ -205,4 +206,43 @@ export async function grant(form: FormData) {
     await sendMotivProEmail(email, subscriptionId).catch((e) => console.error('grant email failed', e));
   }
   back(`/admin/motiv/customers/${encodeURIComponent(email)}`, `Granted ${plan} subscription ${subscriptionId}.`);
+}
+
+/** Sends the welcome email again for one licence, for a customer who lost it or got the old wording. */
+export async function resendWelcome(form: FormData) {
+  const actor = await admin();
+  const id = form.get('id');
+  if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
+  const to = returnPath(form, licencePath(id));
+  const [row] = await db()<{ subscription_id: string; customer_email: string; status: string; account_id: string | null }[]>`
+    select subscription_id, customer_email, status, account_id from subscriptions where id = ${id}`;
+  if (!row) fail('/admin/motiv', 'Licence not found.');
+  if (row.status === 'revoked' || row.status === 'canceled') fail(to, 'This licence is not active, so no welcome email was sent.');
+  try {
+    await sendMotivProEmail(row.customer_email, row.subscription_id);
+  } catch (e) {
+    fail(to, `Not sent: ${errorText(e)}`);
+  }
+  await logEvent('welcome_sent', {}, { subscriptionId: id, accountId: row.account_id, actor });
+  back(to, `Welcome email sent to ${row.customer_email}.`);
+}
+
+/** Sends the welcome email to every active licence that has no computer registered. */
+export async function sendWelcomeToUnregistered(form: FormData) {
+  const actor = await admin();
+  if (form.get('confirm') !== 'on') fail('/admin/motiv', 'Tick the box to confirm before sending.');
+  const rows = await unregisteredLicences();
+  const failed: string[] = [];
+  for (const r of rows) {
+    try {
+      await sendMotivProEmail(r.customer_email, r.subscription_id);
+      await logEvent('welcome_sent', { bulk: true }, { subscriptionId: r.id, accountId: r.account_id, actor });
+    } catch (e) {
+      console.error('welcome email failed', r.customer_email, e);
+      failed.push(r.customer_email);
+    }
+  }
+  const sent = rows.length - failed.length;
+  if (failed.length) fail('/admin/motiv', `Sent ${sent}. Failed for ${failed.join(', ')}.`);
+  back('/admin/motiv', `Welcome email sent to ${sent} ${sent === 1 ? 'customer' : 'customers'}.`);
 }

@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { systemChecks } from '@/lib/server/health';
-import { customerSummaries, fmtDate } from '@/lib/server/queries';
+import { customerSummaries, fmtDate, unregisteredLicences } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
+import { sendWelcomeToUnregistered } from './actions';
 import { btn, input, Notice, ReauthBanner } from './ui';
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
@@ -23,6 +24,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
     select support_ends_at, (support_ends_at is not null and support_ends_at <= now()) as ended
     from motiv_support where id = 1`;
   const checks = await systemChecks();
+  const unregistered = await unregisteredLicences();
   const supportEnds = support?.support_ends_at ?? null;
 
   return (
@@ -70,6 +72,21 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
               ))}
             </ul>
           </details>
+
+          {unregistered.length > 0 && (
+            <form action={sendWelcomeToUnregistered} className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm">
+              <p className="font-semibold text-gray-900">
+                {unregistered.length} active {unregistered.length === 1 ? 'licence has' : 'licences have'} no computer registered yet
+              </p>
+              <p className="mt-1 text-gray-700">{unregistered.map((r) => r.customer_email).join(', ')}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-gray-700">
+                  <input type="checkbox" name="confirm" /> Send each of them the welcome email with their subscription ID
+                </label>
+                <button className={btn} disabled={locked}>Send welcome emails</button>
+              </div>
+            </form>
+          )}
 
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <form method="get" className="flex flex-1 gap-2 min-w-64">

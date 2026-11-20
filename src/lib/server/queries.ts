@@ -111,3 +111,13 @@ export function statusLabel(s: SubscriptionView): string {
   if (s.plan === 'lifetime') return 'Active';
   return s.cancel_at_period_end ? `Ends ${fmtDate(s.period_end)}` : `Renews ${fmtDate(s.period_end)}`;
 }
+
+/** Active licences with no computer registered yet: the people who may be stuck. */
+export async function unregisteredLicences() {
+  return db()<{ id: string; subscription_id: string; customer_email: string; account_id: string | null }[]>`
+    select s.id, s.subscription_id, s.customer_email, s.account_id
+    from subscriptions s
+    where s.status in ('active', 'past_due') and s.archived_at is null
+      and not exists (select 1 from devices d where d.subscription_id = s.id and d.deactivated_at is null)
+    order by s.created_at`;
+}

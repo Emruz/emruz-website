@@ -109,6 +109,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
                     <th className="px-4 py-2 font-semibold">Licences</th>
                     <th className="px-4 py-2 font-semibold">Active</th>
                     <th className="px-4 py-2 font-semibold">Revoked</th>
+                    <th className="px-4 py-2 font-semibold">Computers</th>
                     <th className="px-4 py-2 font-semibold">Latest purchase</th>
                   </tr>
                 </thead>
@@ -123,6 +124,9 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
                       <td className="px-4 py-3">{c.licences}</td>
                       <td className="px-4 py-3">{c.active}</td>
                       <td className="px-4 py-3">{c.revoked}</td>
+                      <td className={`px-4 py-3 ${c.seats > 0 && c.computers === 0 ? 'text-amber-700 font-semibold' : ''}`}>
+                        {c.computers}/{c.seats}
+                      </td>
                       <td className="px-4 py-3 text-gray-600">{fmtDate(c.last_bought)}</td>
                     </tr>
                   ))}

@@ -5,7 +5,7 @@ import { fail } from '@/lib/server/licensing';
 
 // Motiv: a crash or error report, a reported problem or a suggested feature
 // the user chose to send becomes a labelled issue in the private Emruz/motiv
-// repo. Needs MOTIV_CRASH_GITHUB_TOKEN (Issues: read and write).
+// repo (error, bug or enhancement). Needs MOTIV_CRASH_GITHUB_TOKEN (Issues: read and write).
 export const POST = licensingRoute(
   'crash-report',
   async (b, req) => {

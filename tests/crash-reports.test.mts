@@ -59,7 +59,7 @@ function fakeGitHub(existing: boolean, labelFails = false) {
   const out = await fileCrashReport(r, 't', f);
   assert.deepEqual(out, { url: 'https://github.com/Emruz/motiv/issues/8', duplicate: false });
   assert.ok(decodeURIComponent(calls[0].url).includes('repo:Emruz/motiv is:issue is:open in:body "crash-signature: a1b2c3d4e5f6"'));
-  assert.deepEqual(calls[1].body?.labels, ['bug']);
+  assert.deepEqual(calls[1].body?.labels, ['error']);
 }
 {
   const { f, calls } = fakeGitHub(true);
@@ -74,10 +74,11 @@ function fakeGitHub(existing: boolean, labelFails = false) {
   assert.equal(calls[2].body?.labels, undefined);
 }
 
-// Crash and error from 0.32.x (no labels) and 0.33.0 (labels) are both labelled bug
-assert.deepEqual(r.labels, ['bug']);
-assert.deepEqual((parseCrashReport({ ...valid, kind: 'error' }) as CrashReport).labels, ['bug']);
-assert.deepEqual((parseCrashReport({ ...valid, labels: ['bug'] }) as CrashReport).labels, ['bug']);
+// Crash and error from 0.32.x (no labels) and 0.33.0 (labels: bug) are both labelled error
+assert.deepEqual(r.labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, kind: 'error' }) as CrashReport).labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, labels: ['bug'] }) as CrashReport).labels, ['error']);
+assert.deepEqual((parseCrashReport({ ...valid, kind: 'error', labels: ['enhancement'] }) as CrashReport).labels, ['error']);
 assert.equal(issueTitle(parseCrashReport({ ...valid, labels: ['bug'] }) as CrashReport), `[crash] ${valid.title}`);
 
 // Problem and feature reports
@@ -117,11 +118,13 @@ const feature = { ...problem, kind: 'feature', title: 'Export to Notion', report
 // Labels: given, missing, not allowed
 assert.deepEqual(reportLabels('feature', undefined), ['enhancement']);
 assert.deepEqual(reportLabels('problem', undefined), ['bug']);
-assert.deepEqual(reportLabels('crash', []), ['bug']);
+assert.deepEqual(reportLabels('crash', []), ['error']);
+assert.deepEqual(reportLabels('error', undefined), ['error']);
+assert.deepEqual(reportLabels('problem', ['error']), ['bug'], 'error is not taken from the app');
 assert.deepEqual(reportLabels('feature', ['wontfix', 'security']), ['enhancement']);
 assert.deepEqual(reportLabels('problem', ['bug', 'admin-only', 42]), ['bug']);
 assert.deepEqual(reportLabels('feature', ['enhancement', 'bug']), ['bug', 'enhancement']);
-assert.deepEqual(reportLabels('crash', 'enhancement'), ['bug']);
+assert.deepEqual(reportLabels('feature', 'enhancement'), ['enhancement']);
 assert.deepEqual(reportLabels('feature', [' Enhancement ']), ['enhancement']);
 assert.deepEqual((parseCrashReport({ ...feature, labels: undefined }) as CrashReport).labels, ['enhancement']);
 assert.deepEqual((parseCrashReport({ ...problem, labels: ['p0'] }) as CrashReport).labels, ['bug']);

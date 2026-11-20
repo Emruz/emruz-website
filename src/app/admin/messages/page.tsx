@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import LiveSearch from '@/components/LiveSearch';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { isAdmin, requireAccount } from '@/lib/server/session';
@@ -31,7 +32,8 @@ export default async function MessagesPage() {
       <section className="py-8">
         <Container>
           {rows.length === 0 && <p className="text-gray-600">No messages yet.</p>}
-          <ul className="space-y-4">
+<LiveSearch placeholder="Search messages" className="max-w-xl mb-6" />
+          <ul data-search-list className="space-y-4">
             {rows.map((r) => (
               <li key={r.id} className="rounded-xl border border-gray-200 p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">

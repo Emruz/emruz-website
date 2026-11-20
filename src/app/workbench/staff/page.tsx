@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
@@ -28,10 +29,11 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
         <Container>
           <WorkbenchNav current="staff" isAdmin />
           {(sp.added || sp.saved) && <p role="status" className="mb-4 text-emerald-700 font-semibold">{sp.added ? 'Staff member added.' : 'Changes saved.'}</p>}
+<LiveSearch placeholder="Search staff" className="max-w-md mb-4" />
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <div className={`${card} overflow-x-auto`}>
-                <table className="w-full text-sm">
+                <table data-search-list className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-500 border-b border-gray-200">
                       <th className="p-3 font-medium">Name</th>
@@ -41,7 +43,7 @@ export default async function Staff({ searchParams }: { searchParams: Promise<{ 
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.length === 0 && <tr><td colSpan={4} className="p-4 text-gray-500">No staff added yet.</td></tr>}
+                    {rows.length === 0 && <tr data-search-skip><td colSpan={4} className="p-4 text-gray-500">No staff added yet.</td></tr>}
                     {rows.map((s) => (
                       <tr key={s.account_id} className={`border-b border-gray-100 last:border-0 align-top ${s.active ? '' : 'opacity-60'}`}>
                         <td className="p-3">

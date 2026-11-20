@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { Plus } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
@@ -103,8 +104,9 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
             </Link>
           </div>
 
+<LiveSearch placeholder="Search engagements" className="max-w-md mb-4" />
           <div className={`${card} overflow-x-auto`}>
-            <table className="w-full text-sm">
+            <table data-search-list className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-200">
                   <th className="p-3 font-medium">Engagement</th>
@@ -118,7 +120,7 @@ export default async function Workbench({ searchParams }: { searchParams: Promis
               </thead>
               <tbody>
                 {rows.length === 0 && (
-                  <tr>
+                  <tr data-search-skip>
                     <td colSpan={7} className="p-6 text-gray-500">No engagements yet.</td>
                   </tr>
                 )}

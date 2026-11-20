@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { requireStaff } from '@/lib/server/workbench';
@@ -31,9 +32,10 @@ export default async function Partners({ searchParams }: { searchParams: Promise
         <Container>
           <WorkbenchNav current="partners" isAdmin />
           {sp.error && <p role="alert" className="mb-4 text-red-700 font-semibold">{errors[sp.error] ?? sp.error}</p>}
+<LiveSearch placeholder="Search partners" className="max-w-md mb-4" />
           <div className="grid lg:grid-cols-3 gap-6">
             <div className={`lg:col-span-2 ${card} overflow-x-auto`}>
-              <table className="w-full text-sm">
+              <table data-search-list className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-gray-500 border-b border-gray-200">
                     <th className="p-3 font-medium">Partner</th>
@@ -43,7 +45,7 @@ export default async function Partners({ searchParams }: { searchParams: Promise
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.length === 0 && <tr><td colSpan={4} className="p-4 text-gray-500">No partners yet.</td></tr>}
+                  {rows.length === 0 && <tr data-search-skip><td colSpan={4} className="p-4 text-gray-500">No partners yet.</td></tr>}
                   {rows.map((p) => (
                     <tr key={p.id} className={`border-b border-gray-100 last:border-0 ${p.active ? '' : 'opacity-60'}`}>
                       <td className="p-3">

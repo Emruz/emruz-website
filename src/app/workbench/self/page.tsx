@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { DetailHeader, Container } from '@/components';
 import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { controls, inScope, maturity, recommend, targetIG } from '@/content/cis-assessment';
@@ -65,8 +66,9 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
           </Link>
           </div>
 
+<LiveSearch placeholder="Search self-assessments" className="max-w-md mb-4" />
           <div className={`${card} overflow-x-auto`}>
-            <table className="w-full text-sm">
+            <table data-search-list className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 border-b border-gray-200">
                   <th className="p-3 font-medium">Organization</th>
@@ -79,7 +81,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
               </thead>
               <tbody>
                 {shown.length === 0 && (
-                  <tr><td colSpan={6} className="p-6 text-gray-500">{all ? 'No self-assessments here.' : 'Nothing assigned to you yet.'}</td></tr>
+                  <tr data-search-skip><td colSpan={6} className="p-6 text-gray-500">{all ? 'No self-assessments here.' : 'Nothing assigned to you yet.'}</td></tr>
                 )}
                 {shown.map((r) => {
                   const ig = r.target_ig ?? targetIG(r.profile);

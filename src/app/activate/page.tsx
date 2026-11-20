@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Laptop, CheckCircle2 } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
+import { MOTIV_DOWNLOAD_URL } from '@/content/products';
 import { findPendingPairing } from '@/lib/server/licensing';
 import { normalizeUserCode } from '@/lib/server/lease';
 import { planLabel, statusLabel, subscriptionsFor } from '@/lib/server/queries';
@@ -77,6 +78,24 @@ export default async function ActivatePage({
                   In Motiv, open Settings &gt; License and choose Register this computer to get a code.
                 </p>
               </form>
+            )}
+
+            {!sp.done && !pairing && (
+              <div className="mt-10 p-6 rounded-xl border border-gray-200 bg-gray-50">
+                <h2 className="font-semibold text-gray-900 mb-3">How to get a code</h2>
+                <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+                  <li>
+                    If Motiv is not on this computer yet,{' '}
+                    <Link href={MOTIV_DOWNLOAD_URL} className="text-blue-700 font-semibold">download and install it</Link>.
+                  </li>
+                  <li>Open Motiv, then <strong>Settings</strong> and <strong>License</strong>.</li>
+                  <li>Choose <strong>Register this computer</strong>. Motiv shows a code like ABCD-1234.</li>
+                  <li>Enter that code above and choose Continue, then Approve.</li>
+                </ol>
+                <p className="mt-3 text-sm text-gray-600">
+                  Or skip this page: paste the subscription ID from your email (it starts with MOTIV-) into Motiv.
+                </p>
+              </div>
             )}
 
             {!sp.done && pairing && (

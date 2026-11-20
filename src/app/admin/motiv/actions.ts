@@ -3,9 +3,9 @@
 import { notFound, redirect } from 'next/navigation';
 import { accountForEmail } from '@/lib/server/accounts';
 import { isUuid } from '@/lib/server/api';
-import { motiv, PLANS, SITE_URL, type Plan } from '@/lib/server/config';
+import { motiv, PLANS, type Plan } from '@/lib/server/config';
 import { db, logEvent } from '@/lib/server/db';
-import { sendEmail } from '@/lib/server/email';
+import { sendMotivProEmail } from '@/lib/server/motiv-emails';
 import { newSubscriptionId } from '@/lib/server/lease';
 import { deactivateDevice, type SubscriptionRow } from '@/lib/server/licensing';
 import { canArchive, canDelete, isRevokeCategory, revocationProblem } from '@/lib/server/revocation';
@@ -202,11 +202,7 @@ export async function grant(form: FormData) {
     returning id`;
   await logEvent('granted', { plan, months: plan === 'lifetime' ? null : months }, { subscriptionId: row.id, accountId, actor });
   if (form.get('notify') === 'on') {
-    await sendEmail(
-      email,
-      'Your Motiv Pro subscription',
-      `You've been given Motiv Pro.\n\nSubscription ID: ${subscriptionId}\n\nIn Motiv, open Settings > License and choose "Register this computer", then sign in at ${SITE_URL}/activate with this email. Or paste the subscription ID.\n\nManage it at ${SITE_URL}/motiv/account\n\nEmruz`,
-    ).catch((e) => console.error('grant email failed', e));
+    await sendMotivProEmail(email, subscriptionId).catch((e) => console.error('grant email failed', e));
   }
   back(`/admin/motiv/customers/${encodeURIComponent(email)}`, `Granted ${plan} subscription ${subscriptionId}.`);
 }

@@ -163,7 +163,7 @@ export default function Header() {
             href="/assessments"
             className="hidden xl:inline-block bg-blue-600 text-white px-5 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors"
           >
-            Schedule Assessment
+            Self-Assessment
           </Link>
           <AccountMenu me={me} />
         </div>
@@ -275,7 +275,7 @@ export default function Header() {
               href="/assessments"
               className="block text-center bg-blue-600 text-white px-5 py-2.5 rounded-md font-semibold hover:bg-blue-700"
             >
-              Schedule Assessment
+              Self-Assessment
             </Link>
           </div>
         </div>

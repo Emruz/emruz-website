@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { requireStaff } from '@/lib/server/workbench';
@@ -20,10 +21,11 @@ export default async function Clients() {
       <section className="py-8 bg-gray-50 min-h-[60vh]">
         <Container>
           <WorkbenchNav current="clients" isAdmin={role === 'admin'} />
+<LiveSearch placeholder="Search clients" className="max-w-md mb-4" />
           <div className="grid lg:grid-cols-3 gap-6">
             <div className={`${card} lg:col-span-2 overflow-hidden`}>
-              <ul className="divide-y divide-gray-100">
-                {rows.length === 0 && <li className="p-4 text-gray-500">No clients yet.</li>}
+              <ul data-search-list className="divide-y divide-gray-100">
+                {rows.length === 0 && <li data-search-skip className="p-4 text-gray-500">No clients yet.</li>}
                 {rows.map((c) => (
                   <li key={c.id} className="p-4 flex justify-between gap-3">
                     <div>

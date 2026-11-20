@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import LiveSearch from '@/components/LiveSearch';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
 import { fmtDate } from '@/lib/server/queries';
@@ -39,13 +40,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       />
       <section className="py-8">
         <Container>
-          <form method="get" className="flex gap-2 max-w-xl mb-6">
-            <label htmlFor="q" className="sr-only">Search</label>
-            <input id="q" name="q" defaultValue={q} placeholder="Email or name" className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm" />
-            <button className="px-3 py-2 rounded-md text-sm font-semibold border border-gray-300 hover:bg-gray-50">Search</button>
-          </form>
+          <LiveSearch server placeholder="Search by email or name" className="max-w-xl mb-6" />
           {rows.length === 0 && <p className="text-gray-600">No accounts found.</p>}
-          <ul className="divide-y divide-gray-100 border-y border-gray-100">
+          <ul data-search-list className="divide-y divide-gray-100 border-y border-gray-100">
             {rows.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div>

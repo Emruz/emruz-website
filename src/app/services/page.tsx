@@ -92,8 +92,9 @@ export default function Services() {
       description: `${SOC_LINE}, at the level of protection you need.`,
       href: '/products/compare',
       benefits: ['EDR, MDR, XDR and ΔDR editions', 'Grow from endpoint protection to identity and data risk', 'Compare every edition side by side'],
-      color: 'teal' as const,
+      color: 'slate' as const,
       ctaLabel: 'Compare editions',
+      ctaStyle: 'link' as const,
       note: POWERED_BY,
     },
   ];
@@ -122,6 +123,7 @@ export default function Services() {
         eyebrow="Services"
         title="What we deliver"
         description="Advisory and managed services across security, cloud, data science and AI. Pick a service below, or start with an assessment."
+        ctasAbove={[{ label: 'Perform a Self-assessment', href: '/assessments/self' }]}
         cta={{ label: 'Schedule an Assessment', href: '/assessments' }}
       />
 
@@ -141,6 +143,7 @@ export default function Services() {
                 ctaLabel={service.ctaLabel ?? 'Learn more'}
                 color={service.color}
                 note={service.note}
+                ctaStyle={service.ctaStyle}
               />
             ))}
           </div>

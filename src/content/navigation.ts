@@ -38,7 +38,6 @@ export const mainNav: NavGroup[] = [
     footer: { label: 'All services', href: '/services' },
   },
   { label: 'Motiv', href: '/motiv' },
-  { label: 'Assessments', href: '/assessments' },
   { label: 'About', href: '/about' },
   { label: 'Insights', href: '/insights' },
   { label: 'Contact', href: '/contact' },

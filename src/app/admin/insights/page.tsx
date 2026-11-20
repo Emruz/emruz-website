@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { allInsights, monthYear } from '@/lib/server/insights';
@@ -28,7 +29,8 @@ export default async function InsightsAdmin({ searchParams }: { searchParams: Pr
       <section className="py-8">
         <Container>
           {deleted && <p className="mb-4 text-sm font-semibold text-green-700">Article deleted.</p>}
-          <ul className="divide-y divide-gray-100 border-y border-gray-100">
+<LiveSearch placeholder="Search articles" className="max-w-xl mb-6" />
+          <ul data-search-list className="divide-y divide-gray-100 border-y border-gray-100">
             {rows.map((r) => (
               <li key={r.slug} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">

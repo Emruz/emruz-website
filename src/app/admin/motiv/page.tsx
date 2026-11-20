@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
@@ -7,7 +8,7 @@ import { customerSummaries, fmtDate, unregisteredLicences } from '@/lib/server/q
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
 import { MoreHorizontal } from 'lucide-react';
 import { resendWelcomeToCustomer, sendWelcomeToUnregistered } from './actions';
-import { btn, input, Notice, ReauthBanner } from './ui';
+import { btn, Notice, ReauthBanner } from './ui';
 
 export const metadata = { title: 'Motiv admin', robots: { index: false } };
 
@@ -90,11 +91,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
           )}
 
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <form method="get" className="flex flex-1 gap-2 min-w-64">
-              <label htmlFor="q" className="sr-only">Search customers</label>
-              <input id="q" name="q" defaultValue={q} placeholder="Search by email" className={`${input} flex-1`} />
-              <button className={btn}>Search</button>
-            </form>
+            <LiveSearch server placeholder="Search customers by email" className="flex-1 min-w-64" />
             <Link href="/admin/motiv/archive" className={btn}>Archive</Link>
             <Link href="/admin/motiv/grant" className={btn}>Grant a licence</Link>
           </div>
@@ -103,7 +100,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
             <p className="text-gray-600">No customers found.</p>
           ) : (
             <div className="overflow-x-auto md:overflow-visible rounded-lg border border-gray-200">
-              <table className="min-w-full text-sm">
+              <table data-search-list className="min-w-full text-sm">
                 <thead className="bg-gray-50 text-left text-gray-600">
                   <tr>
                     <th className="px-4 py-2 font-semibold">Customer</th>
@@ -130,7 +127,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
                         {c.computers}/{c.seats}
                       </td>
                       <td className="px-4 py-3 text-gray-600">{fmtDate(c.last_bought)}</td>
-                      <td className="px-2 py-3 text-right">
+                      <td data-search-ignore className="px-2 py-3 text-right">
                         <details className="relative inline-block text-left">
                           <summary
                             aria-label={`Actions for ${c.email}`}

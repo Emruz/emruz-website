@@ -9,7 +9,9 @@ interface ServiceCardProps {
   benefits: string[];
   href: string;
   ctaLabel?: string;
-  color?: 'blue' | 'teal' | 'purple';
+  color?: 'blue' | 'teal' | 'purple' | 'slate';
+  /** A text link instead of a button, like the add-on tiles */
+  ctaStyle?: 'button' | 'link';
   /** Small print under the button */
   note?: string;
 }
@@ -18,6 +20,7 @@ const colorMap = {
   blue: { bg: 'bg-gradient-to-br from-blue-500 to-blue-600', text: 'text-white' },
   teal: { bg: 'bg-gradient-to-br from-cyan-500 to-teal-600', text: 'text-white' },
   purple: { bg: 'bg-gradient-to-br from-purple-500 to-purple-600', text: 'text-white' },
+  slate: { bg: 'bg-slate-900', text: 'text-white' },
 };
 
 export default function ServiceCard({
@@ -29,6 +32,7 @@ export default function ServiceCard({
   ctaLabel = 'Learn More',
   color = 'blue',
   note,
+  ctaStyle = 'button',
 }: ServiceCardProps) {
   return (
     <Card hoverable className="flex flex-col relative overflow-hidden">
@@ -61,7 +65,11 @@ export default function ServiceCard({
       {/* CTA */}
       <Link
         href={href}
-        className="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors mt-auto"
+        className={
+          ctaStyle === 'link'
+            ? 'inline-flex items-center font-semibold text-slate-900 hover:text-indigo-700 transition-colors mt-auto'
+            : 'inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors mt-auto'
+        }
       >
         {ctaLabel} →
       </Link>

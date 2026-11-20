@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import LiveSearch from '@/components/LiveSearch';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { archivedLicences, fmtDate, planLabel } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
-import { btn, input, Notice, ReauthBanner } from '../ui';
+import { btn, Notice, ReauthBanner } from '../ui';
 
 export const metadata = { title: 'Motiv archive', robots: { index: false } };
 
@@ -29,17 +30,13 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
           {locked && <ReauthBanner next={'/admin/motiv/archive'} />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
-          <form method="get" className="mb-6 flex gap-2 max-w-xl">
-            <label htmlFor="q" className="sr-only">Search archived licences</label>
-            <input id="q" name="q" defaultValue={q} placeholder="Search by email" className={`${input} flex-1`} />
-            <button className={btn}>Search</button>
-          </form>
+          <LiveSearch server placeholder="Search archived licences by email" className="mb-6 max-w-xl" />
 
           {rows.length === 0 ? (
             <p className="text-gray-600">No archived licences{q ? ' match that search' : ''}.</p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="min-w-full text-sm">
+              <table data-search-list className="min-w-full text-sm">
                 <thead className="bg-gray-50 text-left text-gray-600">
                   <tr>
                     <th className="px-4 py-2 font-semibold">Customer</th>

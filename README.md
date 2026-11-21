@@ -38,3 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Tests
 
 Run every test file in `tests/` with `npm test`. It exits non-zero if any file fails. `npm run ship`, `npm run preview` and `npm run local` run it after lint (`npm run local -- --fast` skips it), and CI runs it on every pull request. New test files named `tests/*.test.mts` are picked up automatically.
+
+## Releases and changelog
+
+Releases are numbered vYYYYMM.# (the first release of a month is .1). On the feature branch, run `npm run bump` to set the next number, then add a `## vYYYYMM.#` section to `CHANGELOG.md` with a line for each change. `npm run ship` stops if `CHANGELOG.md` has no section for the version in package.json.

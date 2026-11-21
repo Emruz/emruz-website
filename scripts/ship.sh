@@ -44,6 +44,13 @@ fi
 step "Issue"
 resolve_issue "$branch" "$ISSUE_ARG"
 
+step "Changelog"
+version="$(node -p "require('./package.json').version")"
+release="v${version%.0}"
+grep -qE "^## ${release//./\\.}([[:space:]]|$)" CHANGELOG.md 2>/dev/null ||
+  fail "CHANGELOG.md has no section for $release. Add a \"## $release\" heading with a line for each change, then run npm run ship again."
+echo "CHANGELOG.md has $release."
+
 step "Changes on $branch"
 if [ -n "$(git status --porcelain)" ]; then
   git status --short

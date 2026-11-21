@@ -14,7 +14,8 @@ export interface NavGroup {
   label: string;
   href: string;
   children?: NavLink[];
-  footer?: NavLink;
+  /** First link in the panel, for the group's own page */
+  overview?: NavLink;
 }
 
 export const mainNav: NavGroup[] = [
@@ -35,7 +36,7 @@ export const mainNav: NavGroup[] = [
         divider: true,
       },
     ],
-    footer: { label: 'All services', href: '/services' },
+    overview: { label: 'All services', href: '/services' },
   },
   { label: 'Motiv', href: '/motiv' },
   { label: 'About', href: '/about' },

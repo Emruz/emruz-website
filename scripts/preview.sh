@@ -6,7 +6,7 @@
 #   npm run preview -- "Title" --no-issue                     (no issue, don't ask)
 #   npm run pr -- "Title"                                    (same thing)
 #
-# Steps: commit any changes, check (types, lint, build), push, open or reuse the
+# Steps: commit any changes, check (types, lint, tests, build), push, open or reuse the
 # pull request, print the preview address. Run `npm run ship` later to merge.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -63,6 +63,7 @@ git log --oneline origin/main..HEAD
 step "Checks"
 npx tsc --noEmit
 npm run -s lint
+npm test
 if [ "$SKIP_BUILD" = 0 ]; then
   npm run -s build >/tmp/emruz-build.log 2>&1 || { tail -40 /tmp/emruz-build.log; fail "Build failed (full log: /tmp/emruz-build.log)"; }
   echo "Build passed."

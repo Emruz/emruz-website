@@ -5,7 +5,7 @@
 #   npm run ship -- "Title" --issue 42                     (link an issue; usually found automatically)
 #   npm run ship -- "Title" --no-issue                     (no issue, don't ask)
 #
-# Steps: commit any changes, check (types, lint, build), push, open or reuse the
+# Steps: commit any changes, check (types, lint, tests, build), push, open or reuse the
 # pull request, wait for the checks, squash and merge (which deploys on Netlify),
 # delete the branch, then bring main up to date locally.
 set -euo pipefail
@@ -61,6 +61,7 @@ git log --oneline origin/main..HEAD
 step "Checks"
 npx tsc --noEmit
 npm run -s lint
+npm test
 if [ "$SKIP_BUILD" = 0 ]; then
   npm run -s build >/tmp/emruz-build.log 2>&1 || { tail -40 /tmp/emruz-build.log; fail "Build failed (full log: /tmp/emruz-build.log)"; }
   echo "Build passed."

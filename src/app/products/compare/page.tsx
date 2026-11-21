@@ -1,12 +1,13 @@
 import { DetailHeader, Container, CTABanner } from '@/components';
 import { POWERED_BY } from '@/content/packages';
 import PackagePortfolio from '@/components/PackagePortfolio';
+import IndividualServices from '@/components/IndividualServices';
 import { alphabetical, capabilities, type CapabilityCode } from '@/content/packages';
 
 export const metadata = {
-  title: 'Compare managed security: EDR, MDR, XDR and ΔDR',
+  title: 'Compare managed security: EDR, MDR, XDR, ΔDR and individual services',
   description:
-    'Managed security packages from endpoint protection to full detect, defend and respond coverage with compliance reporting, in eleven editions.',
+    'Managed security packages from endpoint protection to full detect, defend and respond coverage with compliance reporting, in eleven editions, plus individual services you can buy on their own.',
 };
 
 export default function ComparePage() {
@@ -21,11 +22,12 @@ export default function ComparePage() {
           { label: 'Compare managed security' },
         ]}
         title="Compare managed security"
-        summary="EDR, MDR, XDR and ΔDR in eleven editions. Start where you are and grow; each card shows exactly what's included."
+        summary="EDR, MDR, XDR and ΔDR in eleven editions, plus individual services for posture, identity, network access, training, data and backup. Start where you are and grow; each card shows exactly what's included."
         primaryCta={{ label: 'Help me choose', href: '/assessments' }}
         secondaryCta={{ label: 'Talk to us', href: '/contact?topic=packages' }}
         sections={[
           { label: 'Packages', href: '#packages' },
+          { label: 'Individual services', href: '#individual-services' },
           { label: 'Capability glossary', href: '#glossary' },
         ]}
       />
@@ -41,7 +43,17 @@ export default function ComparePage() {
         </Container>
       </section>
 
-      <section id="glossary" className="py-12 md:py-16 scroll-mt-20">
+      <section id="individual-services" className="py-12 md:py-16 scroll-mt-20">
+        <Container>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Individual services</h2>
+          <p className="text-gray-600 mb-8">
+            Managed services you can buy on their own or alongside any EDR, MDR, XDR or ΔDR edition.
+          </p>
+          <IndividualServices />
+        </Container>
+      </section>
+
+      <section id="glossary" className="py-12 md:py-16 bg-gray-50 border-t border-gray-200 scroll-mt-20">
         <Container>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Capability glossary</h2>
           <p className="text-gray-600 mb-8">What each abbreviation on the package cards means.</p>

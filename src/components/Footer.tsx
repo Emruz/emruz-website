@@ -93,7 +93,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Managed security and add-ons */}
+          {/* Managed security and individual services */}
           <div className="col-span-2 grid grid-cols-2 gap-8">
             <div>
               <h3 className="font-semibold mb-4">Managed Security</h3>
@@ -111,7 +111,7 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Add-ons</h3>
+              <h3 className="font-semibold mb-4">Individual Services</h3>
               <ul className="space-y-2">
                 {sections.addOns.map((item) => (
                   <li key={item.href}>

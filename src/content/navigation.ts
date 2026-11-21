@@ -32,7 +32,7 @@ export const mainNav: NavGroup[] = [
       {
         label: 'Managed Security',
         href: '/products/compare',
-        description: 'EDR, MDR, XDR, ΔDR and add-on services. Powered by WhiteDog Cyber.',
+        description: 'EDR, MDR, XDR, ΔDR and individual services. Powered by WhiteDog Cyber.',
         divider: true,
       },
     ],

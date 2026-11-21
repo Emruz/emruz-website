@@ -53,10 +53,10 @@ export const capabilities: Record<CapabilityCode, { name: string; description: s
   DNSSPM: { name: 'DNS Security Posture', description: 'Monitors domains and DNS configuration for hijack and spoofing risk.' },
   CFS: { name: 'Cloud File Security', description: 'Scans files in cloud storage and collaboration platforms for threats.' },
   ITDR: { name: 'Identity Threat Detection & Response', description: 'Detects and responds to account takeover and identity attacks.' },
-  MDE: { name: 'Managed Data Encryption', description: 'Policy-driven AES-256 file-level encryption of sensitive data, deployed and managed for you. Add-on.' },
-  PSA: { name: 'Phishing Simulations & Awareness Training', description: 'Monthly end-user training with advanced phishing and threat simulations. Add-on.' },
-  ZTNA: { name: 'Zero Trust Network Access', description: 'Replaces VPN with per-app access that checks the user, device trust and posture on every connection. Add-on.' },
-  DSB: { name: 'Distributed SaaS Backup', description: 'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with granular restore. Add-on.' },
+  MDE: { name: 'Managed Data Encryption', description: 'Policy-driven AES-256 file-level encryption of sensitive data, deployed and managed for you. On its own or with any edition.' },
+  PSA: { name: 'Phishing Simulations & Awareness Training', description: 'Monthly end-user training with advanced phishing and threat simulations. On its own or with any edition.' },
+  ZTNA: { name: 'Zero Trust Network Access', description: 'Replaces VPN with per-app access that checks the user, device trust and posture on every connection. On its own or with any edition.' },
+  DSB: { name: 'Distributed SaaS Backup', description: 'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with granular restore. On its own or with any edition.' },
   CRPT: { name: 'Compliance Reporting', description: 'Evidence and reporting mapped to the frameworks your auditors use, such as NIST CSF, ISO 27001, SOC 2 and CMMC.' },
 };
 
@@ -289,7 +289,7 @@ export function familyCapabilities(slug: FamilySlug): CapabilityCode[] {
   return alphabetical((Object.keys(capabilities) as CapabilityCode[]).filter((c) => all.has(c)));
 }
 
-/* ---------- Add-on services ---------- */
+/* ---------- Individual services (on their own or with any edition) ---------- */
 
 export type AddOnFamily = 'PSA' | 'DRM' | 'DSB' | 'ZTI' | 'ZTNA' | 'SPM';
 
@@ -306,10 +306,10 @@ export interface AddOn {
   features: string[];
 }
 
-/** How an add-on is named in self-assessment results. */
+/** How an individual service is named in self-assessment results. */
 export const addOnLabel = (a: { code: string; label?: string }) => a.label ?? a.code;
 
-/** Services that can be added to any edition to close specific gaps. */
+/** Services sold on their own or alongside any edition to close specific gaps. */
 export const addOns: AddOn[] = [
   {
     code: 'ZTI',
@@ -421,7 +421,7 @@ export const addOns: AddOn[] = [
   },
 ];
 
-/* ---------- Add-on product lines (pages under /products) ---------- */
+/* ---------- Individual service lines (pages under /products) ---------- */
 
 export interface AddOnLine {
   slug: AddOnFamily;

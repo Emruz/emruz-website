@@ -11,6 +11,9 @@ Releases are numbered vYYYYMM.#: the year and month, then the release number in 
 - `npm run ship`, `npm run preview` and `npm run local` run the tests after lint (`--fast` skips them in local).
 - CI runs `npm test` on every pull request instead of only the licensing tests.
 - Added this changelog. `npm run ship` stops when it has no section for the version in package.json, and `npm run bump` reminds you to add one.
+- Home page: the Security, Cloud and AI assessment tiles each have their own description, and one Explore All Assessments button replaces the three Learn More buttons.
+- Services menu: clicking Services opens the Services page, the arrow next to it opens the menu, and All services is at the top of the menu.
+- Managed security: posture, identity, network access, training, data and backup services are individual services, shown with the EDR, MDR, XDR and ΔDR editions on the compare page and no longer called add-ons.
 
 ## v202611.4
 

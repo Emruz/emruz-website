@@ -430,6 +430,8 @@ export interface AddOnLine {
   label: string;
   name: string;
   tagline: string;
+  /** One line for glossaries */
+  brief: string;
   summary: string;
   bestFor: string;
   outcomes: string[];
@@ -445,6 +447,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'SPM',
     name: 'Security Posture Management',
     tagline: 'See your environment the way an attacker does',
+    brief: 'Continuous discovery and testing of internet-facing and internal assets, with automated pen testing.',
     summary:
       'Continuous threat exposure management for your internet-facing assets, your internal network, or both: automated discovery, vulnerability scanning and exploitation, and continuous automated pen testing.',
     bestFor: 'Organizations that need to know what they expose and which weaknesses are exploitable, without waiting for an annual pen test.',
@@ -479,6 +482,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'ZTI',
     name: 'Zero Trust Identity',
     tagline: 'Identity is the new perimeter. Protect it.',
+    brief: 'Identity posture, threat detection and automated response for Entra ID and Active Directory.',
     summary:
       'Continuous identity posture management for Entra ID and Active Directory, deception and threat detection for identity attacks, and automated response that shuts compromised accounts down fast.',
     bestFor: 'Organizations running Active Directory or Entra ID where stolen credentials and excessive privileges are the easiest way in.',
@@ -539,6 +543,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'ZTNA',
     name: 'Zero Trust Network Access',
     tagline: 'Retire the VPN. Grant access one app at a time.',
+    brief: 'Per-app access that replaces VPN and checks every user and device on each connection.',
     summary:
       'Per-app access to applications and infrastructure that checks the user, the device and its posture on every connection, with tunnels that replace VPN and a secure web gateway built in.',
     bestFor: 'Organizations still relying on VPN for remote access, or with staff, contractors and devices reaching cloud and on-premises apps from anywhere.',
@@ -586,6 +591,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'PSAT',
     name: 'Phishing Simulations & Awareness Training',
     tagline: 'Turn people into your first line of defense',
+    brief: 'Monthly awareness training with realistic phishing and threat simulations.',
     summary:
       'Monthly security awareness training with advanced phishing and threat simulations, targeted to each person by AI, so your people recognize and report attacks.',
     bestFor: 'Any organization where phishing and social engineering are a real risk, and anyone who needs training records for compliance or insurance.',
@@ -609,6 +615,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'DRM',
     name: 'Data Risk Management',
     tagline: 'Know where sensitive data lives, and keep it protected',
+    brief: 'Finds and classifies sensitive data, values the risk and encrypts it.',
     summary:
       'Data security posture management that finds, classifies and values sensitive data across endpoints, file servers and cloud, plus managed encryption that protects it automatically.',
     bestFor: 'Organizations holding PII, PCI or PHI that need to prove where it is, what it is worth and that it is encrypted.',
@@ -650,6 +657,7 @@ export const addOnLines: AddOnLine[] = [
     label: 'DSB',
     name: 'Distributed SaaS Backup & Recovery',
     tagline: 'Your cloud data, backed up somewhere else',
+    brief: 'Daily backup of Microsoft 365 or Google Workspace to an independent location.',
     summary:
       'Automated daily backup of Microsoft 365 or Google Workspace to an independent location, with search across users and data types and granular restore.',
     bestFor: 'Organizations that rely on Microsoft 365 or Google Workspace and need to recover from ransomware, deletion or a departing employee.',

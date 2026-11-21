@@ -2,6 +2,7 @@ import { DetailHeader, Container, CTABanner } from '@/components';
 import { POWERED_BY } from '@/content/packages';
 import PackagePortfolio from '@/components/PackagePortfolio';
 import IndividualServices from '@/components/IndividualServices';
+import ServicesGlossary from '@/components/ServicesGlossary';
 import { alphabetical, capabilities, type CapabilityCode } from '@/content/packages';
 
 export const metadata = {
@@ -72,6 +73,7 @@ export default function ComparePage() {
               </div>
             ))}
           </dl>
+          <ServicesGlossary />
         </Container>
       </section>
 

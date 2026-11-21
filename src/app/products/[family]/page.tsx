@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container, CTABanner } from '@/components';
 import PackagePortfolio from '@/components/PackagePortfolio';
+import ServicesGlossary from '@/components/ServicesGlossary';
 import { Check } from 'lucide-react';
 import {
   addOnLineByPath,
@@ -90,6 +91,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
               </div>
             ))}
           </dl>
+          <ServicesGlossary />
 
           <nav aria-label="Other products" className="mt-12 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-6">
             {prev ? (

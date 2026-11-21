@@ -173,7 +173,7 @@ export default function Home() {
         subheadline="Emruz helps organizations understand their security, cloud, and AI landscape, and how to evolve it. Through industry frameworks. Through outcomes we can measure."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Explore Services',
@@ -371,7 +371,7 @@ export default function Home() {
         description="Schedule a diagnostic assessment with our team. No sales pitch. Just honest diagnosis and a clear roadmap."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

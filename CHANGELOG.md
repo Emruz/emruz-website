@@ -14,6 +14,8 @@ Releases are numbered vYYYYMM.#: the year and month, then the release number in 
 - Home page: the Security, Cloud and AI assessment tiles each have their own description, and one Explore All Assessments button replaces the three Learn More buttons.
 - Services menu: clicking Services opens the Services page, the arrow next to it opens the menu, and All services is at the top of the menu.
 - Managed security: posture, identity, network access, training, data and backup services are individual services, shown with the EDR, MDR, XDR and ΔDR editions on the compare page and no longer called add-ons.
+- The capability glossary on the compare page and the EDR, MDR, XDR and ΔDR pages lists the individual services, each linking to its page.
+- Schedule buttons open the contact form with the topic filled in: the assessment's name on the Assessments tiles and service pages, or "Assessment" elsewhere.
 
 ## v202611.4
 

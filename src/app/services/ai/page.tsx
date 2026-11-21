@@ -13,7 +13,7 @@ export default function AIAdvisory() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'AI Advisory & Enablement' }]}
         title="AI Advisory & Enablement"
         summary="Understand AI opportunity and risk. Build governance. Upskill your team. Execute with confidence."
-        primaryCta={{ label: 'Schedule AI Readiness Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule AI Readiness Assessment', href: '/contact?topic=AI%20Readiness%20Assessment' }}
         secondaryCta={{ label: 'Explore AI Strategy', href: '/contact' }}
       />
 
@@ -38,7 +38,7 @@ export default function AIAdvisory() {
         description="Schedule an AI readiness assessment. We'll evaluate your current state and chart a path to responsible, strategic AI adoption."
         primaryCta={{
           label: 'Schedule Assessment',
-          href: '/assessments',
+          href: '/contact?topic=AI%20Readiness%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

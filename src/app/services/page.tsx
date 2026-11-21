@@ -112,7 +112,7 @@ export default function Services() {
         title="What we deliver"
         description="Advisory and managed services across security, cloud, data science and AI. Pick a service below, or start with an assessment."
         ctasAbove={[{ label: 'Perform a Self-assessment', href: '/assessments/self' }]}
-        cta={{ label: 'Schedule an Assessment', href: '/assessments' }}
+        cta={{ label: 'Schedule an Assessment', href: '/contact?topic=Assessment' }}
       />
 
       {/* Services Grid */}
@@ -255,7 +255,7 @@ export default function Services() {
         description="Choose your starting point: assessment, consultation, or let's discuss your specific needs."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

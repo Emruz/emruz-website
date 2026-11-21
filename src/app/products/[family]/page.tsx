@@ -113,7 +113,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
       <CTABanner
         heading={`Is ${f.label} the right fit?`}
         description="A short assessment shows where you are today and which edition closes the gaps that matter."
-        primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule an Assessment', href: `/contact?topic=${encodeURIComponent(`${f.label} Assessment`)}` }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
     </>

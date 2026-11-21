@@ -18,7 +18,7 @@ interface HeroProps {
 export default function Hero({
   headline,
   subheadline,
-  primaryCta = { label: 'Schedule Assessment', href: '/assessments' },
+  primaryCta = { label: 'Schedule Assessment', href: '/contact?topic=Assessment' },
   secondaryCta = { label: 'Learn More', href: '#services' },
   backgroundClass = 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900',
 }: HeroProps) {

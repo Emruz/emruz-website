@@ -39,7 +39,7 @@ export default function GRC() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance', href: '/services/security' }, { label: 'GRC Program' }]}
         title="GRC Program"
         summary="Build a compliance program grounded in the frameworks you answer to. Then maintain it without it becoming a second job."
-        primaryCta={{ label: 'Schedule GRC Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule GRC Assessment', href: '/contact?topic=GRC%20Assessment' }}
         secondaryCta={{ label: 'Discuss Compliance Needs', href: '/contact' }}
       />
 
@@ -121,7 +121,7 @@ export default function GRC() {
         description="Schedule a GRC assessment. We'll understand your current posture, compliance requirements, and build a program that actually works."
         primaryCta={{
           label: 'Schedule GRC Assessment',
-          href: '/assessments',
+          href: '/contact?topic=GRC%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

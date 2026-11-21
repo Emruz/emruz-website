@@ -80,7 +80,7 @@ export default function ComparePage() {
       <CTABanner
         heading="Not sure which edition fits?"
         description="A short assessment shows where you are today and which package closes the gaps that matter."
-        primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule an Assessment', href: '/contact?topic=Managed%20Security%20Assessment' }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
     </>

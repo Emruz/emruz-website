@@ -14,7 +14,8 @@ export interface NavGroup {
   label: string;
   href: string;
   children?: NavLink[];
-  footer?: NavLink;
+  /** First link in the panel, for the group's own page */
+  overview?: NavLink;
 }
 
 export const mainNav: NavGroup[] = [
@@ -31,11 +32,11 @@ export const mainNav: NavGroup[] = [
       {
         label: 'Managed Security',
         href: '/products/compare',
-        description: 'EDR, MDR, XDR, ΔDR and add-on services. Powered by WhiteDog Cyber.',
+        description: 'EDR, MDR, XDR, ΔDR and individual services. Powered by WhiteDog Cyber.',
         divider: true,
       },
     ],
-    footer: { label: 'All services', href: '/services' },
+    overview: { label: 'All services', href: '/services' },
   },
   { label: 'Motiv', href: '/motiv' },
   { label: 'About', href: '/about' },

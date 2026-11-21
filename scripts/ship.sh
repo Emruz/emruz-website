@@ -5,7 +5,7 @@
 #   npm run ship -- "Title" --issue 42                     (link an issue; usually found automatically)
 #   npm run ship -- "Title" --no-issue                     (no issue, don't ask)
 #
-# Steps: commit any changes, check (types, lint, build), push, open or reuse the
+# Steps: commit any changes, check (types, lint, tests, build), push, open or reuse the
 # pull request, wait for the checks, squash and merge (which deploys on Netlify),
 # delete the branch, then bring main up to date locally.
 set -euo pipefail
@@ -44,6 +44,13 @@ fi
 step "Issue"
 resolve_issue "$branch" "$ISSUE_ARG"
 
+step "Changelog"
+version="$(node -p "require('./package.json').version")"
+release="v${version%.0}"
+grep -qE "^## ${release//./\\.}([[:space:]]|$)" CHANGELOG.md 2>/dev/null ||
+  fail "CHANGELOG.md has no section for $release. Add a \"## $release\" heading with a line for each change, then run npm run ship again."
+echo "CHANGELOG.md has $release."
+
 step "Changes on $branch"
 if [ -n "$(git status --porcelain)" ]; then
   git status --short
@@ -61,6 +68,7 @@ git log --oneline origin/main..HEAD
 step "Checks"
 npx tsc --noEmit
 npm run -s lint
+npm test
 if [ "$SKIP_BUILD" = 0 ]; then
   npm run -s build >/tmp/emruz-build.log 2>&1 || { tail -40 /tmp/emruz-build.log; fail "Build failed (full log: /tmp/emruz-build.log)"; }
   echo "Build passed."

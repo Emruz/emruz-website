@@ -71,22 +71,37 @@ export default function Header() {
                 onMouseEnter={() => setOpenMenu(group.label)}
                 onMouseLeave={() => setOpenMenu(null)}
               >
-                <button
-                  className={`flex items-center gap-1 px-3 py-2 rounded-md font-medium transition-colors ${
+                <div
+                  className={`flex items-center rounded-md font-medium transition-colors ${
                     isActive(group.href) || group.children.some((c) => isActive(c.href))
                       ? 'text-blue-700'
-                      : 'text-gray-700 hover:text-blue-700'
+                      : 'text-gray-700'
                   }`}
-                  aria-expanded={openMenu === group.label}
-                  aria-haspopup="true"
-                  onClick={() => setOpenMenu(openMenu === group.label ? null : group.label)}
                 >
-                  {group.label}
-                  <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === group.label ? 'rotate-180' : ''}`} />
-                </button>
+                  <Link href={group.href} className="pl-3 pr-1 py-2 hover:text-blue-700">
+                    {group.label}
+                  </Link>
+                  <button
+                    className="pr-3 pl-0.5 py-2 hover:text-blue-700"
+                    aria-label={`${group.label} menu`}
+                    aria-expanded={openMenu === group.label}
+                    aria-haspopup="true"
+                    onClick={() => setOpenMenu(openMenu === group.label ? null : group.label)}
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform ${openMenu === group.label ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
                 {openMenu === group.label && (
                   <div className="absolute left-0 top-full pt-2">
                     <div className="w-[26rem] bg-white rounded-xl border border-gray-200 shadow-xl p-2">
+                      {group.overview && (
+                        <Link
+                          href={group.overview.href}
+                          className="block mb-1 px-3 py-2 border-b border-gray-100 text-sm font-semibold text-blue-700 hover:text-blue-900"
+                        >
+                          {group.overview.label} →
+                        </Link>
+                      )}
                       <ul>
                         {group.children.map((item) => (
                           <li key={item.href} className={item.divider ? 'mt-1 pt-1 border-t border-gray-200' : ''}>
@@ -103,14 +118,6 @@ export default function Header() {
                           </li>
                         ))}
                       </ul>
-                      {group.footer && (
-                        <Link
-                          href={group.footer.href}
-                          className="block mt-1 px-3 py-2 border-t border-gray-100 text-sm font-semibold text-blue-700 hover:text-blue-900"
-                        >
-                          {group.footer.label} →
-                        </Link>
-                      )}
                     </div>
                   </div>
                 )}
@@ -196,6 +203,13 @@ export default function Header() {
                     </button>
                     {mobileGroup === group.label && (
                       <ul className="pb-3 pl-3 space-y-2">
+                        {group.overview && (
+                          <li>
+                            <Link href={group.overview.href} className="block font-semibold text-blue-700">
+                              {group.overview.label} →
+                            </Link>
+                          </li>
+                        )}
                         {group.children.map((item) => (
                           <li key={item.href} className={`${item.divider ? 'pt-2 border-t border-gray-100' : ''} ${item.indent ? 'pl-4' : ''}`}>
                             <Link href={item.href} className={`block ${item.divider ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
@@ -203,13 +217,6 @@ export default function Header() {
                             </Link>
                           </li>
                         ))}
-                        {group.footer && (
-                          <li>
-                            <Link href={group.footer.href} className="block font-semibold text-blue-700">
-                              {group.footer.label} →
-                            </Link>
-                          </li>
-                        )}
                       </ul>
                     )}
                   </>

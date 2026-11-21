@@ -15,3 +15,4 @@ if [ "$major" = "$month" ]; then n=$((minor + 1)); else n=1; fi
 
 npm version "$month.$n.0" --no-git-tag-version >/dev/null
 echo "Release v$month.$n"
+echo "Add a \"## v$month.$n\" section to CHANGELOG.md before you ship."

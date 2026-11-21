@@ -173,7 +173,7 @@ export default function Home() {
         subheadline="Emruz helps organizations understand their security, cloud, and AI landscape, and how to evolve it. Through industry frameworks. Through outcomes we can measure."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Explore Services',
@@ -257,20 +257,16 @@ export default function Home() {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {['Security', 'Cloud', 'AI'].map((type) => (
-              <Card key={type} hoverable className="text-center flex flex-col">
+            {[
+              { type: 'Security', description: 'Where your defenses stand, what is exposed and what to fix first' },
+              { type: 'Cloud', description: 'Readiness, architecture, cost and security of your cloud estate' },
+              { type: 'AI', description: 'Where AI can help, what it needs from your data and how to govern it' },
+            ].map(({ type, description }) => (
+              <Card key={type} className="text-center">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {type} Assessment
                 </h3>
-                <p className="text-gray-600 text-sm mb-4 flex-grow">
-                  Diagnostic readiness and opportunity assessment
-                </p>
-                <a
-                  href="/assessments"
-                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Learn More →
-                </a>
+                <p className="text-gray-600 text-sm">{description}</p>
               </Card>
             ))}
           </div>
@@ -375,7 +371,7 @@ export default function Home() {
         description="Schedule a diagnostic assessment with our team. No sales pitch. Just honest diagnosis and a clear roadmap."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

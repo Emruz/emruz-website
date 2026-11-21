@@ -48,7 +48,7 @@ export default function Assessments() {
         title="Assessments"
         description="Start with clarity. Diagnostic assessments across security, compliance, cloud, and AI. Understanding your current state leads to better decisions."
         ctasAbove={[{ label: 'Perform a Self-assessment', href: '/assessments/self' }]}
-        cta={{ label: 'Schedule an Assessment', href: '/contact' }}
+        cta={{ label: 'Schedule an Assessment', href: '/contact?topic=Assessment' }}
       />
 
       <section id="types" className="py-12 md:py-16">
@@ -68,7 +68,7 @@ export default function Assessments() {
                   Part of our {assessment.service} engagement model
                 </p>
                 <Link
-                  href="/contact"
+                  href={`/contact?topic=${encodeURIComponent(assessment.name)}`}
                   className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700"
                 >
                   Schedule <ArrowRight className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function Assessments() {
         description="Schedule an assessment and get clear insights into your situation, gaps, and opportunities."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/contact',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Contact Us',

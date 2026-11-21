@@ -13,7 +13,7 @@ export default function SecurityOps() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance', href: '/services/security' }, { label: 'Security Operations' }]}
         title="Security Operations"
         summary="Build or optimize your security operations program. From SOC design through 24/7 monitoring and incident response."
-        primaryCta={{ label: 'Schedule Security Ops Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule Security Ops Assessment', href: '/contact?topic=Security%20Ops%20Assessment' }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
 
@@ -38,7 +38,7 @@ export default function SecurityOps() {
         description="Schedule a security ops assessment to understand your current SOC maturity and opportunities."
         primaryCta={{
           label: 'Schedule Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Security%20Ops%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

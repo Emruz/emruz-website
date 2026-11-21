@@ -15,7 +15,7 @@ export default function SecurityHub() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Security & Compliance' }]}
         title="Security & Compliance"
         summary="Build GRC programs that work. Optimize security operations that scale. Both grounded in frameworks and focused on outcomes."
-        primaryCta={{ label: 'Schedule Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule Assessment', href: '/contact?topic=Security%20Assessment' }}
         secondaryCta={{ label: 'Talk to us', href: '/contact' }}
       />
 
@@ -129,7 +129,7 @@ export default function SecurityHub() {
         description="Schedule an assessment for either GRC or Security Operations. Let's understand your needs and build a program that works."
         primaryCta={{
           label: 'Schedule Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Security%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

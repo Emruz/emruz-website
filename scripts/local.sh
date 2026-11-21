@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build and run the site locally: checks, packages, database, then the dev server.
 #   npm run local            full run
-#   npm run local -- --fast  skip type check and lint
+#   npm run local -- --fast  skip type check, lint and tests
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -48,6 +48,8 @@ if [ "$FAST" = 0 ]; then
   npx tsc --noEmit
   step "Lint"
   npm run -s lint
+  step "Tests"
+  npm test
 fi
 
 step "Port $PORT"

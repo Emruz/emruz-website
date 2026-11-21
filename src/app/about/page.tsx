@@ -232,7 +232,7 @@ export default function About() {
         }}
         secondaryCta={{
           label: 'Schedule Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
       />
     </>

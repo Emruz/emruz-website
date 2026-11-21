@@ -78,7 +78,7 @@ export default async function InsightPage({ params }: { params: Promise<{ slug: 
       <CTABanner
         heading="Want to talk this through?"
         description="A short conversation is often the fastest way to see where you stand and what to do next."
-        primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule an Assessment', href: '/contact?topic=Assessment' }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
     </>

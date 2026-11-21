@@ -70,7 +70,7 @@ export default function VCISo() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'vCISO & Leadership' }]}
         title="vCISO & Leadership"
         summary="Strategic security leadership and governance from someone who thinks like a CISO. Define and execute security strategy. Get board-ready risk reporting."
-        primaryCta={{ label: 'Schedule vCISO Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule vCISO Assessment', href: '/contact?topic=vCISO%20Assessment' }}
         secondaryCta={{ label: 'Discuss Your Needs', href: '/contact' }}
       />
 
@@ -226,7 +226,7 @@ export default function VCISo() {
         description="Schedule a vCISO assessment to understand your current state, gaps, and opportunities. No sales pitch—just honest diagnosis and a clear path forward."
         primaryCta={{
           label: 'Schedule vCISO Assessment',
-          href: '/assessments',
+          href: '/contact?topic=vCISO%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

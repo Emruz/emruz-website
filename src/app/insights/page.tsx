@@ -135,7 +135,7 @@ export default async function Insights({ searchParams }: { searchParams: Promise
         description="Whether you're looking for insights or ready to engage, let's connect."
         primaryCta={{
           label: 'Schedule an Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

@@ -13,7 +13,7 @@ export default function DataScience() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Data Science & Analytics' }]}
         title="Data Science & Analytics"
         summary="Turn data into insight. Threat hunting, anomaly detection, operational analytics, risk prediction."
-        primaryCta={{ label: 'Schedule Data Analytics Discovery', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule Data Analytics Discovery', href: '/contact?topic=Data%20Analytics%20Discovery' }}
         secondaryCta={{ label: 'Discuss Your Data', href: '/contact' }}
       />
 
@@ -38,7 +38,7 @@ export default function DataScience() {
         description="Schedule a data analytics discovery. Let's understand your data sources and high-value use cases."
         primaryCta={{
           label: 'Schedule Discovery',
-          href: '/assessments',
+          href: '/contact?topic=Data%20Analytics%20Discovery',
         }}
         secondaryCta={{
           label: 'Get in Touch',

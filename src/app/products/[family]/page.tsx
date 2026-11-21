@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DetailHeader, Container, CTABanner } from '@/components';
 import PackagePortfolio from '@/components/PackagePortfolio';
+import ServicesGlossary from '@/components/ServicesGlossary';
 import { Check } from 'lucide-react';
 import {
   addOnLineByPath,
@@ -90,6 +91,7 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
               </div>
             ))}
           </dl>
+          <ServicesGlossary />
 
           <nav aria-label="Other products" className="mt-12 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-6">
             {prev ? (
@@ -111,14 +113,14 @@ export default async function FamilyPage({ params }: { params: Promise<{ family:
       <CTABanner
         heading={`Is ${f.label} the right fit?`}
         description="A short assessment shows where you are today and which edition closes the gaps that matter."
-        primaryCta={{ label: 'Schedule an Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule an Assessment', href: `/contact?topic=${encodeURIComponent(`${f.label} Assessment`)}` }}
         secondaryCta={{ label: 'Get in Touch', href: '/contact' }}
       />
     </>
   );
 }
 
-/** Page for an add-on product line (PSAT, DRM, DSB). */
+/** Page for an individual service line (SPM, ZTI, ZTNA, PSA, DRM, DSB). */
 function AddOnPage({ path }: { path: string }) {
   const l = addOnLineByPath(path)!;
   const items = addOns.filter((a) => a.family === l.slug);
@@ -158,7 +160,7 @@ function AddOnPage({ path }: { path: string }) {
           <div className={`grid gap-6 ${items.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
             {items.map((a) => (
               <div key={a.code} className="bg-indigo-800 text-white rounded-xl p-6 flex flex-col">
-                <p className="text-xs font-semibold uppercase tracking-widest text-indigo-200">Add-on</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-indigo-200">Individual service</p>
                 <h2 className="text-2xl font-bold mt-1">{a.code}</h2>
                 <p className="text-indigo-100 font-semibold">{a.name}</p>
                 <p className="text-sm text-indigo-100 mt-2">{a.summary}</p>
@@ -232,7 +234,7 @@ function AddOnPage({ path }: { path: string }) {
             </table>
           </div>
 
-          <nav aria-label="Other add-ons" className="mt-12 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-6">
+          <nav aria-label="Other individual services" className="mt-12 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-6">
             {prev ? (
               <Link href={`/products/${prev.path}`} className="text-indigo-700 font-semibold hover:text-indigo-900">
                 ← {prev.label}: {prev.name}

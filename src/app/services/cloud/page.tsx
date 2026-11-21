@@ -57,7 +57,7 @@ export default function Cloud() {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Services', href: '/services' }, { label: 'Cloud Strategy & Security' }]}
         title="Cloud Strategy & Security"
         summary="Architect cloud for security, cost, and organizational capability. From readiness assessment through implementation and optimization."
-        primaryCta={{ label: 'Schedule Cloud Assessment', href: '/assessments' }}
+        primaryCta={{ label: 'Schedule Cloud Assessment', href: '/contact?topic=Cloud%20Assessment' }}
         secondaryCta={{ label: 'Discuss Your Cloud Journey', href: '/contact' }}
       />
 
@@ -173,7 +173,7 @@ export default function Cloud() {
         description="Schedule a cloud assessment. We'll understand your applications, data, compliance needs, and opportunities—then chart a clear path forward."
         primaryCta={{
           label: 'Schedule Cloud Assessment',
-          href: '/assessments',
+          href: '/contact?topic=Cloud%20Assessment',
         }}
         secondaryCta={{
           label: 'Get in Touch',

@@ -84,20 +84,26 @@ if [ "$SKIP_BUILD" = 0 ]; then
   echo "Build passed."
 fi
 
+step "Review gate"
+# Needs a committed review record for HEAD (repo-pr-review), with no Critical findings
+scripts/ship-gate.sh push || fail "No valid review record for this commit. Run the PR review, commit its record, then run npm run ship again."
+REVIEW_NOTE="$(scripts/ship-gate.sh pr-body)"
+
 step "Push"
-# The branch is ours alone, so a rebased branch may replace the copy on GitHub
+# The branch is ours alone; the pre-push hook blocks pushes that would drop commits on GitHub
 git push --force-with-lease -u origin "$branch"
+scripts/ship-gate.sh pr || fail "Review gate failed after push."
 
 step "Pull request"
 # Only an open pull request counts; an earlier one on the same branch name may already be merged
 pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
 if [ -n "$pr" ]; then
   echo "Using open pull request #$pr."
-  gh pr comment "$pr" --body "$SCAN_NOTE" >/dev/null
+  gh pr comment "$pr" --body "$(printf '%s\n\n%s' "$SCAN_NOTE" "$REVIEW_NOTE")" >/dev/null
 else
   body="$(git log --reverse --pretty='- %s' origin/main..HEAD)"
   [ -z "$ISSUE" ] || body="$(printf '%s\n\nCloses #%s' "$body" "$ISSUE")"
-  body="$(printf '%s\n\n%s' "$body" "$SCAN_NOTE")"
+  body="$(printf '%s\n\n%s\n\n%s' "$body" "$SCAN_NOTE" "$REVIEW_NOTE")"
   gh pr create --base main --head "$branch" --title "$TITLE" --body "$body"
   pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
 fi
@@ -119,7 +125,7 @@ for c in tests security-scan dependency-review; do
   printf '%s\n' "$required" | grep -qx "$c" ||
     fail "\"$c\" is not a required check on main. Add it to the ruleset (LAUNCH/repo-ci.md), then run npm run ship again."
 done
-gh pr checks "$pr" --watch --required || fail "A required check failed. Fix it, then run npm run ship again."
+REQUIRED_CHECKS=1 scripts/ship-gate.sh merge "$pr" || fail "Review gate or a required check failed. Fix it, then run npm run ship again."
 
 step "Merge"
 gh pr merge "$pr" --squash --delete-branch

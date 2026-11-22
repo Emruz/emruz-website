@@ -1,0 +1,43 @@
+# Review record check on every pull request. Template from repo-pr-review.
+# No AI and no secrets: it only reads the committed record.
+# Fails unless LAUNCH/reviews/<branch>.md exists at the PR head, its "Commit:"
+# is the PR head's parent, the head commit changes only the record, and
+# "Critical:" is 0.
+# Job name is the required check name: pr-review-record (Full or Rules tier).
+name: PR review record
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pr-review-record:
+    name: pr-review-record
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Check record
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -u
+          fail() { echo "::error::$1"; exit 1; }
+          file="LAUNCH/reviews/$(printf '%s' "$HEAD_REF" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g').md"
+          head="$(git rev-parse HEAD)"
+          parent="$(git rev-parse -q --verify HEAD^1)" || fail "PR head has no parent"
+          [ -f "$file" ] || fail "no review record $file at ${head:0:12}; run repo-pr-review and commit the record"
+          rec="$(sed -n 's/^Commit:[[:space:]]*\([0-9a-f]\{40\}\)[[:space:]]*$/\1/p' "$file" | head -n 1)"
+          crit="$(sed -n 's/^Critical:[[:space:]]*\([0-9]\{1,\}\)[[:space:]]*$/\1/p' "$file" | head -n 1)"
+          [ -n "$rec" ] || fail "$file: missing or malformed 'Commit:' line"
+          [ -n "$crit" ] || fail "$file: missing or malformed 'Critical:' line"
+          [ "$rec" = "$parent" ] || fail "$file reviewed ${rec:0:12}, but the PR head's parent is ${parent:0:12}; review is stale"
+          changed="$(git diff --name-only "$parent" "$head")"
+          [ "$changed" = "$file" ] || fail "the PR head commit changes more than the record: $(printf '%s' "$changed" | tr '\n' ' ')"
+          [ "$crit" -eq 0 ] || fail "$file has $crit open Critical finding(s)"
+          echo "Review record OK: $file reviewed ${rec:0:12}, Critical 0" | tee -a "$GITHUB_STEP_SUMMARY"

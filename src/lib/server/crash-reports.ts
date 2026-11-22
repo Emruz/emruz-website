@@ -141,6 +141,7 @@ function occurrence(r: CrashReport): string {
 
 export function issueBody(r: CrashReport): string {
   if (isFeedback(r.kind)) {
+    // nosemgrep: javascript.lang.security.html-in-template-string GitHub issue Markdown, not browser HTML; the signature is validated as 12 hex chars
     return [userText(r), '', sentFrom(r), '', `<sub>Sent from the Motiv app. ${signatureMarker(r.signature)}</sub>`].join('\n');
   }
   return [
@@ -152,6 +153,7 @@ export function issueBody(r: CrashReport): string {
     '',
     '</details>',
     '',
+    // nosemgrep: javascript.lang.security.html-in-template-string GitHub issue Markdown, not browser HTML; the signature is validated as 12 hex chars
     `<sub>Sent from the Motiv app. ${signatureMarker(r.signature)}</sub>`,
   ].join('\n');
 }

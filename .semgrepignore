@@ -1,0 +1,15 @@
+# Paths Semgrep (scripts/security-scan.sh) skips, each group under a reason.
+# This file replaces Semgrep's defaults, so built and vendored code is listed here.
+
+# Built or downloaded code
+node_modules/
+target/
+dist/
+build/
+.next/
+out/
+.semgrep-rules/
+
+# Motiv lease test vectors: tokens signed with the public test key (seed 0x2A, kid "test"),
+# never valid for real leases. JSON has no comments, so the path is excluded here.
+tests/motiv-test-vectors.json

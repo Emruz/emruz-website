@@ -64,3 +64,6 @@ next-env.d.ts
 .idea/
 *.swp
 *.log
+
+# Semgrep rules cache (scripts/security-scan.sh)
+.semgrep-rules/

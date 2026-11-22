@@ -1,0 +1,4 @@
+# Semgrep rules that don't apply to this project, one rule id per line, under
+# a comment giving the reason. scripts/security-scan.sh skips these and fails
+# on any entry without a reason. Keep this short: prefer a fix, or a
+# "nosemgrep: <rule-id> <reason>" comment on the one reviewed line.

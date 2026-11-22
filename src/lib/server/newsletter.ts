@@ -27,7 +27,7 @@ Emruz`,
   );
 }
 
-export async function confirm(token: string) {
+export async function confirmSubscription(token: string) {
   const rows = await db()`
     update newsletter_subscribers set confirmed_at = now(), unsubscribed_at = null
     where token = ${token} returning id`;

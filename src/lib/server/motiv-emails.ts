@@ -38,10 +38,13 @@ The Emruz Team`;
 
   const p = 'margin:0 0 16px;font-size:16px;line-height:1.5;color:#374151';
   const a = 'color:#1d4ed8;font-weight:600';
+  // nosemgrep: javascript.lang.security.html-in-template-string intro is esc()'d
+  const introHtml = intro ? `<p style="${p}">${esc(intro)}</p>` : '';
+  // nosemgrep: javascript.lang.security.html-in-template-string every interpolated value is esc()'d or a SITE_URL constant
   const html = `<!doctype html><html><body style="margin:0;padding:24px;background:#f9fafb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
 <div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px">
 <h1 style="margin:0 0 16px;font-size:24px;color:#111827">Your Motiv Pro subscription is ready!</h1>
-${intro ? `<p style="${p}">${esc(intro)}</p>` : ''}
+${introHtml}
 <p style="${p}">Subscription ID<br><span style="font-family:Menlo,Consolas,monospace;font-size:18px;font-weight:700;color:#111827">${esc(subscriptionId)}</span></p>
 <h2 style="margin:24px 0 12px;font-size:18px;color:#111827">Get started in three steps</h2>
 <p style="${p}"><strong>1. Download and install Motiv.</strong> The page picks the right file for your computer.</p>

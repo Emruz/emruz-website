@@ -63,3 +63,7 @@ Release update since the launch baseline. Full report: `LAUNCH/drift-2026-11-15.
 ## Drift check (2026-11-21)
 
 - 141 files since the last drift check. Added GitHub to vendors.md, lawyer question 16 on partners. Open: emruz.com privacy page and ROPA for partners and GitHub. See LAUNCH/drift-2026-11-21.md.
+
+## Repo kit (2026-11-21)
+
+- repo-kit via launch-kit: CODEOWNERS, CodeQL workflow, PR review gate in ship.sh, git hooks, pr-review-record Action, ruleset JSON with the new checks. See LAUNCH/repo-report.md.

@@ -42,15 +42,12 @@ In the working tree with a temporary file: an `eval` sample failed Semgrep; a `n
 
 ## Required checks
 
-Add to the main ruleset: `tests`, `security-scan`, `dependency-review`. LAUNCH/ruleset-main.json has them.
+Add to the main ruleset: `tests`, `security-scan`, `dependency-review`.
+
+Existing ruleset 27092501 "main protection" already requires `npm audit and lint` and `Secret scan`; the file keeps those and its other rules unchanged.
 
 ```sh
-gh api repos/Emruz/emruz-website/rulesets --jq '.[] | {id,name}'
-# none: create
-gh api -X POST repos/Emruz/emruz-website/rulesets --input LAUNCH/ruleset-main.json
-# one exists: update
-gh api -X PUT repos/Emruz/emruz-website/rulesets/<id> --input LAUNCH/ruleset-main.json
-# confirm
+gh api -X PUT repos/Emruz/emruz-website/rulesets/27092501 --input LAUNCH/ruleset-main.json
 gh api repos/Emruz/emruz-website/rules/branches/main --jq '.[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context'
 ```
 

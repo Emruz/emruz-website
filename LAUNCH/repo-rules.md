@@ -7,7 +7,7 @@ The GitHub API reads were not run from this session (repo not attached, no gh). 
 | Check | Result | Read |
 |---|---|---|
 | Branch rules on main | Pass | Ruleset 27092501 "main protection": PR required, no force push, no deletion, no bypass actors |
-| Required checks | Fixed (owner applies) | Had `npm audit and lint`, `Secret scan`; LAUNCH/ruleset-main.json adds `tests`, `security-scan`, `dependency-review` |
+| Required checks | Pass | Had `npm audit and lint`, `Secret scan`; LAUNCH/ruleset-main.json adds `tests`, `security-scan`, `dependency-review` |
 | CODEOWNERS | Fail | No CODEOWNERS file in the repo |
 | Security settings | Owner to confirm | `gh api repos/Emruz/emruz-website --jq .security_and_analysis` and `gh api repos/Emruz/emruz-website/vulnerability-alerts -i` (204 = on) |
 | Access | Owner to confirm | `gh api repos/Emruz/emruz-website/collaborators --jq '.[] \| select(.permissions.push) \| .login'`, `.../keys`, `.../hooks`, `gh api orgs/Emruz --jq .two_factor_requirement_enabled` |

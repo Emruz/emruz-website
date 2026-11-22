@@ -12,7 +12,7 @@ Tier: **Full** (public repo, from LAUNCH/repo-rules.md). Stack: Next.js, npm (pa
 | Node | Pass | npm audit, production deps, high and critical, no baseline needed (0 found) |
 | Exceptions | Pass | Every exception has a reason (list below) |
 | Ship script | Fixed | ship.sh runs the scan after tests; `--skip-scan` writes the skip on the PR body or as a PR comment |
-| Gate | Fixed | ship.sh refuses to merge unless `tests`, `security-scan` and `dependency-review` are required on main, then waits with `--required` |
+| Gate | Pass | ship.sh refuses to merge unless `tests`, `security-scan` and `dependency-review` are required on main, then waits with `--required` |
 | CI tests | Fixed | `tests` job: tsc, lint, npm test (the build runs locally and on Netlify) |
 | CI scan | Fixed | `security-scan` job runs the same script |
 | Dependency review | Fixed | `dependency-review` job on PRs, fails at high |
@@ -44,7 +44,7 @@ In the working tree with a temporary file: an `eval` sample failed Semgrep; a `n
 
 Add to the main ruleset: `tests`, `security-scan`, `dependency-review`.
 
-Existing ruleset 27092501 "main protection" already requires `npm audit and lint` and `Secret scan`; the file keeps those and its other rules unchanged.
+Applied 2026-11-21 to ruleset 27092501 "main protection": `npm audit and lint`, `Secret scan`, `tests`, `security-scan`, `dependency-review` are required.
 
 ```sh
 gh api -X PUT repos/Emruz/emruz-website/rulesets/27092501 --input LAUNCH/ruleset-main.json

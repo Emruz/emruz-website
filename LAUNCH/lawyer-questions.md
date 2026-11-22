@@ -17,3 +17,4 @@ Collected by /launch-kit. Deduplicated; 15 items (the cap). Not legal advice; se
 13. Does Stripe Checkout's renewal disclosure meet California's auto-renewal law, given that the site now states renewal on the plan notes? Is online cancellation (account page) enough?
 14. Does Emruz need an EU or UK representative (GDPR Art. 27, UK GDPR equivalent) for Motiv sales to EU and UK customers? Does the CCPA apply, given the revenue and data-volume thresholds?
 15. For assessment clients, is Emruz a processor for the evidence files they upload, and does a DPIA need to be done for evidence uploads, which may hold personal data of client staff?
+16. Partners now run guided self-assessments for their own customers and invite them by email; a partner staff member records the customer's consent on their behalf. Is Emruz a processor for the partner here or a controller, does each partner need a data processing agreement, and is consent recorded by the partner valid?

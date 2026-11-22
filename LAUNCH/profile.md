@@ -6,7 +6,7 @@ Saved by /launch-kit. Answers come from the owner's survey and a repo scan on th
 
 | Question | Answer |
 |---|---|
-| Stage | First audit, already live (deployed to emruz.com on Netlify) |
+| Stage | Release update since last audit (2026-11-21; first audit 2026-11-14) |
 | Type | Web app (accounts, client workbench, billing) plus Motiv desktop app (separate repo, distributed separately) |
 | Markets | US-California, other US, EU, UK |
 | Data collected | Accounts, contact forms, newsletter, payments. Also evidence file uploads and security event logs (found in scan). |
@@ -17,6 +17,15 @@ Saved by /launch-kit. Answers come from the owner's survey and a repo scan on th
 | Security review | Recent review, fixes done. No findings file on disk; commits Security E1 to E10 are the fixes. |
 | Mode | Fix and draft |
 | Entity | Code sets legal party "Shahin Pirooz, doing business as Emruz", Santa Clara, California, USA (`src/components/LegalPage.tsx:4`). Owner to confirm this is correct, and whether an LLC exists. Contact: info@emruz.com. Refund rule: 14 days, full refund on first purchase (in terms and pricing page). Owner to confirm. |
+
+## Repo
+
+| Question | Answer |
+|---|---|
+| Repo | GitHub public (Emruz/emruz-website, organization) |
+| GitHub plan | Free (owner, 2026-11-21) |
+| Push access | Just me |
+| Tokens and backup | Fine-grained tokens scoped with an expiry. Classic `repo` tokens not ruled out. No backup or mirror. |
 
 ## Scan notes
 

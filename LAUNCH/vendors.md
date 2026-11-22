@@ -10,6 +10,7 @@ Source: `src/app/privacy/page.tsx` (vendor table), code scan in `LAUNCH/profile.
 | Microsoft (sign-in) | Independent controller for its own account | Sign-in identifier, email, verification status | N/A (provider terms apply to the user's sign-in) | Provider's own transfer basis | https://www.microsoft.com/licensing/docs/view/Microsoft-Products-and-Services-Data-Protection-Addendum-DPA |
 | Google (sign-in) | Independent controller for its own account | Sign-in identifier, name, email | N/A (provider terms apply) | Provider's own basis | https://developers.google.com/terms/api-services-user-data-policy |
 | Apple (sign-in) | Independent controller for its own account | Sign-in identifier, email or private relay address | N/A (provider terms apply) | Provider's own basis | [[TODO]] |
+| GitHub | Processor | Motiv crash reports, problem reports and feature suggestions the user chose to send, filed as issues in the private Emruz/motiv repo (Motiv version, OS version, computer model, error details, the user's note; home folder, user name and emails removed) | OPEN: [[TODO]] confirm the GitHub DPA applies to the Emruz org | [[TODO]] DPF or SCCs | https://github.com/customer-terms (verify) |
 | WhiteDog Cyber | Role [[TODO]]: processor for managed products, or separate controller. The policy says data is handled under the service agreement and WhiteDog's terms. | Data processed to deliver managed EDR, MDR, XDR and ΔDR services | OPEN: [[TODO]] | [[TODO]] | https://www.whitedogcyber.com/legal |
 
 ## Notes

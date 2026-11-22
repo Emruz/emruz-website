@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { DetailHeader, Container } from '@/components';
-import { confirm } from '@/lib/server/newsletter';
+import { confirmSubscription } from '@/lib/server/newsletter';
 
 export const metadata = { title: 'Subscription confirmed', robots: { index: false } };
 
 export default async function ConfirmPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams;
-  const ok = !!token && (await confirm(token));
+  const ok = !!token && (await confirmSubscription(token));
   return (
     <>
       <DetailHeader

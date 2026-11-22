@@ -85,13 +85,24 @@ export async function partnerStaffList(partnerId: string): Promise<PartnerStaffR
     order by s.active desc, coalesce(a.name, a.email)`;
 }
 
+const DOMAIN_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const TOP_LEVEL = /^[a-z]{2,63}$/;
+
+/** A hostname of 3 to 253 characters: labels of letters, digits and inner hyphens, then a letters-only top level. */
+function isDomain(d: string): boolean {
+  if (d.length < 3 || d.length > 253) return false;
+  const labels = d.split('.');
+  const top = labels.pop() ?? '';
+  return labels.length > 0 && TOP_LEVEL.test(top) && labels.every((l) => DOMAIN_LABEL.test(l));
+}
+
 /** Turn "@DataEndure.com, gocmt.com" into ['dataendure.com', 'gocmt.com']; null if any entry is not a domain. */
 export function parseDomains(input: string): string[] | null {
   const parts = input
     .split(/[\s,;]+/)
     .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
     .filter(Boolean);
-  if (parts.some((d) => !/^(?=.{3,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(d))) return null;
+  if (parts.some((d) => !isDomain(d))) return null;
   return [...new Set(parts)];
 }
 

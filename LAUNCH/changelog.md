@@ -55,3 +55,7 @@ Release update since the launch baseline. Full report: `LAUNCH/drift-2026-11-15.
 - Refund rule (14 days): not changed. It appears in two places, and the owner must confirm it.
 - Lifetime plan wording: not changed. The pricing page and the terms disagree; the owner must pick one.
 - No dependency changes. No deletions.
+
+## Repo CI checks (2026-11-22)
+
+- Added scripts/security-scan.sh, Checks workflow (tests, security-scan, dependency-review), ship.sh scan and `--skip-scan`. Fixed 3 Semgrep findings, 3 reviewed exceptions. See LAUNCH/repo-ci.md and LAUNCH/repo-rules.md.

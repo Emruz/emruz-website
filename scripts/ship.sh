@@ -4,8 +4,9 @@
 #   npm run ship -- "Title" --branch feature/my-change   (when starting on main)
 #   npm run ship -- "Title" --issue 42                     (link an issue; usually found automatically)
 #   npm run ship -- "Title" --no-issue                     (no issue, don't ask)
+#   npm run ship -- "Title" --skip-scan                    (skip the local security scan; noted on the PR)
 #
-# Steps: commit any changes, check (types, lint, tests, build), push, open or reuse the
+# Steps: commit any changes, check (types, lint, tests, security scan, build), push, open or reuse the
 # pull request, wait for the checks, squash and merge (which deploys on Netlify),
 # delete the branch, then bring main up to date locally.
 set -euo pipefail
@@ -20,12 +21,14 @@ TITLE=""
 BRANCH_ARG=""
 ISSUE_ARG=""
 SKIP_BUILD=0
+SCAN=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --branch) BRANCH_ARG="${2:-}"; shift 2 ;;
     --issue) ISSUE_ARG="${2:-}"; shift 2 ;;
     --no-issue) ISSUE_ARG="none"; shift ;;
     --skip-build) SKIP_BUILD=1; shift ;;
+    --skip-scan) SCAN=0; shift ;;
     -*) fail "Unknown option $1" ;;
     *) TITLE="$1"; shift ;;
   esac
@@ -69,6 +72,13 @@ step "Checks"
 npx tsc --noEmit
 npm run -s lint
 npm test
+SCAN_NOTE="Security scan: passed locally"
+if [ "$SCAN" = 1 ]; then
+  scripts/security-scan.sh || fail "Security scan failed. Fix it or record a reviewed exception, then run npm run ship again."
+else
+  SCAN_NOTE="Security scan: SKIPPED locally (--skip-scan) by $(git config user.name), $(date -u +%F)"
+  echo "$SCAN_NOTE"
+fi
 if [ "$SKIP_BUILD" = 0 ]; then
   npm run -s build >/tmp/emruz-build.log 2>&1 || { tail -40 /tmp/emruz-build.log; fail "Build failed (full log: /tmp/emruz-build.log)"; }
   echo "Build passed."
@@ -83,9 +93,11 @@ step "Pull request"
 pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
 if [ -n "$pr" ]; then
   echo "Using open pull request #$pr."
+  gh pr comment "$pr" --body "$SCAN_NOTE" >/dev/null
 else
   body="$(git log --reverse --pretty='- %s' origin/main..HEAD)"
   [ -z "$ISSUE" ] || body="$(printf '%s\n\nCloses #%s' "$body" "$ISSUE")"
+  body="$(printf '%s\n\n%s' "$body" "$SCAN_NOTE")"
   gh pr create --base main --head "$branch" --title "$TITLE" --body "$body"
   pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
 fi
@@ -99,6 +111,13 @@ for _ in $(seq 1 24); do
   gh pr checks "$pr" >/dev/null 2>&1 && break
   [ "$(gh pr checks "$pr" 2>&1 | grep -c 'no checks')" = 0 ] && break
   sleep 5
+done
+# With no required checks, --required has nothing to wait for. Refuse to merge unless
+# the ruleset on main requires the CI gate (see LAUNCH/repo-ci.md).
+required="$(gh pr checks "$pr" --required --json name --jq '.[].name' 2>/dev/null || true)"
+for c in tests security-scan dependency-review; do
+  printf '%s\n' "$required" | grep -qx "$c" ||
+    fail "\"$c\" is not a required check on main. Add it to the ruleset (LAUNCH/repo-ci.md), then run npm run ship again."
 done
 gh pr checks "$pr" --watch --required || fail "A required check failed. Fix it, then run npm run ship again."
 

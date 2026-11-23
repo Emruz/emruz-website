@@ -1,118 +1,85 @@
 # PR review: feature/62-ship-tooling
 
-Commit: a0b5185b2cf39da4be6eb1cf95c84997954511fc
+Commit: 84c5837c8835a0bb12a7bb80f846d4d355e7e79a
 Base: ae7aa62d32da81219f3efd029e93e4df62928dab
 Date: 2026-11-23
 Critical: 0
 High: 1
-Medium: 1
-Low: 8
+Medium: 0
+Low: 4
 
 <!-- The lines above are parsed by scripts/ship-gate.sh and the pr-review-record Action. Keep them exact. -->
 
 ## Scope
-- Files reviewed: 13, lines changed: +430/-80 (commits 1f102aa, a0b5185)
-- Skipped: package-lock.json (lockfile); LAUNCH/ (breach-runbook.md, changelog.md, drift-2026-11-15.md, prelaunch-checklist.md, repo-report.md, repo-rules.md, report.md)
+- Files reviewed: 13, lines changed: +478/-81 (commits 1f102aa, a0b5185, 84c5837; re-review after the R1 to R10 fixes)
+- Skipped: package-lock.json (lockfile); LAUNCH/ (breach-runbook.md, changelog.md, drift-2026-11-15.md, prelaunch-checklist.md, repo-report.md, repo-rules.md, report.md, reviews/feature-62-ship-tooling.md)
 - Lanes: logic, injection and data access, edge cases and performance, sensitive paths. Isolated: yes (four parallel agents, then one verifier)
-- Sensitive paths touched: no app auth or payments. Marked: data deletion/retention (scripts/backup.sh), access control on branches and paths (.githooks/pre-push, .github/CODEOWNERS), merge gate (scripts/ship-gate.sh, .github/workflows/pr-review-record.yml), ship flow with shell calls and branch deletion (scripts/ship.sh)
+- Sensitive paths touched: no app auth or payments. Marked: data deletion/retention (scripts/backup.sh), access control on branches and paths (.githooks/pre-push, .github/CODEOWNERS), merge gate (scripts/ship-gate.sh, .github/workflows/pr-review-record.yml), ship flow with shell calls, headless review and branch deletion (scripts/ship.sh)
 
 ## Findings
 | ID | Sev | Title | Location | Fix |
 |---|---|---|---|---|
-| R1 | High | ship-gate.sh lost its execute bit; CI and ship.sh run it directly | scripts/ship-gate.sh (mode), .github/workflows/pr-review-record.yml:39, scripts/ship.sh:83,95,96,117,150 | `git update-index --chmod=+x scripts/ship-gate.sh`; add a test that asserts mode 100755 |
-| R2 | Medium | Feature-branch force push can silently drop remote commits | .githooks/pre-push:13-22, scripts/ship.sh:116 | Add `--force-if-includes` to the push |
-| R3 | Low | `Critical:` overflow wraps to 0 and passes | scripts/ship-gate.sh:59 | Limit digits (`[0-9]{1,6}`) or compare as text `^0+$` |
-| R4 | Low | `--review` headless run may write and commit any file | scripts/ship.sh:86-89 | Scope Write to LAUNCH/reviews/**; check HEAD changed only the record after `claude` returns |
-| R5 | Low | Dependabot skip trusts only the PR author | .github/workflows/pr-review-record.yml:28,34 | Also require `github.actor == 'dependabot[bot]'` |
-| R6 | Low | One failed `gh pr view` aborts the whole check wait | scripts/ship-gate.sh:146-147 | Retry, giving up after about 3 consecutive failures |
-| R7 | Low | Non-numeric SHIP_CHECK_TIMEOUT/INTERVAL disables the timeout or spins | scripts/ship-gate.sh:142,174,178 | Check both are digits at the start of wait_checks |
-| R8 | Low | Unpruned mirror can hit a ref D/F conflict and stop refreshing quietly | scripts/backup.sh:24 | Show the fetch error instead of discarding it |
-| R9 | Low | Merge still needs CLEAN, so the #61 hang becomes a 30-minute timeout | scripts/ship-gate.sh:128-179 | Also return when no check is failed or waiting, or correct the comment and CHANGELOG |
-| R10 | Low | Mirror still prunes if fetch.prune is set in git config | scripts/backup.sh:24 | `git -C "$dir" remote update --no-prune` |
+| R1 | High | `ship --review` gives the headless review writes the post-review check can't see | scripts/ship.sh:87-96 | `Write(LAUNCH/reviews/**)`; drop `git fetch`, `git branch`, `git add`, `git commit` from allowedTools; ship.sh commits the record itself |
+| R2 | Low | "Settled" exit returns while the PR is BLOCKED; merge then fails with gh's raw error | scripts/ship-gate.sh:179-185, scripts/ship.sh:161 | Take the settled exit only when every required check is present and ok, or wrap the merge in a `fail` message |
+| R3 | Low | pre-commit reports a gitleaks fatal error as a found secret | .githooks/pre-commit:13-16 | `--exit-code 3` and treat rc 3 as a finding |
+| R4 | Low | By-hand backup can still exit 0 on failure | scripts/backup.sh:10,31 | `cd ... \|\| warn ...`; `date ... > "$stamp" \|\| warn ...` |
+| R5 | Low | Headless review has no time or turn limit | scripts/ship.sh:87 | Add `--max-turns N` |
 
-### R1 ship-gate.sh lost its execute bit
-- Problem: The diff changes scripts/ship-gate.sh from 100755 to 100644. The pr-review-record step now runs `scripts/ship-gate.sh record ...` under `set -uo pipefail`, so on the Actions checkout it exits 126 (Permission denied) and the check fails on every non-Dependabot PR. ship.sh calls it directly too: line 95 fails the ship with a misleading "No valid review record" message, and line 83 always looks like a failure, so `--review` runs even when a valid record exists. The gate fails closed, but nothing can ship. Locally it may still work if the file on disk keeps +x or core.fileMode is false.
-- Evidence: `git diff --summary`: `mode change 100755 => 100644 scripts/ship-gate.sh`; pr-review-record.yml:39 `scripts/ship-gate.sh record "$(git rev-parse HEAD)" "$HEAD_REF" 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"`; tests/ship-tooling.test.mts:71,154 run it as `bash <gate>`, so tests miss it.
-- Fix: `git update-index --chmod=+x scripts/ship-gate.sh`, plus a test that checks the mode or runs it without `bash`.
-- Verifier: confirmed (found by all four lanes; A2-A4 merged).
+### R1 `ship --review` gives the headless review writes the post-review check can't see
+- Problem: `claude -p` is allowed bare `Write` (any path) and `Bash(git fetch:*)`, `Bash(git branch:*)`, `Bash(git add:*)`, `Bash(git commit:*)`, `Bash(git diff:*)` with any arguments, which permits `git fetch --upload-pack=<cmd>`, `git diff --output=<file>`, `git commit --no-verify` and `git branch -f main`. The checks after the review (`git status --porcelain`, `git diff before_review..HEAD`) don't see gitignored paths (node_modules, .next, .env*), .git/ (core.fsmonitor in .git/config) or anything outside the repo. Text in the diff being reviewed could steer the model to plant code that `npx tsc`, `npm test` or `npm run build` then runs on the owner's machine before push and merge.
+- Evidence: scripts/ship.sh:88-90 `--allowedTools "Agent" "Read" "Grep" "Glob" "Write" ... "Bash(git fetch:*)" "Bash(git branch:*)" "Bash(git add:*)" "Bash(git commit:*)"`; :93 `[ -z "$(git status --porcelain)" ]`; :94 `git diff --no-renames --name-only "$before_review" HEAD`; .gitignore:4,17,34.
+- Fix: Scope Write to `Write(LAUNCH/reviews/**)`, drop `git fetch` and `git branch`, and drop `git add`/`git commit` so ship.sh runs `git add -- "$record" && git commit` itself after checking `git status --porcelain --ignored` shows only the record.
+- Verifier: confirmed, High (not Critical: the attacker first needs text in the owner's own branch diff). inj-1 and sens-1 merged. Whether Claude Code confines a path-scoped `Write(...)` rule in `-p` mode was not tested; if bypass permissions apply to the headless run, allowedTools may not limit it at all.
 
-### R2 Feature-branch force push can silently drop remote commits
-- Problem: The pre-push non-fast-forward check was removed on purpose so rebased branches can ship. ship.sh:116 pushes with bare `--force-with-lease`, which compares against the remote-tracking ref. After any fetch (editor autofetch, `git fetch` in ship-gate.sh:84, ship.sh:162), commits pushed to the branch on GitHub by anyone else, such as a suggestion commit, are overwritten with no warning. The backup mirror fetches with `+refs/*:refs/*` and keeps no reflog, so it doesn't save them either.
-- Evidence: removed lines `refusing force push to $branch: it would drop commits on the remote`; ship.sh:116 `git push --force-with-lease -u origin "$branch"`
-- Fix: `git push --force-with-lease --force-if-includes -u origin "$branch"`.
-- Verifier: confirmed, Medium (edge case with data loss; it needs someone else to push to the branch).
+### R2 "Settled" exit returns while the PR is BLOCKED
+- Problem: wait_checks returns 0 after two polls in which every reported check has a result and none failed, for any state except UNKNOWN, including BLOCKED. A required check that hasn't been created yet (pr-review-record is its own workflow and isn't in ship.sh's required-check list) isn't in statusCheckRollup, so it can't hold the wait. ship.sh then runs `gh pr merge` without `--admin`, which gh refuses on BLOCKED; under `set -e` the owner sees gh's raw error, not a `fail` message. Before this diff, `gh pr checks --watch --required` waited for GitHub's view of required checks.
+- Evidence: scripts/ship-gate.sh:180 `if [ "$total" -gt 0 ] && [ -z "$waiting" ] && [ "$state" != UNKNOWN ]; then settled=$((settled + 1)); if [ "$settled" -ge 2 ]; then ... return 0`; scripts/ship.sh:161 `gh pr merge "$pr" --squash --delete-branch --match-head-commit ...`
+- Fix: Take the settled exit only for HAS_HOOKS/UNSTABLE, or only when every name from `gh pr checks "$pr" --required` is present and ok; or wrap the merge with `|| fail "GitHub refused the merge ..."`.
+- Verifier: confirmed, Low (fails safe, nothing merges). logic-1, edge-1 (Medium, lowered) and sens-3 merged.
 
-### R3 `Critical:` overflow wraps to 0
-- Problem: `grep -Eqx '[0-9]+'` accepts any number of digits, and `$((10#$crit))` wraps on 64-bit overflow, so `Critical: 18446744073709551616` passes. The old `-eq` test rejected it.
-- Evidence: scripts/ship-gate.sh:51,59
-- Fix: Limit the length, or compare the text with `^0+$`.
-- Verifier: confirmed, Low (it needs a crafted record; the record's author could just write 0).
-
-### R4 `--review` headless run may write and commit any file
-- Problem: `claude -p` is allowed bare `Write`, `Bash(git add:*)` and `Bash(git commit:*)` (including `--no-verify`). Only the prompt keeps it to the record. If the model drifts, or text in the diff steers it, it could commit code and then a record naming that commit, and the gate at :95 would pass on unreviewed code.
-- Evidence: scripts/ship.sh:86-89 `--allowedTools "Agent" "Read" "Grep" "Glob" "Write" ... "Bash(git add:*)" "Bash(git commit:*)"`
-- Fix: Scope writes to LAUNCH/reviews/**. After `claude` returns, check that `git diff --name-only <pre-review HEAD> HEAD` lists only the record.
-- Verifier: severity changed to Low (lines 61-75 already refuse other local changes; the path is indirect). C2 merged.
-
-### R5 Dependabot skip trusts only the PR author
-- Problem: Anyone with write access who pushes extra commits to a Dependabot PR gets pr-review-record passed with no record.
-- Evidence: .github/workflows/pr-review-record.yml:28,34 `github.event.pull_request.user.login == 'dependabot[bot]'`
-- Fix: Also require `github.actor == 'dependabot[bot]'` for the skip, and negate it on the check step.
-- Verifier: confirmed, Low (solo repo; the merge is still a person's call). D2 merged.
-
-### R6 One failed `gh pr view` aborts the check wait
-- Problem: A single network or API error during a wait of up to 30 minutes stops the ship even when CI is green.
-- Evidence: scripts/ship-gate.sh:146-147 `... || die "can't read the checks on PR $pr: $out"`
-- Fix: Allow about 3 consecutive failures, sleeping between them.
+### R3 pre-commit reports a gitleaks fatal error as a found secret
+- Problem: The hook passes `--exit-code 1`, the same code gitleaks uses on a fatal error (old version, bad config), so a tool failure prints "found a possible secret". The commit is still blocked.
+- Evidence: .githooks/pre-commit:13 `--exit-code 1`; :16 `if [ "$rc" -eq 1 ]; then echo "...found a possible secret..."`
+- Fix: `--exit-code 3`, treat rc 3 as a finding and every other non-zero as a gitleaks error. The test's fake gitleaks should use the real codes.
 - Verifier: confirmed, Low.
 
-### R7 Unvalidated SHIP_CHECK_TIMEOUT / SHIP_CHECK_INTERVAL
-- Problem: A non-numeric timeout makes the `-ge` test error, which counts as false, so the time limit never fires. A non-numeric interval makes `sleep` fail, and with no `set -e` the loop calls gh with no pause.
-- Evidence: scripts/ship-gate.sh:142,174,178
-- Fix: Check both against `^[0-9]+$` at the start of wait_checks.
+### R4 By-hand backup can still exit 0 on failure
+- Problem: The new header says a failure run by hand exits 1, but `cd ... || exit 0` exits 0 silently, and the stamp write is unchecked, so a full disk or read-only mirror dir prints "updated" and exits 0 (and under `--due` refreshes on every ship).
+- Evidence: scripts/backup.sh:10 `cd "$(dirname "$0")/.." || exit 0`; :31 `date -u +%FT%TZ > "$stamp"`; :32 `echo "Backup: $dir updated."`
+- Fix: `|| warn "can't cd to the repo"` on line 10 and `|| warn "can't write $stamp"` on line 31.
+- Verifier: confirmed, Low (the lines predate the diff; they now contradict its new header). edge-4 merged.
+
+### R5 Headless review has no time or turn limit
+- Problem: A stuck `claude -p` run (model loop, network, permission denial) hangs the ship with no limit before any check runs.
+- Evidence: scripts/ship.sh:87 `claude -p "Run the repo-pr-review skill in review mode ..." --allowedTools ... || fail "The PR review didn't finish. ..."`
+- Fix: Add `--max-turns N` (portable; macOS has no `timeout` by default).
 - Verifier: confirmed, Low.
-
-### R8 Unpruned mirror can stop refreshing quietly
-- Problem: With `--prune` gone, a deleted ref `x` that is later recreated as `x/y` (or the other way round) causes a ref conflict, and every later refresh fails. Under `--due` this is only a warning, and the fetch error is sent to /dev/null.
-- Evidence: scripts/backup.sh:24 `git -C "$dir" remote update >/dev/null 2>&1 || warn ...`
-- Fix: Show the fetch error so the conflicting ref is named.
-- Verifier: confirmed, Low.
-
-### R9 Merge still needs CLEAN
-- Problem: The comment and CHANGELOG say a check with a conclusion counts as done even when GitHub shows it in progress, but the only success exit is `mergeStateStatus == CLEAN`. If GitHub holds the PR BLOCKED or UNSTABLE for that check, the loop waits the full timeout. The #61 test hard-codes CLEAN, so it doesn't cover that case.
-- Evidence: scripts/ship-gate.sh:162-164; tests/ship-tooling.test.mts:161-166
-- Fix: Also return 0 when the total is above 0, nothing is failed or waiting, and the state isn't DIRTY, BEHIND or DRAFT (the merge is already pinned with `--match-head-commit`). Or correct the comment and CHANGELOG.
-- Verifier: severity changed to Low (the wait is bounded with a clear message; it can't cause a wrong merge).
-
-### R10 Mirror still prunes when fetch.prune is set
-- Problem: Plain `git remote update` follows `fetch.prune` / `remote.origin.prune`. If either is set, deleted refs are still removed, which contradicts the line-8 comment.
-- Evidence: scripts/backup.sh:8,24
-- Fix: `git -C "$dir" remote update --no-prune`.
-- Verifier: severity changed to Low (neither setting is set on this machine; config-dependent).
 
 ## Checked, no finding
-- .github/workflows/pr-review-record.yml:33-39: HEAD_REF comes in through `env:` and is quoted, so there's no expression injection. Permissions are contents: read, with persist-credentials false. The Dependabot step and the check step have opposite conditions.
-- scripts/ship-gate.sh:33-35: record_path cleans the branch name to `[A-Za-z0-9._-]` under LAUNCH/reviews/, so it can't escape the directory.
-- scripts/ship-gate.sh:37-58: field() takes the first matching line, strict `grep -x` fails closed on a malformed value, an empty parent dies, and `--no-renames` shows deleted files.
-- scripts/ship-gate.sh:128-179: POLL_JQ handles a null rollup. A moved head stops the wait, failures are checked before CLEAN, DIRTY/BEHIND/DRAFT die, and the no-workflows pass needs zero checks, no workflows and 60s elapsed.
-- scripts/ship-gate.sh:187: the record subcommand requires exactly 2 arguments.
-- scripts/ship.sh:61-75: uncommitted changes other than the record are refused before `git add -A` unless `--review` is given.
-- scripts/ship.sh:83-96: the gate always runs again after `--review`. Moving it before the checks is safe.
-- scripts/ship.sh:150-162: the merge is pinned with `--match-head-commit`. Branch deletion covers only the shipped branch and is unchanged.
-- .githooks/pre-commit:12-23: rc is captured with no `set -e`. Any non-zero exit blocks the commit, and the output is redacted.
-- .githooks/pre-push:13-22: pushes and deletions to main/master are still refused.
-- .github/CODEOWNERS:30-39: coverage only grows. Code owner review is off, so it enforces nothing yet.
-- scripts/install-hooks.sh:19-27: only skips the old-hooks warning when hooksPath is already .githooks.
-- scripts/backup.sh:16-29: `--due` exits 0, a run by hand exits 1, and the stamp is written only on success. Nothing is deleted.
-- .github/workflows/security.yml:19: .nvmrc exists, matching checks.yml.
-- package.json:3 and CHANGELOG.md: version 202611.7.0 matches the v202611.7 section.
-- tests/ship-tooling.test.mts: spawnSync with argument arrays and no shell, in temporary repos.
+- .githooks/pre-push:13-22: pushes and deletions to main/master still refused; force-push check removed on purpose for feature branches, covered by `--force-with-lease --force-if-includes` at scripts/ship.sh:123.
+- .githooks/pre-commit:11-23: no `set -e`, rc captured; every non-zero exit blocks the commit; output redacted.
+- .github/workflows/pr-review-record.yml:25-39: Dependabot pass needs both PR author and `github.actor` to be dependabot[bot]; conditions are exact complements; HEAD_REF via `env:` and quoted; `set -uo pipefail` with `tee` keeps the exit code; contents: read, persist-credentials false; fetch-depth 2 gives HEAD^1; ship-gate.sh is 100755 at head.
+- .github/workflows/security.yml:19: `node-version-file: .nvmrc`, which exists.
+- .github/CODEOWNERS: coverage grows (/scripts/, /package.json, /netlify.toml, /LAUNCH/reviews/); nothing lost.
+- scripts/ship-gate.sh:35-37: record_path cleans the branch to `[A-Za-z0-9._-]`; no traversal.
+- scripts/ship-gate.sh:39-63: field() takes the first line; Commit must be 40 hex, Critical 1-6 digits with `10#` (no overflow, no octal); HEAD^1 must equal Commit; `--no-renames` exposes deletions; fails closed.
+- scripts/ship-gate.sh:134-197: POLL_JQ is constant and handles a null rollup; timeout and interval must be digits; at most 3 gh errors in a row; head re-checked every poll; failures checked before state; DIRTY/BEHIND/DRAFT die; no-workflows path waits 60s and is unreachable from ship.sh. About 120 gh calls max per wait.
+- scripts/ship-gate.sh:207: record subcommand requires exactly 2 arguments.
+- scripts/ship.sh:61-75: uncommitted changes other than the record are refused (fixed-string match, fails safe on quoted paths).
+- scripts/ship.sh:93-97: after `--review`, a dirty tree or a commit changing more than the record is refused (blind spots in R1).
+- scripts/ship.sh:99-102: gate before the checks is safe; build output is gitignored.
+- scripts/ship.sh:152-168: tests, security-scan and dependency-review still required; merge pinned with `--match-head-commit`; only the shipped branch is deleted.
+- scripts/backup.sh:16-31: `--due` exits 0, by hand exits 1 via warn; `remote update --no-prune` keeps deleted refs regardless of fetch.prune; fetch errors shown; nothing deleted.
+- scripts/install-hooks.sh:12-24: old-hooks warning skipped only when hooksPath is already .githooks.
+- package.json and CHANGELOG.md: 202611.7.0 matches the v202611.7 section.
+- tests/ship-tooling.test.mts: spawnSync with argument arrays, temporary repos, fake gh, no network.
 
 ## Dropped
-- A2, A3, A4: duplicates of R1.
-- B2: duplicate of R3. C2: duplicate of R4. D2: duplicate of R5.
+- edge-3, sens-4: mirror doesn't keep feature-branch history from before a force push. The backup.sh:8 comment only promises deleted refs are kept; feature branches are squash-merged and deleted. Documentation nuance, not a defect.
+- sens-2: CI runs ship-gate.sh from the PR head. Not introduced by this diff; the inline check in the workflow was equally PR-controlled under `pull_request`, and both paths are in CODEOWNERS.
+- Duplicates: sens-1 of R1; edge-1, sens-3 of R2; edge-4 of R4.
 
 ## Not reviewed
-- Runtime behaviour: no CI run observed. The mode of the local ship-gate.sh on disk and `git ls-tree` output were not checked; R1 rests on `git diff --summary`.
-- How GitHub sets mergeStateStatus for a check that has a conclusion but is still IN_PROGRESS (R9).
+- Runtime behaviour: no CI run or real `gh pr merge` observed; gh's refusal on BLOCKED (R2) and gitleaks's fatal exit code (R3) are from documented behaviour, not tested.
+- Whether Claude Code confines path-scoped `Write(...)` or blocks `--upload-pack`/`--output` in `-p` mode (R1), and whether bypass permissions apply to the headless run.
 - Ruleset and repo settings on GitHub; the skipped files listed above.

@@ -67,3 +67,8 @@ next-env.d.ts
 
 # Semgrep rules cache (scripts/security-scan.sh)
 .semgrep-rules/
+
+# Security reports with attack details
+LAUNCH/auth-review.md
+LAUNCH/auth-review-issues.sh
+LAUNCH/security-findings.md

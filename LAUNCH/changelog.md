@@ -39,7 +39,7 @@ Release update since the launch baseline. Full report: `LAUNCH/drift-2026-11-15.
 | `LAUNCH/profile.md` | Survey answers and repo scan (from the intake). |
 | `LAUNCH/name-check.md` | Name and trademark screen. |
 | `LAUNCH/lawyer-questions.md` | Deduplicated questions for counsel. |
-| `LAUNCH/security-findings.md` | Verification of the E1 to E10 security fixes, plus post-E10 review. |
+| `LAUNCH/security-findings.md` (local only, not in the repo) | Verification of the E1 to E10 security fixes, plus post-E10 review. |
 | `LAUNCH/compliance-checklist.md` | 20-check legal checklist. |
 | `LAUNCH/changelog.md` | This file. |
 | `LAUNCH/privacy-law-checklist.md` | 22-row GDPR, UK GDPR, and CCPA checklist. |

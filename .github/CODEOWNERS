@@ -30,9 +30,10 @@
 # CI, hooks and ship scripts
 /.github/                         @shahinpirooz
 /.githooks/                       @shahinpirooz
-/scripts/ship.sh                  @shahinpirooz
-/scripts/ship-gate.sh             @shahinpirooz
-/scripts/security-scan.sh         @shahinpirooz
-/scripts/install-hooks.sh         @shahinpirooz
+/scripts/                         @shahinpirooz
+/package.json                     @shahinpirooz
+/netlify.toml                     @shahinpirooz
 /.semgrepignore                   @shahinpirooz
-/scripts/semgrep-exclude.txt      @shahinpirooz
+
+# Review records read by the ship gate and the pr-review-record check
+/LAUNCH/reviews/                  @shahinpirooz

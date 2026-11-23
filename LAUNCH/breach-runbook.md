@@ -50,7 +50,7 @@ Risk to people is likely: notify the supervisory authority (within 72 hours) and
 ## 5. Recover and learn (within 2 weeks)
 
 - Root cause, the fix, and a commit or change reference for each control added.
-- Update `LAUNCH/security-findings.md` with any new finding.
+- Update `LAUNCH/security-findings.md` (local only, not in the repo) with any new finding.
 - Update this runbook if a step was unclear or missing.
 - Keep the incident log and notices for at least the period required by counsel (default: 5 years, to be confirmed).
 

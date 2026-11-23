@@ -4,6 +4,19 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.7
+
+- `npm run ship -- "Title" --review` runs the PR review in Claude Code without opening it, then ships. It runs only when the branch has no valid review record.
+- The backup keeps branches and tags deleted on GitHub (no longer pruned). `npm run backup` run by hand now fails when the backup fails; the monthly run from ship still only warns.
+- The backup runs when the last one is 30 or more days old. It never prunes, even with fetch.prune set, and shows git's error when a refresh fails.
+- `npm run ship` shows check progress on each poll and finishes when GitHub shows the pull request mergeable, or when every check has passed on two polls in a row. A check that has a result counts as done even if GitHub still shows it running. Any failed check stops the merge, a single failed poll is retried, a required check on main that hasn't started counts as waiting, and the wait gives up after 30 minutes (`SHIP_CHECK_TIMEOUT`) with a message.
+- `npm run ship` checks the review record before the slow checks, and stops on uncommitted changes other than the record unless `--review` is given. With `--review`, ship stops if the review changed anything other than the record. The push uses `--force-if-includes`, so commits pushed to the branch on GitHub aren't overwritten.
+- The review gate counts a deleted file even when git would call it a rename, and reads the first `Commit:` and `Critical:` lines strictly. The pr-review-record check now runs the same gate script.
+- Dependabot pull requests pass the review record check with a note, as long as Dependabot made the last push. Don't use Update branch on GitHub; rebase on main instead.
+- The pre-push hook blocks pushes to main only, so rebased feature branches can be pushed. The pre-commit hook says "gitleaks error" when gitleaks itself fails. Re-running `scripts/install-hooks.sh` no longer warns about its own hooks.
+- The security checks workflow uses the Node version in .nvmrc, like the other checks.
+- CODEOWNERS covers scripts/, package.json, netlify.toml and LAUNCH/reviews/. LAUNCH docs mark links to the reports kept out of the repo as local only.
+
 ## v202611.6
 
 - `npm run ship` refreshes a mirror backup of the repo in ~/Backups once a month, after the merge. `npm run backup` refreshes it now. A failed backup prints a warning and never stops the ship.

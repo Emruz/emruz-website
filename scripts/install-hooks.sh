@@ -3,7 +3,7 @@
 #   scripts/install-hooks.sh
 # Points git at .githooks/, which is versioned, so hook updates arrive with a pull.
 #   pre-commit  gitleaks on staged changes
-#   pre-push    no pushes to main, no force pushes
+#   pre-push    no pushes (or force pushes) to main
 set -eu
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "run inside a git repo" >&2; exit 1; }
 cd "$ROOT"
@@ -16,9 +16,12 @@ if [ -n "$current" ] && [ "$current" != ".githooks" ]; then
   exit 1
 fi
 
-hooks_dir="$(git rev-parse --git-path hooks)"
-old="$(ls "$hooks_dir" 2>/dev/null | grep -v '\.sample$' || true)"
-[ -z "$old" ] || echo "note: git will stop running these hooks in $hooks_dir: $old" >&2
+# Already on: re-running only refreshes the file modes, no warning about other hooks
+if [ "$current" != ".githooks" ]; then
+  hooks_dir="$(git rev-parse --git-path hooks)"
+  old="$(ls "$hooks_dir" 2>/dev/null | grep -v '\.sample$' || true)"
+  [ -z "$old" ] || echo "note: git will stop running these hooks in $hooks_dir: $old" >&2
+fi
 
 chmod +x .githooks/*
 git config --local core.hooksPath .githooks

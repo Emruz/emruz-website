@@ -7,20 +7,27 @@
 #   scripts/ship-gate.sh pr-body       print the review note for the PR body (counts, warnings)
 #   scripts/ship-gate.sh merge <pr>    before gh pr merge: record for the PR head, no Critical,
 #                                      waits for checks and refuses on any failure
+#   scripts/ship-gate.sh record <commit> <branch>
+#                                      check the record only (used by the pr-review-record Action)
 #
 # Record: LAUNCH/reviews/<branch>.md, branch with every character outside
 # [A-Za-z0-9._-] turned into "-". It is read from the commit, not the working
 # tree. It counts when its "Commit:" line is HEAD's parent and HEAD changes
 # only the record (the same rule as the pr-review-record Action).
 #
-# REQUIRED_CHECKS=1 makes merge wait on required checks only (Full or Rules
-# tier with checks required). Default waits on every check.
+# merge polls the PR until GitHub reports it mergeable (mergeStateStatus CLEAN),
+# or until every check is done with none failed on two polls in a row (GitHub can
+# keep a PR BLOCKED for a check that has a conclusion but still shows in progress;
+# gh pr merge then refuses if GitHub really blocks it). A check counts as done once
+# it has a conclusion. Any failed check stops the merge.
+#   SHIP_CHECK_TIMEOUT  seconds to wait for checks (default 1800)
+#   SHIP_CHECK_INTERVAL seconds between polls (default 15)
 set -uo pipefail
 
 REVIEW_DIR=LAUNCH/reviews
 
 die() { echo "ship-gate: $*" >&2; exit 1; }
-usage() { echo "usage: scripts/ship-gate.sh push | pr | pr-body | merge <pr>" >&2; exit 2; }
+usage() { echo "usage: scripts/ship-gate.sh push | pr | pr-body | merge <pr> | record <commit> <branch>" >&2; exit 2; }
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "run inside a git repo"
 cd "$ROOT" || exit 1
@@ -29,8 +36,8 @@ record_path() { # branch -> path
   printf '%s/%s.md' "$REVIEW_DIR" "$(printf '%s' "$1" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g')"
 }
 
-field() { # name, record text on stdin -> value (first match)
-  LC_ALL=C sed -n "s/^$1:[[:space:]]*\([^[:space:]]*\)[[:space:]]*\$/\1/p" | head -n 1
+field() { # name, record text on stdin -> value of the first line starting with "name:"
+  LC_ALL=C sed -n "/^$1:/{s/^$1:[[:space:]]*//;s/[[:space:]]*\$//;p;q;}"
 }
 
 # check_record <commit> <branch>: prints the record path, fails with a reason
@@ -41,15 +48,17 @@ check_record() {
     die "no review record $file in commit ${head:0:12}. Run repo-pr-review and commit the record."
   rec="$(printf '%s\n' "$text" | field Commit)"
   crit="$(printf '%s\n' "$text" | field Critical)"
-  printf '%s' "$rec" | grep -Eq '^[0-9a-f]{40}$' || die "$file: missing or malformed 'Commit:' line"
-  printf '%s' "$crit" | grep -Eq '^[0-9]+$' || die "$file: missing or malformed 'Critical:' line"
+  # The first "Commit:" and "Critical:" lines must be well formed; a later valid line doesn't count
+  printf '%s' "$rec" | LC_ALL=C grep -Eqx '[0-9a-f]{40}' || die "$file: missing or malformed 'Commit:' line"
+  printf '%s' "$crit" | LC_ALL=C grep -Eqx '[0-9]{1,6}' || die "$file: missing or malformed 'Critical:' line"
   parent="$(git rev-parse -q --verify "$head^1" 2>/dev/null)" || parent=""
   [ -n "$parent" ] && [ "$rec" = "$parent" ] ||
     die "$file reviewed ${rec:0:12}, but the commit before ${head:0:12} is ${parent:0:12}. Code changed since the review; run repo-pr-review again."
-  changed="$(git diff --name-only "$parent" "$head")"
+  # --no-renames: a deleted file must show up, even when the record looks like it
+  changed="$(git diff --no-renames --name-only "$parent" "$head")"
   [ "$changed" = "$file" ] ||
     die "the last commit changes more than the record:"$'\n'"$changed"$'\n'"Run repo-pr-review again and commit the record alone."
-  [ "$crit" -eq 0 ] || die "$file has $crit open Critical finding(s). Fix them and run repo-pr-review again."
+  [ "$((10#$crit))" -eq 0 ] || die "$file has $crit open Critical finding(s). Fix them and run repo-pr-review again."
   printf '%s\n' "$file"
 }
 
@@ -105,7 +114,7 @@ cmd_pr_body() {
 }
 
 cmd_merge() {
-  local pr="${1:-}" info head branch state out rc args
+  local pr="${1:-}" info head branch state
   printf '%s' "$pr" | grep -Eq '^[0-9]+$' || usage
   command -v gh >/dev/null 2>&1 || die "gh isn't installed"
   info="$(gh pr view "$pr" --json headRefOid,headRefName,state --jq '[.headRefOid,.headRefName,.state] | @tsv')" ||
@@ -116,21 +125,87 @@ cmd_merge() {
   git cat-file -e "$head^{commit}" 2>/dev/null || die "PR head ${head:0:12} isn't available locally; git fetch origin $branch"
   check_record "$head" "$branch" >/dev/null || exit 1
   echo "ship-gate: review record OK for PR $pr head ${head:0:12}; waiting for checks"
-  args=(--watch)
-  [ "${REQUIRED_CHECKS:-0}" = 1 ] && args+=(--required)
-  out="$(gh pr checks "$pr" "${args[@]}" 2>&1)"; rc=$?
-  printf '%s\n' "$out"
-  if [ "$rc" -ne 0 ]; then
-    if printf '%s' "$out" | grep -q 'no checks reported'; then
-      # Workflows in the PR head but no checks yet means CI hasn't started: don't merge around it.
-      [ -z "$(git ls-tree -r --name-only "$head" -- .github/workflows)" ] ||
-        die "PR $pr has workflows but no checks yet; wait for CI to start and run the merge again"
+  wait_checks "$pr" "$head"
+}
+
+# One line per poll: "STATE <mergeStateStatus> <headRefOid>", then "CHECK <ok|wait|fail> <name>"
+# per check. A check run is done once it has a conclusion (GitHub can leave status
+# in_progress after it finished); a status context is done unless pending.
+POLL_JQ='"STATE \(.mergeStateStatus) \(.headRefOid)",
+  (.statusCheckRollup[]? |
+    if has("context") then
+      "CHECK \(if .state == "SUCCESS" then "ok" elif (.state == "PENDING" or .state == "EXPECTED") then "wait" else "fail" end) \(.context)"
+    else
+      "CHECK \(if (.conclusion // "") == "" then "wait" elif (.conclusion == "SUCCESS" or .conclusion == "NEUTRAL" or .conclusion == "SKIPPED") then "ok" else "fail" end) \(.name)"
+    end)'
+
+# wait_checks <pr> <head>: returns when the PR is mergeable, dies on a failure or the time limit
+wait_checks() {
+  local pr="$1" head="$2" timeout="${SHIP_CHECK_TIMEOUT:-1800}" interval="${SHIP_CHECK_INTERVAL:-15}"
+  local start now elapsed out state oid total passed failed waiting errors=0 settled=0 required missing
+  printf '%s' "$timeout" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_TIMEOUT must be a number of seconds, got: $timeout"
+  printf '%s' "$interval" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_INTERVAL must be a number of seconds, got: $interval"
+  # Required checks from the ruleset on main. One that hasn't reported yet (or never
+  # starts, like a workflow that fails to load) counts as waiting, not as passed.
+  required="$(gh api "repos/{owner}/{repo}/rules/branches/main" \
+    --jq '.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context' 2>/dev/null)" ||
+    { echo "ship-gate: couldn't read the required checks on main; GitHub still enforces them at merge" >&2; required=""; }
+  start="$(date +%s)"
+  while :; do
+    if ! out="$(gh pr view "$pr" --json mergeStateStatus,headRefOid,statusCheckRollup --jq "$POLL_JQ" 2>&1)"; then
+      # A network or API hiccup shouldn't end a long wait; three in a row does
+      errors=$((errors + 1))
+      [ "$errors" -lt 3 ] || die "can't read the checks on PR $pr: $out"
+      echo "ship-gate: couldn't read PR $pr ($errors of 3), trying again" >&2
+      sleep "$interval"; continue
+    fi
+    errors=0
+    read -r _ state oid <<<"$(printf '%s\n' "$out" | grep -m1 '^STATE ')"
+    [ "$oid" = "$head" ] || die "PR $pr head moved to ${oid:0:12} while waiting; the review gate checked ${head:0:12}. Not merging."
+    total="$(printf '%s\n' "$out" | grep -c '^CHECK ' || true)"
+    passed="$(printf '%s\n' "$out" | grep -c '^CHECK ok ' || true)"
+    failed="$(printf '%s\n' "$out" | sed -n 's/^CHECK fail //p')"
+    # Required checks with no entry at all yet
+    missing="$(printf '%s\n' "$required" | grep -v '^$' |
+      grep -vxF -f <(printf '%s\n' "$out" | sed -n 's/^CHECK [a-z]* //p') || true)"
+    waiting="$( { printf '%s\n' "$out" | sed -n 's/^CHECK wait //p'; [ -z "$missing" ] || printf '%s\n' "$missing" | sed 's/$/ (not started)/'; } |
+      paste -sd, - | sed 's/,/, /g')"
+    now="$(date +%s)"; elapsed=$((now - start))
+    printf 'ship-gate: [%dm%02ds] PR %s: %s; checks %s/%s passed%s\n' "$((elapsed / 60))" "$((elapsed % 60))" \
+      "$pr" "$state" "$passed" "$total" "${waiting:+; waiting on: $waiting}"
+    if [ -n "$failed" ]; then
+      printf '%s\n' "$failed" | sed 's/^/  failed: /' >&2
+      die "checks failed on PR $pr; not merging"
+    fi
+    case "$state" in
+      CLEAN)
+        echo "ship-gate: checks passed and PR $pr is mergeable"
+        return 0 ;;
+      DIRTY) die "PR $pr has merge conflicts with main. Rebase the branch on main, push, and ship again." ;;
+      BEHIND) die "PR $pr is behind main and the ruleset needs it up to date. Rebase on main and push (don't use Update branch on GitHub), then ship again." ;;
+      DRAFT) die "PR $pr is a draft. Mark it ready for review, then ship again." ;;
+    esac
+    # Every check done and none failed, but GitHub isn't showing CLEAN: accept on the second poll
+    if [ "$total" -gt 0 ] && [ -z "$waiting" ] && [ "$state" != UNKNOWN ]; then
+      settled=$((settled + 1))
+      if [ "$settled" -ge 2 ]; then
+        echo "ship-gate: all $total checks passed on PR $pr (GitHub shows $state); trying the merge"
+        return 0
+      fi
+    else
+      settled=0
+    fi
+    if [ "$total" -eq 0 ] && [ -z "$(git ls-tree -r --name-only "$head" -- .github/workflows)" ] && [ "$elapsed" -ge 60 ]; then
+      # No workflows in the PR head: no checks will ever start
       echo "ship-gate: WARNING no workflows and no checks on PR $pr; merging on the local review and scan only"
       return 0
     fi
-    die "checks failed or did not finish on PR $pr; not merging"
-  fi
-  echo "ship-gate: checks passed on PR $pr"
+    if [ "$elapsed" -ge "$timeout" ]; then
+      [ "$total" -gt 0 ] || die "no checks started on PR $pr after ${timeout}s; not merging. Check Actions on GitHub, then run npm run ship again."
+      die "gave up after ${timeout}s: PR $pr is $state with ${waiting:-no checks pending}. Check the PR on GitHub; if the merge box is green, run npm run ship again (or raise SHIP_CHECK_TIMEOUT)."
+    fi
+    sleep "$interval"
+  done
 }
 
 case "${1:-}" in
@@ -138,5 +213,6 @@ case "${1:-}" in
   pr) cmd_pr ;;
   pr-body) cmd_pr_body ;;
   merge) shift; cmd_merge "$@" ;;
+  record) shift; [ $# -eq 2 ] || usage; check_record "$1" "$2" >/dev/null && echo "ship-gate: review record OK for ${1:0:12}" ;;
   *) usage ;;
 esac

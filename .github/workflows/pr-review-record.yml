@@ -22,16 +22,16 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
           persist-credentials: false
-      # Dependabot PRs have no review record: pass with a note. They still need the other
+      # Dependabot PRs have no review record: pass with a note, only while Dependabot made the last push. They still need the other
       # required checks, and the merge on GitHub is a person's decision.
       - name: Dependabot PR
-        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
         run: echo "Dependabot PR: no review record needed. Review the dependency change before merging." | tee -a "$GITHUB_STEP_SUMMARY"
       # Same check as the ship gate (scripts/ship-gate.sh record), so the two can't drift.
       # Don't use "Update branch" on GitHub: its merge commit changes more than the record.
       # Rebase on main locally and re-run the review instead.
       - name: Check record
-        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        if: github.event.pull_request.user.login != 'dependabot[bot]' || github.actor != 'dependabot[bot]'
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |

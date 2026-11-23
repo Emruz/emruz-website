@@ -70,6 +70,12 @@ function repo(recordText?: (parent: string) => string): [string, string] {
 
 const gateRecord = (dir: string, head: string) => run('bash', [gate, 'record', head, BRANCH], dir);
 
+// --- Scripts run directly (CI and ship.sh call them by path) keep their execute bit ---
+{
+  const modes = run('git', ['ls-files', '-s', 'scripts/ship-gate.sh', 'scripts/ship.sh', 'scripts/install-hooks.sh', '.githooks/pre-commit', '.githooks/pre-push'], repoRoot).out;
+  for (const line of modes.trim().split('\n')) assert.match(line, /^100755 /, `not executable in git: ${line}`);
+}
+
 // --- Review record ---
 {
   const [dir, head] = repo((p) => record(p));
@@ -86,6 +92,10 @@ const gateRecord = (dir: string, head: string) => run('bash', [gate, 'record', h
 { // Same for Commit:
   const [dir, head] = repo((p) => `Commit: ${p} (old)\nCommit: ${p}\nCritical: 0\n`);
   assert.match(gateRecord(dir, head).out, /malformed 'Commit:'/);
+}
+{ // An oversized count can't wrap around to 0
+  const [dir, head] = repo((p) => record(p, 'Critical: 18446744073709551616'));
+  assert.match(gateRecord(dir, head).out, /malformed 'Critical:'/);
 }
 { // Open Critical findings fail
   const [dir, head] = repo((p) => record(p, 'Critical: 2'));
@@ -188,6 +198,14 @@ const run_ = (name: string, status: string, conclusion = '') => ({ __typename: '
   const r = merge([{ state: 'CLEAN', checks: [], head: 'f'.repeat(40) }]);
   assert.notEqual(r.code, 0);
   assert.match(r.out, /head moved/);
+}
+{ // All checks done but GitHub still shows BLOCKED: merge is tried on the second poll, not after the timeout
+  const r = merge([{ state: 'BLOCKED', checks: [run_('tests', 'COMPLETED', 'SUCCESS'), run_('dependency-review', 'IN_PROGRESS', 'SUCCESS')] }]);
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /all 2 checks passed on PR 7 \(GitHub shows BLOCKED\)/);
+}
+{ // Bad timeout values are refused instead of disabling the limit
+  assert.match(merge([{ state: 'CLEAN', checks: [] }], { SHIP_CHECK_TIMEOUT: '30m' }).out, /SHIP_CHECK_TIMEOUT must be a number/);
 }
 { // Conflicts stop at once
   assert.match(merge([{ state: 'DIRTY', checks: [] }]).out, /merge conflicts/);

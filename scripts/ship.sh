@@ -58,10 +58,10 @@ grep -qE "^## ${release//./\\.}([[:space:]]|$)" CHANGELOG.md 2>/dev/null ||
 echo "CHANGELOG.md has $release."
 
 step "Changes on $branch"
+record="LAUNCH/reviews/$(printf '%s' "$branch" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g').md"
 if [ -n "$(git status --porcelain)" ]; then
   # The review gate needs the last code commit reviewed. Committing unreviewed changes here
   # would only fail at the gate, so refuse them unless --review will review the new commit.
-  record="LAUNCH/reviews/$(printf '%s' "$branch" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g').md"
   others="$(git status --porcelain --untracked-files=all | cut -c4- | grep -vxF "$record" || true)"
   if [ "$REVIEW" = 0 ] && [ -n "$others" ]; then
     git status --short
@@ -83,11 +83,17 @@ git log --oneline origin/main..HEAD
 if [ "$REVIEW" = 1 ] && ! scripts/ship-gate.sh push >/dev/null 2>&1; then
   step "PR review"
   command -v claude >/dev/null || fail "Claude Code isn't installed. Run the PR review yourself, commit its record, then run npm run ship again."
+  before_review="$(git rev-parse HEAD)"
   claude -p "Run the repo-pr-review skill in review mode on the current branch ($branch), then commit the record alone. Don't change any other file." \
     --allowedTools "Agent" "Read" "Grep" "Glob" "Write" \
       "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git rev-parse:*)" \
       "Bash(git merge-base:*)" "Bash(git fetch:*)" "Bash(git branch:*)" "Bash(git add:*)" "Bash(git commit:*)" ||
     fail "The PR review didn't finish. Run it in Claude, commit its record, then run npm run ship again."
+  # The review may only add the record: anything else it changed or committed stops the ship
+  [ -z "$(git status --porcelain)" ] || { git status --short; fail "The PR review left uncommitted changes. Check them, then run npm run ship again."; }
+  reviewed="$(git diff --no-renames --name-only "$before_review" HEAD)"
+  [ "$reviewed" = "$record" ] ||
+    fail "The PR review changed more than $record:"$'\n'"$reviewed"$'\n'"Check those commits before shipping."
 fi
 
 step "Review gate"
@@ -112,8 +118,9 @@ if [ "$SKIP_BUILD" = 0 ]; then
 fi
 
 step "Push"
-# The branch is ours alone, so a rebased branch is force pushed; the pre-push hook only blocks main
-git push --force-with-lease -u origin "$branch"
+# A rebased branch is force pushed; --force-if-includes refuses if GitHub has commits we never saw.
+# The pre-push hook only blocks main
+git push --force-with-lease --force-if-includes -u origin "$branch"
 scripts/ship-gate.sh pr || fail "Review gate failed after push."
 
 step "Pull request"

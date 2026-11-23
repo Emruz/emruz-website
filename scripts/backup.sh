@@ -21,7 +21,9 @@ if [ "$due" = 1 ] && [ -f "$stamp" ] && [ -n "$(find "$stamp" -mtime -30 2>/dev/
 fi
 
 if [ -d "$dir" ]; then
-  git -C "$dir" remote update >/dev/null 2>&1 || warn "refresh of $dir failed. Run npm run backup to retry."
+  # --no-prune: keep refs deleted on GitHub, whatever fetch.prune says
+  out="$(git -C "$dir" remote update --no-prune 2>&1)" ||
+    { printf '%s\n' "$out" >&2; warn "refresh of $dir failed (git output above). Run npm run backup to retry."; }
 else
   mkdir -p "$(dirname "$dir")" || warn "can't create $(dirname "$dir")."
   git clone -q --mirror "$url" "$dir" || warn "mirror clone into $dir failed. Run npm run backup to retry."

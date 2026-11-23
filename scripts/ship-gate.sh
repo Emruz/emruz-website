@@ -15,9 +15,11 @@
 # tree. It counts when its "Commit:" line is HEAD's parent and HEAD changes
 # only the record (the same rule as the pr-review-record Action).
 #
-# merge polls the PR until GitHub reports it mergeable (mergeStateStatus CLEAN).
-# A check counts as done once it has a conclusion, even if GitHub still shows
-# it in progress. Any failed check stops the merge.
+# merge polls the PR until GitHub reports it mergeable (mergeStateStatus CLEAN),
+# or until every check is done with none failed on two polls in a row (GitHub can
+# keep a PR BLOCKED for a check that has a conclusion but still shows in progress;
+# gh pr merge then refuses if GitHub really blocks it). A check counts as done once
+# it has a conclusion. Any failed check stops the merge.
 #   SHIP_CHECK_TIMEOUT  seconds to wait for checks (default 1800)
 #   SHIP_CHECK_INTERVAL seconds between polls (default 15)
 set -uo pipefail
@@ -48,7 +50,7 @@ check_record() {
   crit="$(printf '%s\n' "$text" | field Critical)"
   # The first "Commit:" and "Critical:" lines must be well formed; a later valid line doesn't count
   printf '%s' "$rec" | LC_ALL=C grep -Eqx '[0-9a-f]{40}' || die "$file: missing or malformed 'Commit:' line"
-  printf '%s' "$crit" | LC_ALL=C grep -Eqx '[0-9]+' || die "$file: missing or malformed 'Critical:' line"
+  printf '%s' "$crit" | LC_ALL=C grep -Eqx '[0-9]{1,6}' || die "$file: missing or malformed 'Critical:' line"
   parent="$(git rev-parse -q --verify "$head^1" 2>/dev/null)" || parent=""
   [ -n "$parent" ] && [ "$rec" = "$parent" ] ||
     die "$file reviewed ${rec:0:12}, but the commit before ${head:0:12} is ${parent:0:12}. Code changed since the review; run repo-pr-review again."
@@ -140,11 +142,19 @@ POLL_JQ='"STATE \(.mergeStateStatus) \(.headRefOid)",
 # wait_checks <pr> <head>: returns when the PR is mergeable, dies on a failure or the time limit
 wait_checks() {
   local pr="$1" head="$2" timeout="${SHIP_CHECK_TIMEOUT:-1800}" interval="${SHIP_CHECK_INTERVAL:-15}"
-  local start now elapsed out state oid total passed failed waiting
+  local start now elapsed out state oid total passed failed waiting errors=0 settled=0
+  printf '%s' "$timeout" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_TIMEOUT must be a number of seconds, got: $timeout"
+  printf '%s' "$interval" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_INTERVAL must be a number of seconds, got: $interval"
   start="$(date +%s)"
   while :; do
-    out="$(gh pr view "$pr" --json mergeStateStatus,headRefOid,statusCheckRollup --jq "$POLL_JQ" 2>&1)" ||
-      die "can't read the checks on PR $pr: $out"
+    if ! out="$(gh pr view "$pr" --json mergeStateStatus,headRefOid,statusCheckRollup --jq "$POLL_JQ" 2>&1)"; then
+      # A network or API hiccup shouldn't end a long wait; three in a row does
+      errors=$((errors + 1))
+      [ "$errors" -lt 3 ] || die "can't read the checks on PR $pr: $out"
+      echo "ship-gate: couldn't read PR $pr ($errors of 3), trying again" >&2
+      sleep "$interval"; continue
+    fi
+    errors=0
     read -r _ state oid <<<"$(printf '%s\n' "$out" | grep -m1 '^STATE ')"
     [ "$oid" = "$head" ] || die "PR $pr head moved to ${oid:0:12} while waiting; the review gate checked ${head:0:12}. Not merging."
     total="$(printf '%s\n' "$out" | grep -c '^CHECK ' || true)"
@@ -166,6 +176,16 @@ wait_checks() {
       BEHIND) die "PR $pr is behind main and the ruleset needs it up to date. Rebase on main and push (don't use Update branch on GitHub), then ship again." ;;
       DRAFT) die "PR $pr is a draft. Mark it ready for review, then ship again." ;;
     esac
+    # Every check done and none failed, but GitHub isn't showing CLEAN: accept on the second poll
+    if [ "$total" -gt 0 ] && [ -z "$waiting" ] && [ "$state" != UNKNOWN ]; then
+      settled=$((settled + 1))
+      if [ "$settled" -ge 2 ]; then
+        echo "ship-gate: all $total checks passed on PR $pr (GitHub shows $state); trying the merge"
+        return 0
+      fi
+    else
+      settled=0
+    fi
     if [ "$total" -eq 0 ] && [ -z "$(git ls-tree -r --name-only "$head" -- .github/workflows)" ] && [ "$elapsed" -ge 60 ]; then
       # No workflows in the PR head: no checks will ever start
       echo "ship-gate: WARNING no workflows and no checks on PR $pr; merging on the local review and scan only"

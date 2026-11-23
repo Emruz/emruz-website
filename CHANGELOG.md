@@ -4,6 +4,10 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.6
+
+- `npm run ship` refreshes a mirror backup of the repo in ~/Backups once a month, after the merge. `npm run backup` refreshes it now. A failed backup prints a warning and never stops the ship.
+
 ## v202611.5
 
 - `npm test` runs every test file in tests/ and fails if any fails.

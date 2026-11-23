@@ -1,6 +1,6 @@
 {
   "name": "emruz-website",
-  "version": "202611.5.0",
+  "version": "202611.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
     "local": "bash scripts/local.sh",
     "ship": "bash scripts/ship.sh",
     "bump": "bash scripts/bump.sh",
+    "backup": "bash scripts/backup.sh",
     "preview": "bash scripts/preview.sh",
     "pr": "bash scripts/preview.sh",
     "stripe:preview": "bash scripts/stripe-preview.sh",

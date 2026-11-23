@@ -145,4 +145,8 @@ if ! git diff --quiet "$before" HEAD -- package.json package-lock.json; then
   npm ci --no-fund --no-audit
 fi
 
+step "Backup"
+# Monthly mirror backup outside GitHub; never stops the ship
+scripts/backup.sh --due
+
 printf '\n\033[1;32mShipped. Netlify is deploying main now; database updates run with the deploy.\033[0m\n'

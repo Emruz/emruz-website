@@ -76,6 +76,16 @@ const gateRecord = (dir: string, head: string) => run('bash', [gate, 'record', h
   for (const line of modes.trim().split('\n')) assert.match(line, /^100755 /, `not executable in git: ${line}`);
 }
 
+// --- Workflow files parse (a YAML error turns a required check into a silent no-show) ---
+if (spawnSync('python3', ['-c', 'import yaml']).status === 0) {
+  for (const f of ['checks.yml', 'codeql.yml', 'pr-review-record.yml', 'security.yml']) {
+    const r = run('python3', ['-c', 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))', join(repoRoot, '.github/workflows', f)], repoRoot);
+    assert.equal(r.code, 0, `${f} is not valid YAML: ${r.out}`);
+  }
+} else {
+  console.log('ship-tooling: python3 with PyYAML not found, workflow YAML not checked');
+}
+
 // --- Review record ---
 {
   const [dir, head] = repo((p) => record(p));
@@ -126,6 +136,9 @@ const gateRecord = (dir: string, head: string) => run('bash', [gate, 'record', h
 // --- Waiting for checks (fake gh reads JSON fixtures) ---
 const fakeGh = `#!/bin/sh
 d="$FAKE_GH_DIR"
+case "$1" in
+  api) cat "$d/required.txt" 2>/dev/null; exit 0 ;;
+esac
 case "$1 $2" in
   "auth status") exit 0 ;;
   "issue view") echo "Test issue [OPEN]"; exit 0 ;;
@@ -154,10 +167,11 @@ function ghDir(): string {
 }
 
 type Check = Record<string, string>;
-function merge(polls: { state: string; checks: Check[]; head?: string }[], env: Record<string, string> = {}) {
+function merge(polls: { state: string; checks: Check[]; head?: string }[], env: Record<string, string> = {}, required: string[] = []) {
   const [dir, head] = repo((p) => record(p));
   const gh = ghDir();
   write(gh, 'pr.json', JSON.stringify({ headRefOid: head, headRefName: BRANCH, state: 'OPEN' }));
+  write(gh, 'required.txt', required.map((c) => `${c}\n`).join(''));
   polls.forEach((p, i) => write(gh, `poll-${i + 1}.json`, JSON.stringify({
     mergeStateStatus: p.state, headRefOid: p.head ?? head, statusCheckRollup: p.checks,
   })));
@@ -203,6 +217,11 @@ const run_ = (name: string, status: string, conclusion = '') => ({ __typename: '
   const r = merge([{ state: 'BLOCKED', checks: [run_('tests', 'COMPLETED', 'SUCCESS'), run_('dependency-review', 'IN_PROGRESS', 'SUCCESS')] }]);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /all 2 checks passed on PR 7 \(GitHub shows BLOCKED\)/);
+}
+{ // A required check that never started (e.g. its workflow failed to load) blocks, and is named
+  const r = merge([{ state: 'BLOCKED', checks: [run_('tests', 'COMPLETED', 'SUCCESS')] }], { SHIP_CHECK_TIMEOUT: '0' }, ['tests', 'pr-review-record']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.out, /waiting on: pr-review-record \(not started\)/);
 }
 { // Bad timeout values are refused instead of disabling the limit
   assert.match(merge([{ state: 'CLEAN', checks: [] }], { SHIP_CHECK_TIMEOUT: '30m' }).out, /SHIP_CHECK_TIMEOUT must be a number/);

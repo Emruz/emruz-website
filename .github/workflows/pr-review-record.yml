@@ -26,7 +26,8 @@ jobs:
       # required checks, and the merge on GitHub is a person's decision.
       - name: Dependabot PR
         if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
-        run: echo "Dependabot PR: no review record needed. Review the dependency change before merging." | tee -a "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo "Dependabot PR: no review record needed. Review the dependency change before merging." | tee -a "$GITHUB_STEP_SUMMARY"
       # Same check as the ship gate (scripts/ship-gate.sh record), so the two can't drift.
       # Don't use "Update branch" on GitHub: its merge commit changes more than the record.
       # Rebase on main locally and re-run the review instead.

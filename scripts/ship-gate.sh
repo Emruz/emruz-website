@@ -142,9 +142,14 @@ POLL_JQ='"STATE \(.mergeStateStatus) \(.headRefOid)",
 # wait_checks <pr> <head>: returns when the PR is mergeable, dies on a failure or the time limit
 wait_checks() {
   local pr="$1" head="$2" timeout="${SHIP_CHECK_TIMEOUT:-1800}" interval="${SHIP_CHECK_INTERVAL:-15}"
-  local start now elapsed out state oid total passed failed waiting errors=0 settled=0
+  local start now elapsed out state oid total passed failed waiting errors=0 settled=0 required missing
   printf '%s' "$timeout" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_TIMEOUT must be a number of seconds, got: $timeout"
   printf '%s' "$interval" | grep -Eqx '[0-9]+' || die "SHIP_CHECK_INTERVAL must be a number of seconds, got: $interval"
+  # Required checks from the ruleset on main. One that hasn't reported yet (or never
+  # starts, like a workflow that fails to load) counts as waiting, not as passed.
+  required="$(gh api "repos/{owner}/{repo}/rules/branches/main" \
+    --jq '.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context' 2>/dev/null)" ||
+    { echo "ship-gate: couldn't read the required checks on main; GitHub still enforces them at merge" >&2; required=""; }
   start="$(date +%s)"
   while :; do
     if ! out="$(gh pr view "$pr" --json mergeStateStatus,headRefOid,statusCheckRollup --jq "$POLL_JQ" 2>&1)"; then
@@ -160,7 +165,11 @@ wait_checks() {
     total="$(printf '%s\n' "$out" | grep -c '^CHECK ' || true)"
     passed="$(printf '%s\n' "$out" | grep -c '^CHECK ok ' || true)"
     failed="$(printf '%s\n' "$out" | sed -n 's/^CHECK fail //p')"
-    waiting="$(printf '%s\n' "$out" | sed -n 's/^CHECK wait //p' | paste -sd, - | sed 's/,/, /g')"
+    # Required checks with no entry at all yet
+    missing="$(printf '%s\n' "$required" | grep -v '^$' |
+      grep -vxF -f <(printf '%s\n' "$out" | sed -n 's/^CHECK [a-z]* //p') || true)"
+    waiting="$( { printf '%s\n' "$out" | sed -n 's/^CHECK wait //p'; [ -z "$missing" ] || printf '%s\n' "$missing" | sed 's/$/ (not started)/'; } |
+      paste -sd, - | sed 's/,/, /g')"
     now="$(date +%s)"; elapsed=$((now - start))
     printf 'ship-gate: [%dm%02ds] PR %s: %s; checks %s/%s passed%s\n' "$((elapsed / 60))" "$((elapsed % 60))" \
       "$pr" "$state" "$passed" "$total" "${waiting:+; waiting on: $waiting}"

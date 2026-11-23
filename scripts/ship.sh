@@ -128,7 +128,8 @@ done
 REQUIRED_CHECKS=1 scripts/ship-gate.sh merge "$pr" || fail "Review gate or a required check failed. Fix it, then run npm run ship again."
 
 step "Merge"
-gh pr merge "$pr" --squash --delete-branch
+# Merge only the commit the gate checked; a later push makes this fail instead of merging unreviewed code
+gh pr merge "$pr" --squash --delete-branch --match-head-commit "$(git rev-parse HEAD)"
 [ "$(gh pr view "$pr" --json state --jq .state)" = "MERGED" ] || fail "Pull request #$pr did not merge. Check it on GitHub."
 
 step "Update main locally"

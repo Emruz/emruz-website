@@ -36,7 +36,7 @@ Still open:
 - **Counsel review:** the terms, refund, and governing law still need review (lawyer questions 5 and 7).
 - **Vendor agreements:** Netlify, Stripe, and Resend DPAs still need checking in each dashboard (`LAUNCH/vendors.md`).
 - **Font licence:** EspecialKay sets the wordmark on every page, and no licence is in the repo (lawyer question 12).
-- **Security items:** N3 (Origin check on cookie-authenticated API routes) and N4 (contact endpoint) are open. N2 and N5 need a check (`LAUNCH/security-findings.md`).
+- **Security items:** N3 (Origin check on cookie-authenticated API routes) and N4 (contact endpoint) are open. N2 and N5 need a check (`LAUNCH/security-findings.md` (local only, not in the repo)).
 - **Production checks:** the admin lock, and migrations 015 and 016 on the live database.
 - **Desktop app:** ship the update that honours the `perpetual` flag (the app prompt in `LAUNCH/lifetime-licence-fix.md`).
 
@@ -59,7 +59,7 @@ Still open:
 2. **Contract terms are unconfirmed.** The entity is a sole proprietor name set in code, not confirmed by the owner. The 14-day refund rule is not confirmed. The Lifetime wording differs between the pricing page and the terms. The terms are the buyer's contract, so these need an answer before sales. (`LAUNCH/profile.md`, `LAUNCH/compliance-checklist.md` #4, #20)
 3. **GDPR representative and client-data role.** Motiv is sold to EU and UK customers with no EU or UK establishment, so an Art. 27 representative is likely required. For assessment clients, Emruz may be a processor for uploaded evidence, which may hold personal data. (`LAUNCH/privacy-law-checklist.md` #6, #8; `LAUNCH/ropa.md` activity 7)
 4. **Vendor agreements are unverified.** No signed DPA or transfer mechanism for Netlify, Stripe, or Resend could be confirmed from the repo. (`LAUNCH/vendors.md`)
-5. **Motiv desktop app is unreviewed.** It is the largest surface outside this repo: signing, notarisation, update signing, and desktop hardening are not verified. Within the site, the open security items are Low: N3 (no Origin check on cookie-authenticated API routes, defence in depth) and N4 (public contact endpoint, rate limited). (`LAUNCH/security-findings.md`, `LAUNCH/prelaunch-checklist.md` #25, #27, #28)
+5. **Motiv desktop app is unreviewed.** It is the largest surface outside this repo: signing, notarisation, update signing, and desktop hardening are not verified. Within the site, the open security items are Low: N3 (no Origin check on cookie-authenticated API routes, defence in depth) and N4 (public contact endpoint, rate limited). (`LAUNCH/security-findings.md` (local only, not in the repo), `LAUNCH/prelaunch-checklist.md` #25, #27, #28)
 
 ## Open security findings
 
@@ -100,7 +100,7 @@ See [`LAUNCH/lawyer-questions.md`](lawyer-questions.md). 15 items, grouped by to
 
 - Changelog: [`LAUNCH/changelog.md`](changelog.md)
 - Profile and survey: [`LAUNCH/profile.md`](profile.md)
-- Security: [`LAUNCH/security-findings.md`](security-findings.md)
+- Security: `LAUNCH/security-findings.md` (local only, not in the repo)
 - Legal and privacy: [`LAUNCH/compliance-checklist.md`](compliance-checklist.md), [`LAUNCH/privacy-law-checklist.md`](privacy-law-checklist.md), [`LAUNCH/ropa.md`](ropa.md), [`LAUNCH/vendors.md`](vendors.md), [`LAUNCH/breach-runbook.md`](breach-runbook.md)
 - Pre-launch: [`LAUNCH/prelaunch-checklist.md`](prelaunch-checklist.md)
 - Licences: [`LAUNCH/license-checklist.md`](license-checklist.md), [`LAUNCH/sbom.json`](sbom.json), [`LAUNCH/third-party-notices.md`](third-party-notices.md)

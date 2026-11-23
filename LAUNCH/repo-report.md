@@ -11,7 +11,7 @@ Run 2026-11-21 by repo-kit (from launch-kit, release update, fix mode) on branch
 |---|---|---|---|---|---|---|
 | repo-rules-audit | Run | 4 | 1 | 3 | 0 | 3 |
 | repo-ci-checks | Run | 4 | 7 (CodeQL this run, 6 on 2026-11-22 UTC) | 0 | 0 | 0 |
-| repo-pr-review | Install mode: gate, hooks and record Action installed and proved in a throwaway clone. Hooks not yet on in your checkout | | | | | |
+| repo-pr-review | Install mode: gate, hooks and record Action installed and proved in a throwaway clone. Hooks on in the owner checkout (core.hooksPath .githooks); pre-commit needs gitleaks wherever commits are made | | | | | |
 
 Details: LAUNCH/repo-rules.md, LAUNCH/repo-ci.md, LAUNCH/security-scan.md (passed).
 

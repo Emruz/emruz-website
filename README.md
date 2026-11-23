@@ -38,9 +38,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Git hooks and review gate
 
 After cloning, turn on the git hooks once: `scripts/install-hooks.sh`
-(gitleaks on commit; no pushes to main, no force pushes). Needs gitleaks: `brew install gitleaks`.
+(gitleaks on commit; no pushes to main). Feature branches can be force pushed after a rebase. Needs gitleaks: `brew install gitleaks`.
 
 `npm run ship` needs a committed PR review record for the branch head (`LAUNCH/reviews/<branch>.md`, from repo-pr-review) with no Critical findings. Add `--review` to run the review in Claude Code first (`claude -p`, no interactive session). Rollbacks go through a revert branch and a pull request; direct pushes to main are blocked.
+
+After opening the pull request, ship polls it every 15 seconds and prints the check progress. It merges when GitHub shows the pull request mergeable, stops on any failed check, and gives up after 30 minutes. `SHIP_CHECK_TIMEOUT` (seconds) and `SHIP_CHECK_INTERVAL` change these. Don't use Update branch on GitHub: rebase on main and run the review again.
 
 ## Tests
 

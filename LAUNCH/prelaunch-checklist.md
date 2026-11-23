@@ -1,6 +1,6 @@
 # App pre-launch checklist (30 checks)
 
-Run 2026-11-14 on branch `launch-audit`. Scope: the web app in this repo (emruz.com, accounts, Stripe, Netlify) and the Motiv licensing service. The Motiv desktop app is a separate repo and was not reviewed. Security rows cite `LAUNCH/security-findings.md` (E1 to E10, N1 to N6, or section 3) and were not re-audited here.
+Run 2026-11-14 on branch `launch-audit`. Scope: the web app in this repo (emruz.com, accounts, Stripe, Netlify) and the Motiv licensing service. The Motiv desktop app is a separate repo and was not reviewed. Security rows cite `LAUNCH/security-findings.md` (local only, not in the repo) (E1 to E10, N1 to N6, or section 3) and were not re-audited here.
 
 Status: PASS, FIXED, OPEN (someone must act; exact steps given), N/A (reason given). No code fixes were needed in this run: every open item needs a feature decision, a dashboard, or an account.
 

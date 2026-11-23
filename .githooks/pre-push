@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
-# pre-push from repo-pr-review: no pushes to the protected branches, no force pushes.
-# Changes reach main only through a pull request merged on GitHub.
-# Turned on by scripts/install-hooks.sh.
+# pre-push from repo-pr-review: no pushes to the protected branches (which also
+# blocks force pushes and deletion there). Changes reach main only through a pull
+# request merged on GitHub. Feature branches can be force pushed, so a stacked
+# branch rebased after a squash merge can still be shipped (ship.sh uses
+# --force-with-lease). Turned on by scripts/install-hooks.sh.
 #
 # Git passes one line per ref on stdin:
 #   <local ref> <local sha> <remote ref> <remote sha>
@@ -17,16 +19,6 @@ while read -r local_ref local_sha remote_ref remote_sha; do
       fail=1
     fi
   done
-  # New branch or deletion: nothing to overwrite.
-  case "$remote_sha" in *[!0]*) ;; *) continue ;; esac
-  case "$local_sha" in *[!0]*) ;; *) continue ;; esac
-  if ! git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
-    echo "pre-push: $branch on the remote has commits you don't have locally. Pull first; force pushes are blocked." >&2
-    fail=1
-  elif ! git merge-base --is-ancestor "$remote_sha" "$local_sha"; then
-    echo "pre-push: refusing force push to $branch: it would drop commits on the remote. Pull and merge, or push a new branch." >&2
-    fail=1
-  fi
 done
 
 exit "$fail"

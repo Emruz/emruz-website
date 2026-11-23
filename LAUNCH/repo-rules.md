@@ -43,4 +43,4 @@ None apply: public repo (Full tier on Free), one person with push access. Stayin
 
 ## Verdict
 
-Enforced on GitHub: PR required on main, no force push or deletion, five required checks. Enforced locally once hooks are on: gitleaks on commit, no pushes to main, no force pushes, the review gate in ship.sh. Open: secret scanning and push protection, Dependabot security updates, tokens and backup, three new checks not yet required.
+Enforced on GitHub: PR required on main, no force push or deletion, five required checks. Enforced locally once hooks are on: gitleaks on commit, no pushes to main, the review gate in ship.sh. Open: secret scanning and push protection, Dependabot security updates, tokens and backup, three new checks not yet required.

@@ -7,8 +7,8 @@
 #   npm run ship -- "Title" --skip-scan                    (skip the local security scan; noted on the PR)
 #   npm run ship -- "Title" --review                       (run the PR review in Claude Code first if there's no record)
 #
-# Steps: commit any changes, check (types, lint, tests, security scan, build), push, open or reuse the
-# pull request, wait for the checks, squash and merge (which deploys on Netlify),
+# Steps: commit any changes, review gate, check (types, lint, tests, security scan, build), push,
+# open or reuse the pull request, wait until GitHub shows it mergeable, squash and merge (which deploys on Netlify),
 # delete the branch, then bring main up to date locally.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -59,6 +59,14 @@ echo "CHANGELOG.md has $release."
 
 step "Changes on $branch"
 if [ -n "$(git status --porcelain)" ]; then
+  # The review gate needs the last code commit reviewed. Committing unreviewed changes here
+  # would only fail at the gate, so refuse them unless --review will review the new commit.
+  record="LAUNCH/reviews/$(printf '%s' "$branch" | LC_ALL=C sed 's/[^A-Za-z0-9._-]/-/g').md"
+  others="$(git status --porcelain --untracked-files=all | cut -c4- | grep -vxF "$record" || true)"
+  if [ "$REVIEW" = 0 ] && [ -n "$others" ]; then
+    git status --short
+    fail "Uncommitted changes besides the review record. Commit them, run the PR review and commit its record, then run npm run ship again (or add --review to review them here)."
+  fi
   git status --short
   [ -n "$TITLE" ] || fail "There are uncommitted changes. Give a title: npm run ship -- \"What changed\""
   git add -A
@@ -70,6 +78,22 @@ ahead="$(git rev-list --count origin/main..HEAD)"
 [ "$ahead" -gt 0 ] || fail "Nothing to ship: $branch has no commits that are not on main."
 git log --oneline origin/main..HEAD
 [ -n "$TITLE" ] || TITLE="$(git log -1 --pretty=%s)"
+
+# Review before the checks, so a missing or stale record stops the ship before the slow steps
+if [ "$REVIEW" = 1 ] && ! scripts/ship-gate.sh push >/dev/null 2>&1; then
+  step "PR review"
+  command -v claude >/dev/null || fail "Claude Code isn't installed. Run the PR review yourself, commit its record, then run npm run ship again."
+  claude -p "Run the repo-pr-review skill in review mode on the current branch ($branch), then commit the record alone. Don't change any other file." \
+    --allowedTools "Agent" "Read" "Grep" "Glob" "Write" \
+      "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git rev-parse:*)" \
+      "Bash(git merge-base:*)" "Bash(git fetch:*)" "Bash(git branch:*)" "Bash(git add:*)" "Bash(git commit:*)" ||
+    fail "The PR review didn't finish. Run it in Claude, commit its record, then run npm run ship again."
+fi
+
+step "Review gate"
+# Needs a committed review record for HEAD (repo-pr-review), with no Critical findings
+scripts/ship-gate.sh push || fail "No valid review record for this commit. Run the PR review, commit its record, then run npm run ship again."
+REVIEW_NOTE="$(scripts/ship-gate.sh pr-body)"
 
 step "Checks"
 npx tsc --noEmit
@@ -87,23 +111,8 @@ if [ "$SKIP_BUILD" = 0 ]; then
   echo "Build passed."
 fi
 
-if [ "$REVIEW" = 1 ] && ! scripts/ship-gate.sh push >/dev/null 2>&1; then
-  step "PR review"
-  command -v claude >/dev/null || fail "Claude Code isn't installed. Run the PR review yourself, commit its record, then run npm run ship again."
-  claude -p "Run the repo-pr-review skill in review mode on the current branch ($branch), then commit the record alone. Don't change any other file." \
-    --allowedTools "Agent" "Read" "Grep" "Glob" "Write" \
-      "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git rev-parse:*)" \
-      "Bash(git merge-base:*)" "Bash(git fetch:*)" "Bash(git branch:*)" "Bash(git add:*)" "Bash(git commit:*)" ||
-    fail "The PR review didn't finish. Run it in Claude, commit its record, then run npm run ship again."
-fi
-
-step "Review gate"
-# Needs a committed review record for HEAD (repo-pr-review), with no Critical findings
-scripts/ship-gate.sh push || fail "No valid review record for this commit. Run the PR review, commit its record, then run npm run ship again."
-REVIEW_NOTE="$(scripts/ship-gate.sh pr-body)"
-
 step "Push"
-# The branch is ours alone; the pre-push hook blocks pushes that would drop commits on GitHub
+# The branch is ours alone, so a rebased branch is force pushed; the pre-push hook only blocks main
 git push --force-with-lease -u origin "$branch"
 scripts/ship-gate.sh pr || fail "Review gate failed after push."
 
@@ -138,7 +147,7 @@ for c in tests security-scan dependency-review; do
   printf '%s\n' "$required" | grep -qx "$c" ||
     fail "\"$c\" is not a required check on main. Add it to the ruleset (LAUNCH/repo-ci.md), then run npm run ship again."
 done
-REQUIRED_CHECKS=1 scripts/ship-gate.sh merge "$pr" || fail "Review gate or a required check failed. Fix it, then run npm run ship again."
+scripts/ship-gate.sh merge "$pr" || fail "Review gate or a required check failed. Fix it, then run npm run ship again."
 
 step "Merge"
 # Merge only the commit the gate checked; a later push makes this fail instead of merging unreviewed code

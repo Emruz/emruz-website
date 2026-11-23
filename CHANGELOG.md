@@ -4,6 +4,12 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.7
+
+- `npm run ship -- "Title" --review` runs the PR review in Claude Code without opening it, then ships. It runs only when the branch has no valid review record.
+- The backup keeps branches and tags deleted on GitHub (no longer pruned). `npm run backup` run by hand now fails when the backup fails; the monthly run from ship still only warns.
+- The backup runs when the last one is 30 or more days old.
+
 ## v202611.6
 
 - `npm run ship` refreshes a mirror backup of the repo in ~/Backups once a month, after the merge. `npm run backup` refreshes it now. A failed backup prints a warning and never stops the ship.

@@ -40,7 +40,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 After cloning, turn on the git hooks once: `scripts/install-hooks.sh`
 (gitleaks on commit; no pushes to main, no force pushes). Needs gitleaks: `brew install gitleaks`.
 
-`npm run ship` needs a committed PR review record for the branch head (`LAUNCH/reviews/<branch>.md`, from repo-pr-review) with no Critical findings. Rollbacks go through a revert branch and a pull request; direct pushes to main are blocked.
+`npm run ship` needs a committed PR review record for the branch head (`LAUNCH/reviews/<branch>.md`, from repo-pr-review) with no Critical findings. Add `--review` to run the review in Claude Code first (`claude -p`, no interactive session). Rollbacks go through a revert branch and a pull request; direct pushes to main are blocked.
 
 ## Tests
 

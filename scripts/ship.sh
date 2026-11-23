@@ -5,6 +5,7 @@
 #   npm run ship -- "Title" --issue 42                     (link an issue; usually found automatically)
 #   npm run ship -- "Title" --no-issue                     (no issue, don't ask)
 #   npm run ship -- "Title" --skip-scan                    (skip the local security scan; noted on the PR)
+#   npm run ship -- "Title" --review                       (run the PR review in Claude Code first if there's no record)
 #
 # Steps: commit any changes, check (types, lint, tests, security scan, build), push, open or reuse the
 # pull request, wait for the checks, squash and merge (which deploys on Netlify),
@@ -22,6 +23,7 @@ BRANCH_ARG=""
 ISSUE_ARG=""
 SKIP_BUILD=0
 SCAN=1
+REVIEW=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --branch) BRANCH_ARG="${2:-}"; shift 2 ;;
@@ -29,6 +31,7 @@ while [ $# -gt 0 ]; do
     --no-issue) ISSUE_ARG="none"; shift ;;
     --skip-build) SKIP_BUILD=1; shift ;;
     --skip-scan) SCAN=0; shift ;;
+    --review) REVIEW=1; shift ;;
     -*) fail "Unknown option $1" ;;
     *) TITLE="$1"; shift ;;
   esac
@@ -82,6 +85,16 @@ fi
 if [ "$SKIP_BUILD" = 0 ]; then
   npm run -s build >/tmp/emruz-build.log 2>&1 || { tail -40 /tmp/emruz-build.log; fail "Build failed (full log: /tmp/emruz-build.log)"; }
   echo "Build passed."
+fi
+
+if [ "$REVIEW" = 1 ] && ! scripts/ship-gate.sh push >/dev/null 2>&1; then
+  step "PR review"
+  command -v claude >/dev/null || fail "Claude Code isn't installed. Run the PR review yourself, commit its record, then run npm run ship again."
+  claude -p "Run the repo-pr-review skill in review mode on the current branch ($branch), then commit the record alone. Don't change any other file." \
+    --allowedTools "Agent" "Read" "Grep" "Glob" "Write" \
+      "Bash(git status:*)" "Bash(git diff:*)" "Bash(git log:*)" "Bash(git show:*)" "Bash(git rev-parse:*)" \
+      "Bash(git merge-base:*)" "Bash(git fetch:*)" "Bash(git branch:*)" "Bash(git add:*)" "Bash(git commit:*)" ||
+    fail "The PR review didn't finish. Run it in Claude, commit its record, then run npm run ship again."
 fi
 
 step "Review gate"

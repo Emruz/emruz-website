@@ -1,6 +1,6 @@
 {
   "name": "emruz-website",
-  "version": "202611.6.0",
+  "version": "202611.7.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

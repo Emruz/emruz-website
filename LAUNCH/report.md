@@ -4,6 +4,24 @@ Run by /launch-kit on branch `launch-audit`, 2026-11-14. Base commit `4353b05`; 
 
 Changelog: [`LAUNCH/changelog.md`](changelog.md)
 
+## Release update (2026-11-21)
+
+Run by /launch-kit on branch `launch-audit`: release update, fix mode. Kits run: compliance-drift-check, repo-kit. Others skipped (no full re-audit due).
+
+| Kit | Result |
+|---|---|
+| compliance-drift-check | 8 changes: 5 pass, 1 fixed (GitHub in vendors.md), 2 open. LAUNCH/drift-2026-11-21.md |
+| repo-kit | Full tier, Free plan. Rules: 4 pass, 1 fixed, 3 fail, 3 owner to confirm. CI: scan passed, CodeQL added. PR gate and hooks installed. LAUNCH/repo-report.md |
+
+Top risks now:
+1. Partners: privacy policy and ROPA don't cover partner staff, invites, or consent recorded on a customer's behalf (lawyer question 16).
+2. Secret scanning and push protection are off on GitHub (free on this public repo).
+3. GitHub (Motiv crash reports) isn't in the emruz.com privacy vendor table; DPA unconfirmed.
+4. No backup or mirror of the repo.
+5. CodeQL and the PR review record run but aren't required checks yet.
+
+Owner to-dos: the commands in LAUNCH/repo-report.md, then run `scripts/install-hooks.sh`. Baseline tag not moved (drift items open).
+
 ## Status update (2026-11-15)
 
 The launch audit's code fixes are on `main`, along with the Motiv changes that followed. Some items below were decided after this report was written:

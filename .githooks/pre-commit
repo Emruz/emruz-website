@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+# pre-commit from repo-pr-review: gitleaks on the staged changes.
+# A finding, or gitleaks missing, stops the commit.
+# Reviewed false positives go in .gitleaksignore (fingerprint) with a reason
+# comment, as repo-ci-checks requires.
+# Needs gitleaks 8.19 or later (the "git" command). Turned on by scripts/install-hooks.sh.
+command -v gitleaks >/dev/null 2>&1 || {
+  echo "pre-commit: gitleaks isn't installed, so staged changes can't be scanned for secrets." >&2
+  echo "  macOS: brew install gitleaks   Linux: https://github.com/gitleaks/gitleaks/releases" >&2
+  exit 1
+}
+gitleaks git --pre-commit --staged --redact --no-banner --log-level error --verbose --exit-code 1 || {
+  echo "pre-commit: gitleaks found a possible secret in the staged changes (file, line and rule above; the secret is redacted). Commit stopped." >&2
+  echo "  Remove it and rotate it if it was real. A reviewed false positive goes in .gitleaksignore with a reason." >&2
+  exit 1
+}

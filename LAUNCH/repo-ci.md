@@ -16,14 +16,14 @@ Tier: **Full** (public repo, from LAUNCH/repo-rules.md). Stack: Next.js, npm (pa
 | CI tests | Fixed | `tests` job: tsc, lint, npm test (the build runs locally and on Netlify) |
 | CI scan | Fixed | `security-scan` job runs the same script |
 | Dependency review | Fixed | `dependency-review` job on PRs, fails at high |
-| CodeQL | Fail | Not added (available free on this public repo) |
+| CodeQL | Fixed | codeql.yml added 2026-11-21 (javascript-typescript, actions), build-mode none, actions pinned to SHAs. Require `codeql (javascript-typescript)` and `codeql (actions)` after its first green run |
 | Workflow hygiene | Fixed | security.yml actions were on tags (`@v7`); now pinned to SHAs. contents: read, no pull_request_target |
 
 The older security.yml (`npm audit and lint`, `Secret scan`) overlaps checks.yml. Kept, not removed.
 
 ## Last scan
 
-All checks passed on feature/security-scan, 2026-11-22: semgrep ok, gitleaks ok, npm-audit ok, exceptions ok. Also passed with `CI=1`. Full report: LAUNCH/security-scan.md.
+All checks passed on launch-audit, 2026-11-21 (launch-kit release update): semgrep ok, gitleaks ok, npm-audit ok, exceptions ok, clippy and cargo-audit n/a. Run on Linux with semgrep and gitleaks 8.30.1 installed for the run. Full report: LAUNCH/security-scan.md.
 
 ## Findings triaged
 

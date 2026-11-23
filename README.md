@@ -35,6 +35,13 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Git hooks and review gate
+
+After cloning, turn on the git hooks once: `scripts/install-hooks.sh`
+(gitleaks on commit; no pushes to main, no force pushes). Needs gitleaks: `brew install gitleaks`.
+
+`npm run ship` needs a committed PR review record for the branch head (`LAUNCH/reviews/<branch>.md`, from repo-pr-review) with no Critical findings. Rollbacks go through a revert branch and a pull request; direct pushes to main are blocked.
+
 ## Tests
 
 Run every test file in `tests/` with `npm test`. It exits non-zero if any file fails. `npm run ship`, `npm run preview` and `npm run local` run it after lint (`npm run local -- --fast` skips it), and CI runs it on every pull request. New test files named `tests/*.test.mts` are picked up automatically.

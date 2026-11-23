@@ -64,6 +64,18 @@
           {
             "context": "dependency-review",
             "integration_id": 15368
+          },
+          {
+            "context": "codeql (javascript-typescript)",
+            "integration_id": 15368
+          },
+          {
+            "context": "codeql (actions)",
+            "integration_id": 15368
+          },
+          {
+            "context": "pr-review-record",
+            "integration_id": 15368
           }
         ]
       }

@@ -1,0 +1,38 @@
+# Sensitive paths (repo-rules-audit). Solo repo: code owner review stays off in
+# the ruleset until a second person gets push access, then turn it on.
+
+# Auth and sessions
+/src/app/auth/                    @shahinpirooz
+/src/lib/server/session.ts        @shahinpirooz
+/src/lib/server/oauth.ts          @shahinpirooz
+/src/lib/server/accounts.ts       @shahinpirooz
+/src/lib/server/partners.ts       @shahinpirooz
+/src/lib/server/invites.ts        @shahinpirooz
+/src/app/admin/                   @shahinpirooz
+
+# Payments and licensing
+/src/app/api/stripe/              @shahinpirooz
+/src/lib/server/stripe.ts         @shahinpirooz
+/src/lib/server/licensing.ts      @shahinpirooz
+/src/lib/server/lease.ts          @shahinpirooz
+/src/lib/server/revocation.ts     @shahinpirooz
+/src/app/api/motiv/               @shahinpirooz
+
+# Data deletion and storage
+/netlify/functions/purge-deleted.mts  @shahinpirooz
+/src/app/account/actions.ts       @shahinpirooz
+/src/app/api/workbench/evidence/  @shahinpirooz
+/src/lib/server/filetype.ts       @shahinpirooz
+
+# Database migrations
+/netlify/database/migrations/     @shahinpirooz
+
+# CI, hooks and ship scripts
+/.github/                         @shahinpirooz
+/.githooks/                       @shahinpirooz
+/scripts/ship.sh                  @shahinpirooz
+/scripts/ship-gate.sh             @shahinpirooz
+/scripts/security-scan.sh         @shahinpirooz
+/scripts/install-hooks.sh         @shahinpirooz
+/.semgrepignore                   @shahinpirooz
+/scripts/semgrep-exclude.txt      @shahinpirooz

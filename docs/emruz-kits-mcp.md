@@ -32,6 +32,23 @@ The site follows the newest published GitHub Release of `SKILLS_REPO` (drafts an
 
 To hold the site at one release (for example to back out a bad release), set `SKILLS_REF` to its tag in Netlify and redeploy. Remove it to follow releases again.
 
+## Sales (#68)
+
+`/kits` sells the Release, Founder and Marketing Kits and an all-kits bundle. Checkout needs a signed-in account, because the kit is used through that account's MCP sign-in.
+
+| Plan | Stripe lookup key | Access |
+|---|---|---|
+| One-time | `kits_<pack>_once` | Held at the release current at checkout (`through_ref` = that tag) |
+| Upgrade | `kits_<pack>_upgrade` | Only for owners of an earlier release of that pack; adds a row held at the latest release |
+| Monthly, annual | `kits_<pack>_month`, `kits_<pack>_year` | Every release while the subscription lasts (`through_ref` empty) |
+| Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or `KITS_LIFETIME_UNTIL`) |
+
+`<pack>` is `release`, `founder`, `marketing` or `all`. Prices are found by lookup key, so there are no price environment variables; the amounts shown on `/kits` live in `src/content/kits.ts` and must match Stripe. Each product has tax code `txcd_10103001` (SaaS, business use). Promotion codes are allowed except on upgrades and lifetime.
+
+The Stripe webhook adds a `kit_entitlements` row (source `purchase`, with its kind and Stripe IDs) on `checkout.session.completed`. A subscription that Stripe ends (canceled, unpaid, incomplete_expired) revokes its row; past due keeps access while Stripe retries. A refund or lost dispute revokes the row it paid for and cancels its subscription. Subscribers open the Customer Portal from `/motiv/account#kits`.
+
+Create the prices in a sandbox (or live) with the Stripe CLI, one product per pack with metadata `product=kits`, `pack=<pack>`, and the lookup keys above.
+
 ## Environment
 
 | Variable | Notes |
@@ -41,6 +58,8 @@ To hold the site at one release (for example to back out a bad release), set `SK
 | `SKILLS_REPO` | `Emruz/emruz-kits` |
 | `SKILLS_TOKEN` | Fine-grained token, that repo only, Contents read-only, with an expiry. Secret. Renew before it expires. |
 | `SKILLS_REF` | Optional hold, see above |
+| `KITS_SALES_OPEN` | `true` shows buy buttons on `/kits` |
+| `KITS_LIFETIME_UNTIL` | Optional. Last day of the founding lifetime offer, `YYYY-MM-DD`; default 2027-12-31. A past date ends the offer |
 
 ## Rate limits
 
@@ -52,5 +71,7 @@ Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per 
 - Claude Code: `claude mcp add --transport http emruz-kits https://emruz.com/api/mcp`, then `/mcp` to sign in.
 
 ## Data
+
+Migration 022 adds `kind` and the Stripe checkout, payment intent, subscription and customer IDs to `kit_entitlements`.
 
 Migration 021: `oauth_clients`, `oauth_grants`, `oauth_codes`, `oauth_refresh_tokens`, `kit_entitlements`, `mcp_audit`. The daily purge function deletes expired codes and refresh tokens, grants revoked over a year ago, and audit rows over a year old.

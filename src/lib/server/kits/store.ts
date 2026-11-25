@@ -66,10 +66,27 @@ export const oauthStore: OAuthStore = {
 };
 
 /** Active entitlements, read fresh on every MCP call. */
-export async function entitlementsFor(accountId: string): Promise<Entitlement[]> {
-  const rows = await db()<{ pack: string; through_ref: string | null }[]>`
-    select pack, through_ref from kit_entitlements where account_id = ${accountId} and revoked_at is null`;
-  return rows.map((r) => ({ pack: r.pack, throughRef: r.through_ref }));
+export async function entitlementsFor(accountId: string): Promise<(Entitlement & { kind: OwnedKit['kind'] })[]> {
+  const rows = await db()<{ pack: string; through_ref: string | null; kind: OwnedKit['kind'] }[]>`
+    select pack, through_ref, kind from kit_entitlements where account_id = ${accountId} and revoked_at is null`;
+  return rows.map((r) => ({ pack: r.pack, throughRef: r.through_ref, kind: r.kind }));
+}
+
+export interface OwnedKit {
+  id: string;
+  pack: string;
+  throughRef: string | null;
+  kind: 'once' | 'upgrade' | 'subscription' | 'lifetime' | null;
+  /** A Stripe customer, so billing can be managed in the Customer Portal. */
+  billing: boolean;
+}
+
+/** The account's active kits, for the account page (#68). */
+export async function ownedKits(accountId: string): Promise<OwnedKit[]> {
+  const rows = await db()<{ id: string; pack: string; through_ref: string | null; kind: OwnedKit['kind']; stripe_customer_id: string | null }[]>`
+    select id, pack, through_ref, kind, stripe_customer_id from kit_entitlements
+    where account_id = ${accountId} and revoked_at is null order by granted_at`;
+  return rows.map((r) => ({ id: r.id, pack: r.pack, throughRef: r.through_ref, kind: r.kind, billing: r.kind === 'subscription' && !!r.stripe_customer_id }));
 }
 
 export interface ConnectedApp {

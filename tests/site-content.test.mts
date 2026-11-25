@@ -58,4 +58,9 @@ assert.equal(MANAGED_SECURITY_CARD.note, POWERED_BY);
 assert.equal(MANAGED_SECURITY_CARD.ctaStyle, 'link');
 assert.match(readFileSync('src/app/page.tsx', 'utf8'), /note=\{'note' in cap/, 'home cards pass the note through');
 
+// Kits have a top-level page in the nav, footer and sitemap (#68)
+assert.ok(mainNav.some((g) => g.label === 'Kits' && g.href === '/kits'));
+assert.match(readFileSync('src/components/Footer.tsx', 'utf8'), /href: '\/kits'/);
+assert.match(readFileSync('src/app/sitemap.ts', 'utf8'), /\/kits`/);
+
 console.log('site content tests passed');

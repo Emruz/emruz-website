@@ -29,6 +29,15 @@ export const motiv = {
   salesOpen: process.env.MOTIV_SALES_OPEN === 'true',
 };
 
+/** Emruz kit pack sales (#68). Buy buttons show only when this is "true". */
+export const kits = {
+  salesOpen: process.env.KITS_SALES_OPEN === 'true',
+  /** Founding lifetime offer on the all-kits bundle: last day (YYYY-MM-DD, inclusive). KITS_LIFETIME_UNTIL overrides, for example to end it early. */
+  lifetimeUntil: process.env.KITS_LIFETIME_UNTIL?.trim() || '2027-12-31',
+  /** Founding lifetime offer: most buyers. */
+  lifetimeCap: 152,
+};
+
 export const PLANS = ['monthly', 'annual', 'lifetime'] as const;
 export type Plan = (typeof PLANS)[number];
 

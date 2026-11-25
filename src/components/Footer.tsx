@@ -36,6 +36,7 @@ export default function Footer() {
     ],
     resources: [
       { label: 'Motiv', href: '/motiv' },
+      { label: 'Kits', href: '/kits' },
       { label: 'Assessments', href: '/assessments' },
       { label: 'Insights', href: '/insights' },
     ],

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sameOrigin } from '@/lib/server/api';
+import { rateLimitCheck } from '@/lib/server/db';
 import { kits, SITE_URL } from '@/lib/server/config';
 import { currentBundle } from '@/lib/server/kits/content';
 import { canBuy, isKitPlan, isSubscriptionPlan } from '@/lib/server/kits/sales-core';
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
   // Kits are used through the account's MCP sign-in, so a purchase belongs to an account
   const account = await currentAccount();
   if (!account) return NextResponse.redirect(new URL('/signin?next=%2Fkits%23pricing', SITE_URL), 303);
+  // Each attempt creates a Stripe Checkout session
+  if (!(await rateLimitCheck(`kits-checkout:${account.id}`, 20, 3600)).ok) return back('?notice=unavailable');
 
   const bundle = await currentBundle();
   const lifetime = plan === 'lifetime' && (await lifetimeOffer()).open;
@@ -41,6 +44,8 @@ export async function POST(req: Request) {
     billing_address_collection: 'auto',
     allow_promotion_codes: plan !== 'upgrade' && plan !== 'lifetime',
     ...(subscription ? { subscription_data: { metadata } } : { customer_creation: 'always' as const }),
+    // The lifetime cap is checked when checkout starts; a short session keeps late completions few
+    ...(plan === 'lifetime' ? { expires_at: Math.floor(Date.now() / 1000) + 30 * 60 } : {}),
     client_reference_id: account.id,
     customer_email: account.email,
     metadata,

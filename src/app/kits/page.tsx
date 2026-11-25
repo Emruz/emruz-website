@@ -87,7 +87,7 @@ function PriceRow({ price, period, children }: { price: number; period: string; 
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-3">
       <p>
-        <span className="text-2xl font-bold text-gray-900">${price}</span> <span className="text-sm text-gray-500">{period}</span>
+        <span className="text-2xl font-bold text-gray-900">${price}</span> <span className="text-sm text-gray-500 whitespace-nowrap">{period}</span>
       </p>
       <div className="w-32">{children}</div>
     </div>
@@ -217,7 +217,7 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
           {notice && notices[notice] && (
             <p role="status" className="mb-6 rounded-lg bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-3">{notices[notice]}</p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
             {kitOffers.map((o) => (
               <OfferCard
                 key={o.pack}

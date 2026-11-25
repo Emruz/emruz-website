@@ -109,8 +109,8 @@ export async function onKitSubscriptionChanged(sub: Stripe.Subscription) {
  */
 export async function revokeKitsForPayment(paymentIntent: string | null, subscriptionId: string | null, category: 'refund' | 'chargeback'): Promise<number> {
   if (!paymentIntent && !subscriptionId) return 0;
-  const rows = await db()<{ id: string; account_id: string; pack: string; stripe_subscription_id: string | null }[]>`
-    select id, account_id, pack, stripe_subscription_id from kit_entitlements
+  const rows = await db()<{ id: string; account_id: string; pack: string; kind: string | null; stripe_subscription_id: string | null }[]>`
+    select id, account_id, pack, kind, stripe_subscription_id from kit_entitlements
     where revoked_at is null and (
       (${paymentIntent}::text is not null and stripe_payment_intent_id = ${paymentIntent})
       or (${subscriptionId}::text is not null and stripe_subscription_id = ${subscriptionId}))`;
@@ -122,6 +122,13 @@ export async function revokeKitsForPayment(paymentIntent: string | null, subscri
     const reason = category === 'refund' ? 'refunded in Stripe' : 'disputed and lost in Stripe';
     await db()`update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${reason} where id = ${r.id} and revoked_at is null`;
     await oauthStore.audit('kit_revoked', { accountId: r.account_id, detail: { pack: r.pack, reason, by: 'stripe' } });
+    if (r.kind === 'once') {
+      // An upgrade builds on the purchase it upgrades; refunding that purchase ends the upgrades too
+      const ups = await db()<{ id: string }[]>`
+        update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${`${reason} (upgraded purchase)`}
+        where account_id = ${r.account_id} and pack = ${r.pack} and kind = 'upgrade' and revoked_at is null returning id`;
+      if (ups.length) await oauthStore.audit('kit_revoked', { accountId: r.account_id, detail: { pack: r.pack, reason: 'upgraded purchase reversed', count: ups.length, by: 'stripe' } });
+    }
   }
   return rows.length;
 }

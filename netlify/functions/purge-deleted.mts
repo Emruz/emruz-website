@@ -24,6 +24,8 @@ const purgeDeleted = async () => {
     await sql`delete from oauth_codes where expires_at < now()`;
     await sql`delete from oauth_refresh_tokens where expires_at < now()`;
     await sql`delete from oauth_grants where revoked_at < now() - interval '365 days'`;
+    // Registered clients never used (no grant) after 30 days
+    await sql`delete from oauth_clients c where c.created_at < now() - interval '30 days' and not exists (select 1 from oauth_grants g where g.client_id = c.id)`;
     const m = await sql`delete from mcp_audit where at < now() - interval '365 days'`;
     console.log(`purge-deleted: ${e.count} engagements (${keys.length} files), ${a.count} self-assessments, ${m.count} kit audit rows`);
     return new Response('ok');

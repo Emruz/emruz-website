@@ -45,7 +45,15 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
   }
 
   const check = await checkAuthorize(oauthStore, serverConfig, params);
-  if (check.kind === 'redirect') redirect(check.url);
+  // Errors go back to the app only when the person clicks, so this page is never an open redirect
+  if (check.kind === 'redirect') {
+    return shell(
+      <div className="max-w-xl space-y-4">
+        <Problem text={new URL(check.url).searchParams.get('error_description') || 'The app sent a request Emruz cannot accept.'} />
+        <a href={check.url} className="inline-block text-sm font-semibold text-blue-700 hover:underline">Return to {hostOf(check.url)}</a>
+      </div>,
+    );
+  }
   if (check.kind === 'fatal') return shell(<Problem text={check.message} />);
   if (account.impersonatedBy) return shell(<Problem text="You are viewing as another user. Switch back to your own account to connect an app." />);
 

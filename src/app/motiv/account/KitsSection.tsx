@@ -38,7 +38,7 @@ export default async function KitsSection({ accountId, readOnly, revoked }: { ac
               <li key={a.id} className="flex items-center justify-between gap-4 py-3">
                 <span className="min-w-0">
                   <span className="block font-medium text-gray-900 break-words">{a.clientName || 'Unnamed app'}</span>
-                  <span className="block text-sm text-gray-500 break-all">
+                  <span className="block text-sm text-gray-500 break-words">
                     {a.redirectHost} · connected {fmtDate(a.createdAt)}
                     {a.lastUsedAt ? ` · last used ${fmtDate(a.lastUsedAt)}` : ''}
                   </span>

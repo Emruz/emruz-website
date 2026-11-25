@@ -116,6 +116,9 @@ async function fetchBundle(ref: string): Promise<Bundle> {
     const sumAsset = rel.assets.find((a) => a.name === 'SHA256SUMS');
     if (!tar || !sumAsset) throw new Error('release has no .tar.gz or no SHA256SUMS asset');
     if (tar.size > MAX_ASSET) throw new Error('release archive is too large');
+    // Only ever fetch GitHub's own asset API (SSRF guard)
+    const prefix = `https://api.github.com/repos/${repo()}/releases/assets/`;
+    if (!tar.url.startsWith(prefix) || !sumAsset.url.startsWith(prefix)) throw new Error('unexpected asset URL');
     gz = await readCapped(await gh(tar.url, 'application/octet-stream'));
     sums = await readCapped(await gh(sumAsset.url, 'application/octet-stream'));
     assetName = tar.name;

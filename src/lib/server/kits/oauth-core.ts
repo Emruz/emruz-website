@@ -339,7 +339,8 @@ export async function token(store: OAuthStore, keys: Keys, cfg: ServerConfig, p:
     if (p.redirect_uri !== code.redirectUri) return bad('redirect_mismatch');
     if (!p.code_verifier || !VERIFIER.test(p.code_verifier)) return bad('bad_verifier');
     const challenge = crypto.createHash('sha256').update(p.code_verifier).digest('base64url');
-    if (challenge !== code.codeChallenge) return bad('pkce_mismatch');
+    const a = Buffer.from(challenge), b = Buffer.from(code.codeChallenge);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return bad('pkce_mismatch');
     const gid = await store.createGrant(code.accountId, clientId, code.scope);
     await store.audit('token_issued', { accountId: code.accountId, clientId, grantId: gid, ip });
     return issuePair(store, keys, cfg, { id: gid, accountId: code.accountId, clientId, scope: code.scope, revoked: false }, now);

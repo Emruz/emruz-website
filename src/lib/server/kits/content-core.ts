@@ -77,6 +77,7 @@ export function validateManifest(raw: unknown): { ok: true; manifest: Manifest }
   if (!Array.isArray(m.items) || m.items.length === 0) return bad('items is empty');
   const packs = m.packs as string[];
   const seen = new Set<string>();
+  const paths = new Set<string>();
   const items: ManifestItem[] = [];
   for (const it of m.items as Record<string, unknown>[]) {
     const label = String(it?.name ?? '?');
@@ -86,7 +87,10 @@ export function validateManifest(raw: unknown): { ok: true; manifest: Manifest }
     if (typeof it.pack !== 'string' || !packs.includes(it.pack)) return bad(`item ${label}: missing or unknown pack`);
     if (!ACCESS_LEVELS.includes(it.access as Access)) return bad(`item ${label}: bad access`);
     if (typeof it.path !== 'string' || !/^skills\/[a-z0-9-]+\/[a-z0-9-]+$/.test(it.path)) return bad(`item ${label}: bad path`);
+    // One folder per item, so a free item can never serve a paid skill's files
+    if (paths.has(it.path)) return bad(`item ${label}: duplicate path`);
     seen.add(it.name);
+    paths.add(it.path);
     items.push({
       type: 'skill',
       name: it.name,

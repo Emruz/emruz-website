@@ -33,6 +33,7 @@ function memoryStore() {
       r.used = true;
       return r.expiresAt <= now ? { status: 'expired' } : { status: 'ok', grantId: r.grantId };
     },
+    async refreshGrant(h) { return refresh.get(h)?.grantId ?? null; },
     async audit(kind) { audit.push(kind); },
   };
   return { store, codes, grants, audit };
@@ -171,6 +172,15 @@ assert.equal(await grantActive(m.store, c5), true, 'another client cannot revoke
 await revoke(m.store, keys, cfg, { token: t5.body.access_token as string }, now, IP);
 assert.equal(await grantActive(m.store, c5), false, 'revoking the access token ends the grant');
 assert.equal((await token(m.store, keys, cfg, { grant_type: 'refresh_token', refresh_token: t5.body.refresh_token as string, client_id: clientId }, now, IP)).body.error, 'invalid_grant');
+// A revoke from another client does not spend the refresh token (#68 review sens-4)
+code = await newCode();
+const t6 = await exchange(code);
+const c6 = (await verifyAccessToken(keys, cfg, t6.body.access_token as string, now))!;
+await revoke(m.store, keys, cfg, { token: t6.body.refresh_token as string, client_id: 'emz_other' }, now, IP);
+assert.equal(await grantActive(m.store, c6), true, 'wrong client cannot revoke by refresh token');
+const r6 = await token(m.store, keys, cfg, { grant_type: 'refresh_token', refresh_token: t6.body.refresh_token as string, client_id: clientId }, now, IP);
+assert.ok(r6.body.access_token, 'the real client can still refresh');
+assert.equal(await grantActive(m.store, c6), true, 'and the grant is not treated as reuse');
 assert.equal((await revoke(m.store, keys, cfg, { token: 'unknown' }, now, IP)).status, 200, 'unknown tokens still get 200');
 assert.equal((await revoke(m.store, keys, cfg, {}, now, IP)).status, 400);
 

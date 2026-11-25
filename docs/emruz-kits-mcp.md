@@ -63,7 +63,7 @@ Create the prices in a sandbox (or live) with the Stripe CLI, one product per pa
 
 ## Rate limits
 
-Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per IP. Token 60/hour per client and 120/hour per IP. MCP without a valid token 60/hour per IP; signed in 600/hour per account and 300/hour per client; 5,000/hour in total. Over a limit: 429 with Retry-After. Edge rate limiting is a follow-up.
+Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per IP. Token 60/hour per client and 120/hour per IP. MCP without a valid token 60/hour per IP (these never count toward the total); signed in 600/hour per account and 300/hour per client, checked before the 5,000/hour total. Over a limit: 429 with Retry-After. Edge rate limiting is a follow-up.
 
 ## Connecting
 

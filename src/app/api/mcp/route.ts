@@ -10,8 +10,8 @@ import { SITE_URL } from '@/lib/server/config';
 /**
  * Emruz kits MCP server (#67): Streamable HTTP, stateless, read-only.
  * Order per request: token signature (no database), then for no or a bad token
- * only the per-IP limit; for a valid token the global cap and the per-account and
- * per-client limits, then the grant and entitlement checks, then content.
+ * only the per-IP limit; for a valid token the per-account and per-client limits,
+ * then the global cap, then the grant and entitlement checks, then content.
  */
 
 const PRM = `${SITE_URL}/.well-known/oauth-protected-resource/api/mcp`;
@@ -31,11 +31,12 @@ export async function POST(req: Request) {
       if (wait) return tooMany(wait);
       return unauthorized(bearer ? 'invalid_token' : undefined);
     }
-    // Only signed requests count toward the global cap, so anonymous traffic cannot lock out paying users
-    const total = await limited(rules.mcpTotal());
-    if (total) return tooMany(total);
+    // Per account and client first, then the global cap: requests refused for one account or for
+    // having no valid token never count toward the shared cap, so no single caller can lock out others
     const wait = await limited(rules.mcpSignedIn(claims.sub, claims.client_id));
     if (wait) return tooMany(wait);
+    const total = await limited(rules.mcpTotal());
+    if (total) return tooMany(total);
     if (!(await grantActive(oauthStore, claims))) return unauthorized('invalid_token');
 
     const raw = await req.text();

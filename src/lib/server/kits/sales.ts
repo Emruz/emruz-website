@@ -34,6 +34,15 @@ export async function lifetimeOffer(now = new Date()): Promise<{ open: boolean; 
   return { open: lifetimeOpen(until, r.n, cap, now), sold: r.n, cap, until };
 }
 
+/** Audit without letting a logging failure fail the webhook after the change is saved. */
+async function audit(kind: string, accountId: string, detail: Record<string, unknown>) {
+  try {
+    await oauthStore.audit(kind, { accountId, detail });
+  } catch (e) {
+    console.error(`kits audit ${kind} failed`, e);
+  }
+}
+
 const sid = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : v?.id ?? null);
 
 const PLAN_TEXT: Record<KitPlan, string> = {
@@ -70,7 +79,8 @@ export async function onKitCheckoutCompleted(session: Stripe.Checkout.Session) {
   const plan = m.plan;
   const accountId = session.client_reference_id;
   if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(pack) || !isKitPlan(plan) || !accountId) throw new Error(`Kit checkout ${session.id} is missing its pack, plan or account`);
-  if (session.payment_status === 'unpaid') return; // delayed methods are not offered; nothing to grant yet
+  // A delayed payment method: granted when checkout.session.async_payment_succeeded arrives
+  if (session.payment_status === 'unpaid') return;
 
   const subscription = isSubscriptionPlan(plan);
   const throughRef = heldAtRelease(plan) ? m.ref : null;
@@ -89,18 +99,26 @@ export async function onKitCheckoutCompleted(session: Stripe.Checkout.Session) {
     on conflict (stripe_checkout_session) where stripe_checkout_session is not null do nothing
     returning id`;
   if (!rows.length) return; // already handled
-  await oauthStore.audit('kit_purchased', { accountId, detail: { pack, plan, ref: throughRef ?? null, checkout: session.id } });
+  await audit('kit_purchased', accountId, { pack, plan, ref: throughRef ?? null, checkout: session.id });
   const email = session.customer_details?.email || session.customer_email;
   if (email) await purchaseEmail(email, pack, plan, throughRef ?? null);
 }
 
-/** A kit subscription changed: access ends when Stripe ends the subscription. */
+/** A kit subscription changed: access ends when Stripe ends it, and comes back if an unpaid one is paid. */
 export async function onKitSubscriptionChanged(sub: Stripe.Subscription) {
+  if (sub.status === 'active' || sub.status === 'trialing') {
+    const back = await db()<{ account_id: string; pack: string }[]>`
+      update kit_entitlements set revoked_at = null, revoked_by = null, revoked_reason = null
+      where stripe_subscription_id = ${sub.id} and revoked_at is not null and revoked_by = 'stripe' and revoked_reason = 'subscription unpaid'
+      returning account_id, pack`;
+    for (const r of back) await audit('kit_restored', r.account_id, { pack: r.pack, reason: 'subscription paid', by: 'stripe' });
+    return;
+  }
   if (!subscriptionEnded(sub.status)) return;
   const ended = await db()<{ account_id: string; pack: string }[]>`
     update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${`subscription ${sub.status}`}
     where stripe_subscription_id = ${sub.id} and revoked_at is null returning account_id, pack`;
-  for (const r of ended) await oauthStore.audit('kit_revoked', { accountId: r.account_id, detail: { pack: r.pack, reason: `subscription ${sub.status}`, by: 'stripe' } });
+  for (const r of ended) await audit('kit_revoked', r.account_id, { pack: r.pack, reason: `subscription ${sub.status}`, by: 'stripe' });
 }
 
 /**
@@ -109,8 +127,8 @@ export async function onKitSubscriptionChanged(sub: Stripe.Subscription) {
  */
 export async function revokeKitsForPayment(paymentIntent: string | null, subscriptionId: string | null, category: 'refund' | 'chargeback'): Promise<number> {
   if (!paymentIntent && !subscriptionId) return 0;
-  const rows = await db()<{ id: string; account_id: string; pack: string; kind: string | null; stripe_subscription_id: string | null }[]>`
-    select id, account_id, pack, kind, stripe_subscription_id from kit_entitlements
+  const rows = await db()<{ id: string; account_id: string; pack: string; kind: string | null; stripe_subscription_id: string | null; granted_at: Date }[]>`
+    select id, account_id, pack, kind, stripe_subscription_id, granted_at from kit_entitlements
     where revoked_at is null and (
       (${paymentIntent}::text is not null and stripe_payment_intent_id = ${paymentIntent})
       or (${subscriptionId}::text is not null and stripe_subscription_id = ${subscriptionId}))`;
@@ -121,13 +139,18 @@ export async function revokeKitsForPayment(paymentIntent: string | null, subscri
     }
     const reason = category === 'refund' ? 'refunded in Stripe' : 'disputed and lost in Stripe';
     await db()`update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${reason} where id = ${r.id} and revoked_at is null`;
-    await oauthStore.audit('kit_revoked', { accountId: r.account_id, detail: { pack: r.pack, reason, by: 'stripe' } });
+    await audit('kit_revoked', r.account_id, { pack: r.pack, reason, by: 'stripe' });
     if (r.kind === 'once') {
-      // An upgrade builds on the purchase it upgrades; refunding that purchase ends the upgrades too
+      // An upgrade builds on the purchase it upgrades; refunding that purchase ends the upgrades bought after it,
+      // unless another one-time purchase of the pack is still active
       const ups = await db()<{ id: string }[]>`
         update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${`${reason} (upgraded purchase)`}
-        where account_id = ${r.account_id} and pack = ${r.pack} and kind = 'upgrade' and revoked_at is null returning id`;
-      if (ups.length) await oauthStore.audit('kit_revoked', { accountId: r.account_id, detail: { pack: r.pack, reason: 'upgraded purchase reversed', count: ups.length, by: 'stripe' } });
+        where account_id = ${r.account_id} and pack = ${r.pack} and kind = 'upgrade' and revoked_at is null
+          and granted_at > ${r.granted_at}
+          and not exists (select 1 from kit_entitlements o where o.account_id = ${r.account_id} and o.pack = ${r.pack}
+            and o.kind = 'once' and o.revoked_at is null)
+        returning id`;
+      if (ups.length) await audit('kit_revoked', r.account_id, { pack: r.pack, reason: 'upgraded purchase reversed', count: ups.length, by: 'stripe' });
     }
   }
   return rows.length;

@@ -207,6 +207,10 @@ lim.reset();
 assert.equal(await hit(rules.register(IP), LIMITS.registerPerIp.limit), 0);
 assert.ok((await overLimit(lim, rules.register(IP))) > 0);
 assert.equal(await overLimit(lim, rules.register('198.51.100.1')), 0, 'other IPs still register');
+// One IP over its own limit does not use up the shared registration total (#68 review sens-3)
+lim.reset();
+for (let i = 0; i < LIMITS.registerTotal.limit; i++) await overLimit(lim, rules.register(IP));
+assert.equal(await overLimit(lim, rules.register('198.51.100.2')), 0, 'refused requests from one IP do not count toward the total');
 assert.deepEqual([LIMITS.registerTotal.limit, LIMITS.authorizePerIp.limit, LIMITS.authorizePerIp.windowSeconds, LIMITS.tokenPerClient.limit, LIMITS.tokenPerIp.limit], [200, 30, 600, 60, 120]);
 
 console.log('kits oauth passed');

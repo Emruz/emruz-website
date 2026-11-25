@@ -6,6 +6,7 @@ import { isUuid } from '@/lib/server/api';
 import { db } from '@/lib/server/db';
 import { isRef } from '@/lib/server/kits/content-core';
 import { oauthStore } from '@/lib/server/kits/store';
+import { stripe } from '@/lib/server/stripe';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 
 /** Staff grants and revocation of Emruz kit access (#67). */
@@ -49,6 +50,18 @@ export async function revokeKit(form: FormData) {
   const reason = String(form.get('reason') || '').trim().slice(0, 300);
   if (!isUuid(id)) back('Not found.', true);
   if (!reason) back('Give a reason to revoke.', true);
+  // A purchased subscription stops billing first; if Stripe refuses, the kit is left as it was
+  const [sub] = await db()<{ stripe_subscription_id: string | null }[]>`
+    select stripe_subscription_id from kit_entitlements where id = ${id} and revoked_at is null`;
+  if (sub?.stripe_subscription_id) {
+    try {
+      const s = await stripe().subscriptions.retrieve(sub.stripe_subscription_id);
+      if (s.status !== 'canceled') await stripe().subscriptions.cancel(sub.stripe_subscription_id);
+    } catch (e) {
+      console.error('kit subscription cancel failed', e);
+      back('Stripe would not cancel the subscription, so the kit was not revoked. Try again or cancel it in Stripe.', true);
+    }
+  }
   const [row] = await db()<{ account_id: string; pack: string }[]>`
     update kit_entitlements set revoked_at = now(), revoked_by = ${actor}, revoked_reason = ${reason}
     where id = ${id} and revoked_at is null returning account_id, pack`;

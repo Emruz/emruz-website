@@ -181,7 +181,14 @@ export async function currentBundle(): Promise<Bundle> {
     if (!isRef(hold)) throw new Error('SKILLS_REF must be a release tag like v2026.11.5');
     candidates = [hold];
   } else {
-    candidates = await listRefs();
+    try {
+      candidates = await listRefs();
+    } catch (e) {
+      // GitHub unreachable: keep serving the release in memory, or the last good one recorded
+      if (lastGood) return lastGood;
+      candidates = [];
+      console.error('kits: listing releases failed', e instanceof Error ? e.message : e);
+    }
   }
   const target = candidates[0];
   if (target && lastGood?.ref === target) return lastGood;
@@ -228,7 +235,8 @@ export async function readSkill(item: ManifestItem, ref: string): Promise<{ text
   } catch {
     return null;
   }
-  const own = b.manifest.items.find((i) => i.name === item.name);
+  // Same name and same pack in that release, so an older release cannot serve another pack's skill
+  const own = b.manifest.items.find((i) => i.name === item.name && i.pack === item.pack);
   if (!own) return null;
   const text = asText(b.files.get(`${own.path}/SKILL.md`));
   return text == null ? null : { text, files: skillFiles(b, own) };
@@ -241,7 +249,8 @@ export async function readFile(item: ManifestItem, ref: string, rel: string): Pr
   } catch {
     return null;
   }
-  const own = b.manifest.items.find((i) => i.name === item.name);
+  // Same name and same pack in that release, so an older release cannot serve another pack's skill
+  const own = b.manifest.items.find((i) => i.name === item.name && i.pack === item.pack);
   if (!own) return null;
   return asText(b.files.get(`${own.path}/${rel}`));
 }

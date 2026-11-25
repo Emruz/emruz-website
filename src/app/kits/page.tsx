@@ -22,6 +22,7 @@ const notices: Record<string, string> = {
   unknown_pack: 'That kit is not on sale.',
   unavailable: 'That option is not available right now. Please try again later.',
   lifetime_closed: 'The founding lifetime offer has closed.',
+  impersonating: 'Switch back to your own account to buy.',
 };
 
 async function loadState() {
@@ -214,7 +215,7 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
             {latest ? ` Current release: ${latest}.` : ''}
             {!open && ' Available at launch.'}
           </p>
-          {notice && notices[notice] && (
+          {notice && Object.hasOwn(notices, notice) && (
             <p role="status" className="mb-6 rounded-lg bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-3">{notices[notice]}</p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">

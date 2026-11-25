@@ -36,6 +36,10 @@ export async function POST(req: Request) {
         if (event.data.object.metadata?.product === 'kits') await onKitCheckoutCompleted(event.data.object);
         else await onCheckoutCompleted(event.data.object);
         break;
+      case 'checkout.session.async_payment_succeeded':
+        // A delayed payment method (bank debit and the like) confirmed after checkout (#68)
+        if (event.data.object.metadata?.product === 'kits') await onKitCheckoutCompleted(event.data.object);
+        break;
       case 'invoice.paid':
         await onInvoicePaid(event.data.object);
         break;

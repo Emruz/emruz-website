@@ -209,13 +209,16 @@ export async function currentBundle(): Promise<Bundle> {
   throw new Error('No usable Emruz kits release');
 }
 
-/** Published release tags, newest first (for the admin grant form). */
+/** Published releases that pass the checks, newest first (for the admin grant form). Checks the newest 10. */
 export async function releaseTags(): Promise<string[]> {
+  let refs: string[];
   try {
-    return await listRefs();
+    refs = (await listRefs()).slice(0, 10);
   } catch {
     return lastGood ? [lastGood.ref] : [];
   }
+  const checked = await Promise.allSettled(refs.map((r) => bundleFor(r)));
+  return refs.filter((_, i) => checked[i].status === 'fulfilled');
 }
 
 export async function readSkill(item: ManifestItem, ref: string): Promise<{ text: string; files: string[] } | null> {

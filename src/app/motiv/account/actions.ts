@@ -5,6 +5,7 @@ import { isUuid } from '@/lib/server/api';
 import { db, logEvent } from '@/lib/server/db';
 import { deactivateDevice, type SubscriptionRow } from '@/lib/server/licensing';
 import { currentAccount } from '@/lib/server/session';
+import { revokeOwnGrant } from '@/lib/server/kits/store';
 
 export async function removeDevice(form: FormData) {
   const account = await currentAccount();
@@ -31,4 +32,14 @@ export async function unlinkIdentity(form: FormData) {
     if (removed.length) await logEvent('identity_unlinked', { provider: removed[0].provider }, { accountId: account.id });
   }
   redirect('/motiv/account');
+}
+
+/** Disconnect an MCP app: ends its grant, so its access and refresh tokens stop working at once. */
+export async function revokeApp(form: FormData) {
+  const account = await currentAccount();
+  if (!account) redirect('/signin?next=/motiv/account%23kits');
+  if (account.impersonatedBy) throw new Error('Switch back to your own account to disconnect an app');
+  const id = form.get('grant');
+  if (isUuid(id)) await revokeOwnGrant(account.id, id);
+  redirect('/motiv/account?app=revoked#kits');
 }

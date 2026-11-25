@@ -8,6 +8,7 @@ import { fmtDate, planLabel, statusLabel, subscriptionsFor } from '@/lib/server/
 import { REVOKE_CUSTOMER_TEXT, type RevokeCategory } from '@/lib/server/revocation';
 import { isAdmin, requireAccount } from '@/lib/server/session';
 import { removeDevice, unlinkIdentity } from './actions';
+import KitsSection from './KitsSection';
 
 export const metadata = { title: 'Your Motiv account', robots: { index: false } };
 
@@ -20,7 +21,7 @@ const claimMessages: Record<string, string> = {
 
 const providerNames: Record<string, string> = { ...providerLabel, email: 'Email link' };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ claim?: string; removed?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ claim?: string; removed?: string; app?: string }> }) {
   const sp = await searchParams;
   const account = await requireAccount('/motiv/account');
   const subs = await subscriptionsFor({ accountId: account.id });
@@ -37,6 +38,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         sections={[
           { label: 'Subscriptions', href: '#subscriptions' },
           { label: 'Sign-in methods', href: '#signin' },
+          { label: 'Emruz kits', href: '#kits' },
           { label: 'Find a purchase', href: '#claim' },
         ]}
       />
@@ -161,6 +163,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           )}
         </Container>
       </section>
+
+      <KitsSection accountId={account.id} readOnly={!!account.impersonatedBy} revoked={sp.app === 'revoked'} />
 
       <section id="claim" className="py-10 md:py-12 scroll-mt-20">
         <Container>

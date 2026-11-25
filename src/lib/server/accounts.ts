@@ -91,9 +91,18 @@ export async function claimEmail(accountId: string, emailInput: string) {
   const email = lower(emailInput)!;
   const [other] = await db()<{ id: string }[]>`select id from accounts where lower(email) = ${email} and id <> ${accountId}`;
   if (other) {
-    // Move the other account's purchases and sign-ins here
+    // Move the other account's purchases, kits and sign-ins here
     await db()`update subscriptions set account_id = ${accountId} where account_id = ${other.id}`;
+    const kits = await db()<{ id: string }[]>`update kit_entitlements set account_id = ${accountId} where account_id = ${other.id} returning id`;
+    // Apps connected to the other account must sign in again as this one (#68 review sens-1)
+    const grants = await db()<{ id: string }[]>`
+      update oauth_grants set revoked_at = now(), revoked_reason = 'account_merged'
+      where account_id = ${other.id} and revoked_at is null returning id`;
+    if (grants.length) await db()`delete from oauth_refresh_tokens where grant_id in ${db()(grants.map((g) => g.id))}`;
     await db()`update identities set account_id = ${accountId} where account_id = ${other.id}`;
+    await db()`
+      insert into mcp_audit (kind, account_id, detail)
+      values ('account_merged', ${accountId}, ${db().json({ from: other.id, kits: kits.length, grantsRevoked: grants.length })})`;
     await db()`delete from accounts where id = ${other.id}`;
   }
   await db()`

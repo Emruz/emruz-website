@@ -14,8 +14,10 @@ import {
   BarChart3,
   Brain,
   CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
+import { MANAGED_SECURITY_CARD } from '@/content/packages';
 
 export default function Home() {
   // Capability cards data
@@ -80,19 +82,7 @@ export default function Home() {
       href: '/services/ai',
       color: 'blue' as const,
     },
-    {
-      icon: Shield,
-      title: 'Managed Security',
-      description: 'Monitored and managed by our 24x7 SOC, from endpoint protection to full detect, defend and respond.',
-      benefits: [
-        'EDR, MDR, XDR and ΔDR editions',
-        '24x7 detection and response',
-        'Continuous exposure management and pen testing',
-      ],
-      href: '/products/compare',
-      ctaLabel: 'Compare editions',
-      color: 'purple' as const,
-    },
+    { icon: ShieldCheck, ...MANAGED_SECURITY_CARD },
   ];
 
   // Value propositions
@@ -242,6 +232,8 @@ export default function Home() {
                 href={cap.href}
                 ctaLabel={'ctaLabel' in cap ? cap.ctaLabel : undefined}
                 color={cap.color}
+                note={'note' in cap ? cap.note : undefined}
+                ctaStyle={'ctaStyle' in cap ? cap.ctaStyle : undefined}
               />
             ))}
           </div>

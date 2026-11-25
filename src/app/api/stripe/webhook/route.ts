@@ -10,6 +10,7 @@ import {
   revokeForCharge,
 } from '@/lib/server/stripe';
 import { securityEvent } from '@/lib/server/alerts';
+import { onKitCheckoutCompleted, onKitSubscriptionChanged, revokeKitsForPayment } from '@/lib/server/kits/sales';
 
 const pi = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : v?.id ?? null);
 
@@ -32,7 +33,12 @@ export async function POST(req: Request) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await onCheckoutCompleted(event.data.object);
+        if (event.data.object.metadata?.product === 'kits') await onKitCheckoutCompleted(event.data.object);
+        else await onCheckoutCompleted(event.data.object);
+        break;
+      case 'checkout.session.async_payment_succeeded':
+        // A delayed payment method (bank debit and the like) confirmed after checkout (#68)
+        if (event.data.object.metadata?.product === 'kits') await onKitCheckoutCompleted(event.data.object);
         break;
       case 'invoice.paid':
         await onInvoicePaid(event.data.object);
@@ -42,11 +48,12 @@ export async function POST(req: Request) {
         break;
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        await onSubscriptionChanged(event.data.object);
+        if (event.data.object.metadata?.product === 'kits') await onKitSubscriptionChanged(event.data.object);
+        else await onSubscriptionChanged(event.data.object);
         break;
       case 'charge.refunded': {
         const charge = event.data.object;
-        if (charge.refunded) await revokeForCharge(charge.id, 'refund');
+        if (charge.refunded) await revokeForCharge(charge.id, 'refund', (p, s) => revokeKitsForPayment(p, s, 'refund'));
         break;
       }
       case 'charge.dispute.closed': {
@@ -54,7 +61,7 @@ export async function POST(req: Request) {
         if (dispute.status === 'lost') {
           const chargeId = pi(dispute.charge);
           if (!chargeId) throw new Error(`Dispute ${dispute.id} has no charge`);
-          await revokeForCharge(chargeId, 'chargeback');
+          await revokeForCharge(chargeId, 'chargeback', (p, s) => revokeKitsForPayment(p, s, 'chargeback'));
         }
         break;
       }

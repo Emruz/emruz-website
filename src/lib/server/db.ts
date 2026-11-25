@@ -34,17 +34,22 @@ export async function logEvent(
 
 /** Fixed-window rate limit. Returns false when the limit is exceeded. */
 export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-  const [row] = await db()<{ count: number }[]>`
+  return (await rateLimitCheck(key, limit, windowSeconds)).ok;
+}
+
+/** rateLimit, plus the seconds until the window resets (for Retry-After). */
+export async function rateLimitCheck(key: string, limit: number, windowSeconds: number): Promise<{ ok: boolean; retryAfter: number }> {
+  const [row] = await db()<{ count: number; retry_after: number }[]>`
     insert into rate_limits (key, window_start, count) values (${key}, now(), 1)
     on conflict (key) do update set
       count = case when rate_limits.window_start < now() - make_interval(secs => ${windowSeconds}) then 1 else rate_limits.count + 1 end,
       window_start = case when rate_limits.window_start < now() - make_interval(secs => ${windowSeconds}) then now() else rate_limits.window_start end
-    returning count
+    returning count, ceil(extract(epoch from (window_start + make_interval(secs => ${windowSeconds}) - now())))::int as retry_after
   `;
   const ok = row.count <= limit;
   // Report the first hit in each window (finding E9); dynamic import avoids a cycle
   if (!ok && row.count === limit + 1) {
     void import('./alerts').then((m) => m.securityEvent('rate_limited', { key: key.replace(/:[^:]*@[^:]*$/, ':<email>'), limit }));
   }
-  return ok;
+  return { ok, retryAfter: Math.max(1, row.retry_after) };
 }

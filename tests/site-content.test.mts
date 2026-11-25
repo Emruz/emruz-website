@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { mainNav } from '../src/content/navigation.ts';
-import { addOnLines, capabilities } from '../src/content/packages.ts';
+import { MANAGED_SECURITY_CARD, POWERED_BY, addOnLines, capabilities } from '../src/content/packages.ts';
 
 // Changelog has a section for the current version (#52)
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version.replace(/\.0$/, '');
@@ -47,5 +47,20 @@ for (const f of files) {
 const home = readFileSync('src/app/page.tsx', 'utf8');
 const diagnostic = home.slice(home.indexOf('Start With a Diagnostic'), home.indexOf('Explore All Assessments'));
 assert.doesNotMatch(diagnostic, /Learn More/, 'home assessment tiles should not have Learn More buttons');
+
+// The home and Services pages share one Managed Security tile (#67)
+for (const f of ['src/app/page.tsx', 'src/app/services/page.tsx']) {
+  const src = readFileSync(f, 'utf8');
+  assert.match(src, /\{ icon: ShieldCheck, \.\.\.MANAGED_SECURITY_CARD \}/, `${f}: Managed Security tile should use MANAGED_SECURITY_CARD`);
+  assert.doesNotMatch(src, /title: 'Managed Security'/, `${f}: no second copy of the Managed Security tile`);
+}
+assert.equal(MANAGED_SECURITY_CARD.note, POWERED_BY);
+assert.equal(MANAGED_SECURITY_CARD.ctaStyle, 'link');
+assert.match(readFileSync('src/app/page.tsx', 'utf8'), /note=\{'note' in cap/, 'home cards pass the note through');
+
+// Kits have a top-level page in the nav, footer and sitemap (#68)
+assert.ok(mainNav.some((g) => g.label === 'Kits' && g.href === '/kits'));
+assert.match(readFileSync('src/components/Footer.tsx', 'utf8'), /href: '\/kits'/);
+assert.match(readFileSync('src/app/sitemap.ts', 'utf8'), /\/kits`/);
 
 console.log('site content tests passed');

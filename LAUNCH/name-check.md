@@ -67,3 +67,35 @@ Not completed in this screen. Use the owner's accounts to check:
 - EUIPO: https://euipo.europa.eu/eSearch (search "MOTIV", "EMRUZ")
 - UK IPO: https://www.ipo.gov.uk/tmsearch
 - WIPO Global Brand Database: https://www3.wipo.int/branddb/en/
+
+## Shaq's Skills for Claude (run 2026-11-23)
+
+Screening search, not a clearance opinion. Web search only; USPTO TSDR, EUIPO, UK IPO and WIPO were not queried directly.
+
+- **Name:** Shaq's Skills for Claude (paid skill packs, Ship and Business, sold on emruz.com and served over MCP).
+- **Variants:** Shaq's Skills, Shaqs Skills, shaqs-skills, Shaq Skills.
+- **Classes:** 9 (downloadable software), 42 (SaaS), 35 and 41 (business and training content).
+- **Markets:** US, EU, UK.
+
+| Name | Source | Class or field | Risk | Note |
+|---|---|---|---|---|
+| SHAQ, SHAQUILLE O'NEAL and many SHAQ marks | ABG-Shaq, LLC filings on Justia, Markinton, trademarkregistration.app | Many classes; SHAQUILLE O'NEAL reg. 6793675 is Class 9 (2022); SHAQ apps filed as recently as 2026 | High | Famous mark held by an active brand-licensing owner with about 120 US marks. A SHAQ Class 9 application (97184867) is dead, but fame gives dilution and false-endorsement exposure regardless of class. "Shaq's" in possessive form reads as Shaquille O'Neal's. |
+| CLAUDE | Anthropic trademark guidelines; Claude Code legal page | AI software | High | Anthropic does not allow its names in a third party's product name and has enforced against a sound-alike (Clawdbot, renamed). "for Claude" in the product name is out; plain-text compatibility statements are fine. |
+| "Shaq's Skills" in software | Web search | n/a | Low | No software product found. Results are basketball coverage. |
+| shaqs-skills, shaqsskills, shaq-skills | GitHub repo search, npm | n/a | Not checked reliably | Moot given the conflicts above. Domains and social handles not checked. |
+
+**Overall: conflict.** Do not rename or file. Pick a name without SHAQ or CLAUDE, describe compatibility in copy ("skills for use with Claude"), and rerun this check on the new name.
+
+## Emruz Release Kit and Emruz Founder Kit (run 2026-11-24)
+
+Screening search, not a clearance opinion. Web search only. Replaces "Shaq's Skills for Claude" (conflict, above). EMRUZ was rated clear on 2026-11-14.
+
+| Name | Source | Class or field | Risk | Note |
+|---|---|---|---|---|
+| Release Kit (Jira app) | devpost.com | Atlassian Forge app for release overviews | Low | Same words, different product. "Release kit" is descriptive. |
+| RELEASETOOL, RELEASEPRO; RELEASE, INC. | trademarks.justia.com (Release Engineering Inc.; Burkitt & Company) | Software release tools | Low | Shares the descriptive word only. |
+| FOUNDERS KIT., filed 2022-12-07 | trademarks.justia.com (Decentral Holding Corporation) | Class 35 business consulting for start-ups | Medium | Near-identical words, nearby services. Status not confirmed. |
+| FOUNDERSKIT, serial 97708070 | trademarks.justia.com | Not confirmed | Medium | Filed 2022-12-10. Owner and goods not confirmed. |
+| Founder's Kit (SaaS starter toolkit) and The Founder's Kit (kit that runs on Claude Code or Cursor) | producthunt.com | Startup toolkits | Medium | Same field and buyers. The second also ships as AI coding kits. |
+
+**Overall: caution.** "Release Kit" and "Founder Kit" are descriptive and can't be owned on their own; EMRUZ is what gives the names protection. Always use the full names, never the bare kit names, and consider filing EMRUZ in Classes 9, 41 and 42. Domains, packages and social handles not checked.

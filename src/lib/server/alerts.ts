@@ -12,7 +12,7 @@ import { sendEmail } from './email';
  * inside its window, an alert email goes to ALERT_EMAILS (or ADMIN_EMAILS), at most
  * once per kind per cooldown.
  */
-export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited' | 'admin_changed';
+export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited' | 'admin_changed' | 'kits_release_invalid' | 'kits_refresh_reuse';
 
 const RULES: Record<SecurityEventKind, { threshold: number; windowSeconds: number; cooldownSeconds: number; label: string }> = {
   webhook_failure: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 3600, label: 'Stripe webhook handler failed' },
@@ -20,6 +20,8 @@ const RULES: Record<SecurityEventKind, { threshold: number; windowSeconds: numbe
   signin_failure: { threshold: 20, windowSeconds: 900, cooldownSeconds: 3600, label: 'Sign-in failure spike' },
   rate_limited: { threshold: 50, windowSeconds: 900, cooldownSeconds: 3600, label: 'Rate-limit hits' },
   admin_changed: { threshold: 1, windowSeconds: 60, cooldownSeconds: 0, label: 'Admin rights granted or removed' },
+  kits_release_invalid: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 21600, label: 'Emruz kits release rejected; serving the last good release' },
+  kits_refresh_reuse: { threshold: 3, windowSeconds: 3600, cooldownSeconds: 3600, label: 'MCP refresh token reuse (grants revoked)' },
 };
 
 function alertRecipients(): string[] {

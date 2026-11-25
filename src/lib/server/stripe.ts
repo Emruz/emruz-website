@@ -160,11 +160,19 @@ export async function revokeLicence(row: RevocableRow, category: RevokeCategory,
   await revokedEmail(row, category);
 }
 
-/** A refund or lost dispute on a charge: find the licence it paid for and revoke it. */
-export async function revokeForCharge(chargeId: string, category: 'refund' | 'chargeback') {
+/**
+ * A refund or lost dispute on a charge: find the licence it paid for and revoke it.
+ * `other` handles purchases outside Motiv (Emruz kits, #68) and returns how many it ended.
+ */
+export async function revokeForCharge(
+  chargeId: string,
+  category: 'refund' | 'chargeback',
+  other?: (paymentIntent: string | null, subscriptionId: string | null) => Promise<number>,
+) {
   const charge = await stripe().charges.retrieve(chargeId);
   const paymentIntent = id(charge.payment_intent);
   let rows: RevocableRow[] = [];
+  let subId: string | null = null;
   if (paymentIntent) {
     // Lifetime purchases store the payment intent on the subscription row
     rows = await db()<RevocableRow[]>`
@@ -176,7 +184,7 @@ export async function revokeForCharge(chargeId: string, category: 'refund' | 'ch
       const invoiceId = id(payments.data[0]?.invoice);
       if (invoiceId) {
         const invoice = await stripe().invoices.retrieve(invoiceId);
-        const subId = id(invoice.parent?.subscription_details?.subscription);
+        subId = id(invoice.parent?.subscription_details?.subscription);
         if (subId) {
           rows = await db()<RevocableRow[]>`
             select id, customer_email, plan, stripe_subscription_id from subscriptions
@@ -186,6 +194,7 @@ export async function revokeForCharge(chargeId: string, category: 'refund' | 'ch
     }
   }
   if (!rows.length) {
+    if (other && (await other(paymentIntent, subId)) > 0) return;
     await logEvent('payment_reversed_review', { charge: chargeId, category }, { actor: 'stripe' });
     return;
   }

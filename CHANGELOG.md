@@ -4,6 +4,12 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.8
+
+- Emruz kits over MCP (#67): emruz.com serves the Emruz kits to Claude and other MCP apps at `/api/mcp`, with emruz.com as the OAuth 2.1 sign-in. Free skills work with any account; paid skills need an entitlement for their pack. Staff grant and revoke kits on `/admin/kits`; accounts see their kits and disconnect apps on `/motiv/account#kits`. The site follows the newest published emruz-kits release (or `SKILLS_REF`). Migration 021.
+- Kit packs on sale (#68): new `/kits` page in the main menu with the Release, Founder and Marketing Kits and an all-kits bundle. Each can be bought once (held at the release bought, with a lower upgrade price for newer releases) or by monthly or annual subscription (always the latest release). Checkout needs a signed-in account; buy buttons show when `KITS_SALES_OPEN=true`. Stripe prices are found by lookup key, so no price environment variables. A founding lifetime offer on All kits ($549, every future release) runs for the first 152 buyers, until 31 December 2027. Subscriptions that end, refunds and lost disputes end the kit; subscribers manage billing from the account page. Migration 022.
+- Review fixes (#68): merging accounts moves kit purchases instead of deleting them (migration 023 stops kit purchases being deleted with an account); anonymous MCP traffic no longer counts toward the global MCP limit; per-IP limits apply before shared totals; an older held release serves only skills from the same pack; the site keeps serving the last good kits release when GitHub is unreachable at start-up; delayed payment methods grant the kit when the payment confirms; an unpaid kit subscription that is paid again gets its access back; staff revoking a purchased kit subscription cancels it in Stripe; checkout and billing errors show a message instead of an error page; staff viewing as a customer cannot buy or open billing.
+
 ## v202611.7
 
 - `npm run ship -- "Title" --review` runs the PR review in Claude Code without opening it, then ships. It runs only when the branch has no valid review record.

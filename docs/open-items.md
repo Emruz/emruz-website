@@ -16,6 +16,14 @@ Tick items off as they are done. Grouped by when they're needed.
 - [ ] **Downloads.** Signed and notarized Mac build, Windows build, and download links on the account page.
 - [ ] **Test purchase** in live mode with a real card, then refund it.
 
+## Before selling Emruz kits (#68)
+
+- [ ] **Webhook event:** add `checkout.session.async_payment_succeeded` to the sandbox and live webhook destinations (and to `stripe listen --events` locally).
+- [ ] **Stripe live products and prices** for the kits, with the same lookup keys as the sandbox (`kits_<pack>_<plan>`, plus `kits_all_lifetime`) and tax code `txcd_10103001`.
+- [ ] **Kits license terms.** Add kit terms (one-time held at release, upgrades, subscriptions, founding lifetime "for as long as Emruz offers the kits", 14-day refund, one person per purchase) to /terms or a kits license; legal review.
+- [ ] **Open sales:** `npx netlify env:set KITS_SALES_OPEN true`, then redeploy. The founding lifetime offer runs for 152 buyers or until 2027-12-31.
+- [ ] **Test purchase** of each plan in the sandbox (one-time, upgrade, monthly, annual, lifetime), a cancel and a refund.
+
 ## Sign-in providers
 
 - [x] Microsoft (redirect fix: always return to the public site address)

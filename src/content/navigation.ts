@@ -39,6 +39,7 @@ export const mainNav: NavGroup[] = [
     overview: { label: 'All services', href: '/services' },
   },
   { label: 'Motiv', href: '/motiv' },
+  { label: 'Kits', href: '/kits' },
   { label: 'About', href: '/about' },
   { label: 'Insights', href: '/insights' },
   { label: 'Contact', href: '/contact' },

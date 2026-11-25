@@ -34,7 +34,7 @@ export default async function KitsSection({ accountId, readOnly, revoked }: { ac
             {kits.map((k) => (
               <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>
-                  {packTitle(k.pack)}
+                  {k.pack === 'all' ? 'All Emruz kits' : packTitle(k.pack)}
                   <span className="text-gray-500">
                     {' · '}
                     {k.kind === 'subscription' ? 'subscription, includes new releases' : k.kind === 'lifetime' ? 'lifetime, includes new releases' : k.throughRef ? `up to release ${k.throughRef}` : 'includes new releases'}

@@ -44,8 +44,9 @@ export async function POST(req: Request) {
     billing_address_collection: 'auto',
     allow_promotion_codes: plan !== 'upgrade' && plan !== 'lifetime',
     ...(subscription ? { subscription_data: { metadata } } : { customer_creation: 'always' as const }),
-    // The lifetime cap is checked when checkout starts; a short session keeps late completions few
-    ...(plan === 'lifetime' ? { expires_at: Math.floor(Date.now() / 1000) + 30 * 60 } : {}),
+    // The lifetime cap is checked when checkout starts; a short session keeps late completions few.
+    // Stripe needs at least 30 minutes, measured when it receives the request
+    ...(plan === 'lifetime' ? { expires_at: Math.floor(Date.now() / 1000) + 35 * 60 } : {}),
     client_reference_id: account.id,
     customer_email: account.email,
     metadata,

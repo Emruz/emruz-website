@@ -1,100 +1,103 @@
 # PR review: feature/68-pack-access
 
-Commit: b580f211891aaff531cf95315ceaac4296cd32c0
+Commit: 972383eeebcb9f4d9bb8d40e9dde47817b3a93a7
 Base: 976c2946311c652e877ee64dfa05bd29554d7423
 Date: 2026-11-25
-Critical: 1
-High: 1
-Medium: 7
-Low: 11
+Critical: 0
+High: 0
+Medium: 3
+Low: 10
 
 <!-- The lines above are parsed by scripts/ship-gate.sh and the pr-review-record Action. Keep them exact. -->
 
 ## Scope
-- Files reviewed: 48 code, migration and test files of 57 changed; lines changed: +3406/-43 (excluding the lockfile and LAUNCH/)
-- Skipped: package-lock.json (lockfile), LAUNCH/ (lawyer-questions.md, name-check.md, the previous review record). Not reviewed by a lane: CHANGELOG.md, docs/emruz-kits-mcp.md, docs/open-items.md, .env.example, package.json (version bump only)
-- Diff over 1,500 lines. The logic, injection and edge-case lanes each got all the changed server, route and page code; the logic lane also got the tests. The sensitive-paths lane got the auth, payments and deletion files and read each in full.
-- Lanes: logic, injection and data access, edge cases and performance, sensitive paths. Isolated: yes (no prior review or other lane's results given to any lane or to the verifier)
-- Sensitive paths touched: auth (OAuth server, MCP endpoint, rate limits), payments (kit checkout, billing portal, Stripe webhook, refunds), data deletion (purge job, grant revocation, cascades from migration 021)
-- This review replaces the record for c42072c. b580f21 changed code (oauth-core.ts redirect scheme check) after that record, so the whole branch was reviewed again.
+- Files reviewed: 50 code, migration and test files of 55 changed outside LAUNCH/ and the lockfile; lines changed: +3495/-44 (excluding the lockfile and LAUNCH/)
+- Skipped: package-lock.json (lockfile), LAUNCH/ (previous review records). Not reviewed by a lane: CHANGELOG.md, docs/emruz-kits-mcp.md, docs/open-items.md, .env.example, package.json (version bump only)
+- Diff over 1,500 lines. The logic lane got every changed code, migration and test file. The injection and edge-case lanes got all changed server, route, page and migration files. The sensitive-paths lane got the auth, payments and deletion files and read each in full.
+- Lanes: logic, injection and data access, edge cases and performance, sensitive paths. Isolated: partly. No lane was given another lane's results or the previous record, and the verifier got finding text only. However, the sensitive-paths lane read the b580f21 record from the repo on its own and checked its open items, and the logic lane also referred to it (sens-2).
+- Sensitive paths touched: auth (OAuth server, MCP endpoint, rate limits), payments (kit checkout, billing portal, Stripe webhook, refunds, delayed payments), data deletion (account merge, purge job, grant revocation, migrations 021 and 023)
+- This review replaces the record for b580f21. 972383e changed code after that record (account merge keeps kit purchases, migration 023, MCP limit order, held-release pack check, kits outage fallback, delayed payments, subscription recovery, admin revoke cancels Stripe, checkout errors and impersonation), so the whole branch was reviewed again.
 
 ## Findings
 | ID | Sev | Title | Location | Fix |
 |---|---|---|---|---|
-| sens-1 | Critical | Account merge deletes the merged account's paid kit entitlements through the new cascade | src/lib/server/accounts.ts:93-97; netlify/database/migrations/021_mcp_oauth.sql:55 | Move kit_entitlements (and revoke or move oauth_grants, with an audit row) to the surviving account before the delete; make the FK `on delete restrict` |
-| sens-2 | High | One IP's anonymous traffic uses up the global MCP cap and locks out every paying user | src/app/api/mcp/route.ts:25-35 | Verify the token first; anonymous requests hit only mcpAnon(ip); only valid tokens count toward mcpTotal |
-| sens-3 | Medium | registerTotal is counted before registerPerIp, so one IP can block new client registration | src/lib/server/kits/limits.ts:34 | Put registerPerIp first |
-| sens-5 | Medium | A kit subscription that recovers from `unpaid` stays revoked while billing resumes | src/lib/server/kits/sales.ts:98-104; sales-core.ts:85 | On active or trialing, clear revoked_at where revoked_by='stripe' for that subscription; or treat only canceled and incomplete_expired as ended |
-| inj-2 | Medium | A held older release serves a skill found by name without checking its pack in that release | src/lib/server/kits/content.ts:231,244; protocol.ts:125,142 | In readSkill/readFile return null unless `own.pack === item.pack` (or decide against the held manifest) |
-| logic-1 | Medium | Admin revoke of a purchased kit subscription leaves Stripe billing | src/app/admin/kits/actions.ts:46-58 | Cancel stripe_subscription_id when set, as revokeKitsForPayment does, before setting revoked_at |
-| logic-2 | Medium | On a cold start a GitHub failure throws before the saved last-good release is used | src/lib/server/kits/content.ts:184 | Catch the listRefs() error and fall through to the recorded last-good path |
-| logic-3 | Medium | Delayed payment methods are charged but never granted | src/lib/server/kits/sales.ts:73; src/app/api/stripe/webhook/route.ts:34-64 | Set payment_method_types on the session, or handle checkout.session.async_payment_succeeded |
-| edge-4 | Medium | Stripe and GitHub errors in kit checkout and portal show a raw 500 | src/app/api/kits/checkout/route.ts:29-56; src/app/api/kits/portal/route.ts:20-24 | Wrap in try/catch, log, redirect with ?notice=unavailable (portal: home) |
-| inj-1 | Low | Kit billing portal does not refuse impersonation sessions | src/app/api/kits/portal/route.ts:12-24 | Return early when account.impersonatedBy is set |
-| inj-4 | Low | Kit checkout does not refuse impersonation sessions | src/app/api/kits/checkout/route.ts:24 | Same check as inj-1 |
-| sens-4 | Low | Token-endpoint per-client limit keyed on a caller-supplied client_id | src/app/api/oauth/token/route.ts:11; limits.ts:24,36 | Key by IP plus client_id, or apply after the code or refresh token is validated |
-| inj-3 | Low | `/kits?notice=__proto__` crashes the page | src/app/kits/page.tsx:18,217-218 | Object.hasOwn(notices, notice) or a Map |
-| logic-5 | Low | Eligibility and lifetime cap checked only at checkout start; non-lifetime sessions live 24h | src/app/api/kits/checkout/route.ts:30-49; sales.ts:84-91 | Set expires_at on every session; re-check canBuy and the cap in onKitCheckoutCompleted and flag or refund on failure |
-| logic-6 | Low | Revoke spends a refresh token before the client_id check; the real client's next refresh then revokes the grant | src/lib/server/kits/oauth-core.ts:377-386 | Look the token up read-only in revoke instead of calling useRefresh |
-| logic-7 | Low | Refunding a one-time purchase revokes every upgrade for that account and pack | src/lib/server/kits/sales.ts:125-130 | Limit to upgrades built on the refunded purchase (store a base id) |
-| edge-1 | Low | Lost refresh response or concurrent refresh is treated as reuse and revokes the grant | src/lib/server/kits/oauth-core.ts:355-358; store.ts:53-59 | Short grace window after used_at before treating reuse as theft |
-| edge-8 | Low | Admin page loads 10 bundles into a 6-entry FIFO cache | src/lib/server/kits/content.ts:23,166,213-222 | Check tags without caching bundles, or LRU / raise MAX_BUNDLES |
-| edge-10 | Low | Grants whose refresh tokens expired stay listed as connected apps and are never purged | netlify/functions/purge-deleted.mts:25-26; store.ts:100-105 | In the purge, revoke grants with no live refresh token |
-| edge-11 | Low | Audit failure after the grant means the retry skips the purchase email | src/lib/server/kits/sales.ts:84-94 | Catch audit errors (log only), or insert and audit in one transaction |
+| edge-1 | Medium | A kit paid after its buyer's account was merged away is never granted; the merge is not in a transaction | src/lib/server/kits/sales.ts:80,94-100; src/lib/server/accounts.ts:95-106; migration 023 | Wrap claimEmail's merge in `db().begin`; in onKitCheckoutCompleted, when client_reference_id has no account, resolve it via accountForEmail(customer email) or a recorded merged_into |
+| edge-2 | Medium | Kit subscription status is read from the event payload, so out-of-order events can revoke a paying subscriber | src/lib/server/kits/sales.ts:108-122 | Start onKitSubscriptionChanged with `stripe().subscriptions.retrieve(sub.id)` and branch on the current status |
+| logic-1 | Medium | Global MCP cap counted before the per-account limit, so one free account can lock out every user | src/app/api/mcp/route.ts:35-38 | Check rules.mcpSignedIn before rules.mcpTotal |
+| inj-1 | Low | Manifest validation allows two items to share a path, so a free item can serve a paid skill's files | src/lib/server/kits/content-core.ts:88 | Reject duplicate paths in validateManifest |
+| edge-3 | Low | Refresh token spent before the new pair is stored; a DB error makes the retry look like reuse and revokes the grant | src/lib/server/kits/oauth-core.ts:353-365,315-318 | Use, getGrant and insertRefresh in one transaction, or a short grace window after used_at |
+| edge-4 | Low | Admin page loads up to 10 bundles at once into a 6-entry insertion-order cache | src/lib/server/kits/content.ts:23,150-169,220-229; src/app/admin/kits/page.tsx:26 | LRU, never evict lastGood's ref, and don't cache bundles in releaseTags |
+| edge-5 | Low | A transient GitHub or Blob error marks a release bad for 10 minutes and sends a false "release rejected" alert | src/lib/server/kits/content.ts:157-164,196-203,231-237 | Add to badRefs and alert only for validation failures; let network errors retry |
+| edge-6 | Low | Grants whose refresh tokens expired stay listed as connected apps and are never purged | netlify/functions/purge-deleted.mts:25-26; src/lib/server/kits/store.ts:100-113 | In the purge, revoke grants with no live refresh token, or filter connectedApps to live ones with a limit |
+| edge-7 | Low | Eligibility and the lifetime cap are checked only at checkout start; concurrent checkouts can oversell or double-bill | src/app/api/kits/checkout/route.ts:41-42; src/lib/server/kits/sales.ts:94-100 | Re-check canBuy and the cap in onKitCheckoutCompleted and alert staff, or reserve lifetime slots |
+| sens-2 | Low | Kit subscription changes ignore the price, so a portal plan switch would keep the original pack | src/lib/server/kits/sales.ts:108-122; src/app/api/kits/portal/route.ts:21-24 | Pass a kit-only portal configuration with plan switching off, or check lookup_key on subscription updates |
+| sens-3 | Low | A refund on a subscription already revoked as unpaid doesn't cancel it, and a later payment restores access | src/lib/server/kits/sales.ts:132,110-113 | In revokeKitsForPayment also match revoked_reason = 'subscription unpaid', cancel, and overwrite the reason |
+| sens-4 | Low | Revoke spends a refresh token before the client_id check; the real client's next refresh then revokes the grant | src/lib/server/kits/oauth-core.ts:378-383 | Look the token up read-only in revoke instead of calling useRefresh |
+| logic-5 | Low | Admin revoke races its own customer.subscription.deleted webhook and loses the admin's reason | src/app/admin/kits/actions.ts:56-68 | Mark revoked with the admin's actor and reason before cancelling in Stripe; clear it if the cancel throws |
 
-### sens-1 Account merge deletes the merged account's paid kit entitlements through the new cascade
-- Problem: `claimEmail` moves only `subscriptions` and `identities` from the other account, then deletes it. Migration 021 adds `on delete cascade` from `kit_entitlements` (and `oauth_grants`, `oauth_codes`) to `accounts`. Every kit entitlement on the merged account is erased: purchases, staff grants and lifetime licences, along with their Stripe ids. A kit subscription keeps billing in Stripe with no row, so later refund and subscription webhooks find nothing to act on. Reached by any signed-in user through /auth/verify/confirm (route.ts:26-29). Concrete path: staff `grantKit` creates account B for an email via `accountForEmail` (admin/kits/actions.ts:34-35), or the user buys while signed in as B; later, signed in with Apple as A, they claim B's email; B is deleted with its entitlements.
-- Evidence: accounts.ts:95-97 `update subscriptions set account_id = ...`; `update identities set account_id = ...`; `delete from accounts where id = ${other.id}`. 021_mcp_oauth.sql:55 `account_id uuid not null references accounts(id) on delete cascade`.
-- Fix: before the delete in `claimEmail`, `update kit_entitlements set account_id = ${accountId} where account_id = ${other.id}`, and revoke the other account's `oauth_grants` with an audit row. Change the FK to `on delete restrict` so a missed move fails loudly.
-- Verifier: confirmed, Critical. `claimEmail` predates this diff; the cascade that makes it lose paid data is new here.
+### edge-1 A kit paid after its buyer's account was merged away is never granted
+- Problem: checkout puts account.id into client_reference_id (checkout/route.ts:61) and onKitCheckoutCompleted inserts it as-is. claimEmail moves kit_entitlements and then deletes the other account in separate statements with no transaction, and migration 023 makes the FK `on delete restrict`. If the webhook for a checkout the merged account started arrives after the delete, the insert fails the FK; the webhook rolls back its event row and returns 500, Stripe retries until it gives up, and the customer is charged with no kit. Delayed payment methods confirm through checkout.session.async_payment_succeeded (webhook/route.ts:39-41) days later, so the window is wide. If it arrives between the move and the delete, the delete fails and leaves a half-merged account.
+- Evidence: sales.ts:80 `const accountId = session.client_reference_id;`; :94-98 `insert into kit_entitlements (account_id, ...) values (${accountId}, ...`; accounts.ts:96 `update kit_entitlements set account_id = ${accountId} where account_id = ${other.id}`; :106 `delete from accounts where id = ${other.id}`.
+- Fix: run the merge in one `db().begin` transaction; in onKitCheckoutCompleted, when no accounts row has the id, resolve it through accountForEmail(session customer email) (claimEmail adds that email identity to the surviving account) or a merged_into record.
+- Verifier: confirmed, Medium. sens-1, logic-2 and logic-6 merged into it.
 
-### sens-2 One IP's anonymous traffic uses up the global MCP cap
-- Problem: every POST to /api/mcp increments the shared `mcpTotal` counter (5000/h) before the token is checked and before the anonymous per-IP limit (60/h). Rejected requests still count. One IP sending about 5000 unauthenticated POSTs an hour makes /api/mcp return 429 to every token holder until the window resets.
-- Evidence: route.ts:25 `const total = await limited(rules.mcpTotal()); if (total) return tooMany(total);` before the `verifyAccessToken` call and `limited(rules.mcpAnon(ip(req)))` at :31-33. The limiter increments on every call (src/lib/server/db.ts:41-48).
-- Fix: run `verifyAccessToken` first (signature check, no database). For a missing or invalid token apply only `mcpAnon(ip)`. Count only requests with a valid signature toward `mcpTotal`.
-- Verifier: confirmed, High.
+### edge-2 Out-of-order Stripe events can revoke a paying subscriber
+- Problem: onKitSubscriptionChanged branches on the status in the event payload. Stripe doesn't guarantee order and retries failed deliveries later, so a stale `unpaid` processed after `active` revokes access, and nothing restores it until another subscription event.
+- Evidence: sales.ts:109 `if (sub.status === 'active' || sub.status === 'trialing') {…}`; :117 `if (!subscriptionEnded(sub.status)) return;` then revoke.
+- Fix: retrieve the subscription from Stripe at the start of the handler and branch on its current status.
+- Verifier: confirmed, Medium.
+
+### logic-1 Global MCP cap counted before the per-account limit
+- Problem: every request with a valid token increments mcpTotal (5000/h) before mcpSignedIn (600/h per account) is checked, and the limiter increments even when it rejects. Free accounts get valid tokens, so one account sending ~5000 requests an hour gets 429 after 600 but keeps filling the global counter until every user is locked out for the window.
+- Evidence: route.ts:35-38 `const total = await limited(rules.mcpTotal()); if (total) return tooMany(total); const wait = await limited(rules.mcpSignedIn(claims.sub, claims.client_id));`; db.ts:43-46 upsert on every call.
+- Fix: check rules.mcpSignedIn before rules.mcpTotal.
+- Verifier: confirmed, Medium.
 
 ## Checked, no finding
-- src/lib/server/kits/oauth-core.ts:118-155: redirect URIs limited to https, loopback http and dotted private schemes; exact match apart from the loopback port; the scheme regex at :133 has no nested quantifier and input is capped at 2000 characters.
-- src/lib/server/kits/oauth-core.ts:165-183: registration caps redirect_uris at 5, removes duplicates, strips and caps client_name; client ids are random.
-- src/lib/server/kits/oauth-core.ts:225-266: unknown client or redirect shows an error and never redirects; PKCE S256 required; scope and resource checked; codes random, hashed, 5-minute life.
-- src/lib/server/kits/oauth-core.ts:325-369: code deleted before any check (single use); client, expiry, exact redirect_uri and PKCE verifier compared in constant time; refresh single use, reuse revokes the grant.
-- src/lib/server/kits/oauth-core.ts:281-313, 392-395: access tokens pin algorithm (EdDSA), issuer, audience, typ, kid and expiry; each MCP call re-checks the grant's account, client and revoked state.
-- src/lib/server/kits/store.ts:22-29, 37, 51-60, 125-133: atomic code delete-returning; UUID-checked grant ids; refresh used_at flipped once; revokeOwnGrant scoped by account_id and audited; all queries parameterized.
-- src/lib/server/kits/server.ts:50-69: body size caps; repeated parameters rejected; signing key never logged.
-- src/lib/server/kits/protocol.ts:97-154 and content.ts:237-247: search uses `includes`, not a regex from input; `..` rejected; files read by exact key from an in-memory archive map; access decided on every call, including resources/read.
-- src/lib/server/kits/content.ts:28-52, 104-148 and content-core.ts:88, 118-157: repo name validated; tags checked with isRef; downloads limited to GitHub asset URLs and checked against SHA256SUMS; tar reader rejects `..`, links and absolute paths and caps size and entries; token kept out of error text.
-- src/lib/server/kits/content-core.ts:191-198 and sales-core.ts:47-85: decide, holding and canBuy handle no entitlements, the all-kits bundle, staff grants, upgrades and lifetime (pack check gap in inj-2).
-- src/app/api/mcp/route.ts:36-52: batches rejected; body capped at 64 KB; entitlements read fresh for claims.sub; fixed 3-4 queries per request, no N+1.
-- src/app/api/oauth/consent/route.ts:16-43: same-origin, signed-in, impersonation refused, rate limited, authorization re-checked on the server, account from the session.
+- src/lib/server/kits/oauth-core.ts:118-155: redirect URIs limited to https, loopback http and dotted private schemes; no fragments or credentials; exact match apart from the loopback port; linear scheme regex.
+- src/lib/server/kits/oauth-core.ts:165-198: registration caps redirect_uris at 5, removes duplicates, limits grant and response types, cleans and caps client_name; client ids random, all clients public.
+- src/lib/server/kits/oauth-core.ts:225-270: unknown client or redirect gives a page error, never a redirect; PKCE S256 required; scope and resource checked; codes random, hashed, 5-minute life.
+- src/lib/server/kits/oauth-core.ts:281-313, 392-395: access tokens pin EdDSA, issuer, audience, typ, kid and expiry; grantActive re-checks account, client and revoked state.
+- src/lib/server/kits/oauth-core.ts:325-369: code deleted before any check; client, expiry, exact redirect_uri and PKCE verifier compared in constant time; refresh single use, reuse revokes the grant (gaps in edge-3, sens-4).
+- src/lib/server/kits/store.ts:22-60, 68-133: atomic code delete-returning; UUID-checked grant ids; atomic used_at flip; entitlement, connected-app and revokeOwnGrant queries scoped to account_id; all parameterized; revocation audited.
+- src/lib/server/kits/server.ts:10-69: signing key loaded lazily and not logged; `*` CORS fine for bearer-only endpoints; 16 KB body cap; repeated parameters refused.
+- src/lib/server/kits/limits.ts:33-43: registerPerIp before registerTotal; anonymous MCP traffic hits only the per-IP limit (signed-in ordering in logic-1).
+- src/app/api/mcp/route.ts:24-77: batches refused; 64 KB body cap; entitlements read fresh for claims.sub; about 7 small queries per signed request, no N+1.
+- src/lib/server/kits/protocol.ts:97-154, 187-200: list and search iterate the in-memory manifest; search uses `includes`, query capped at 200 characters; `..` rejected; access decided per call including resources/read.
+- src/lib/server/kits/content.ts:28-52, 104-148, 177-217, 231-256: repo and tags validated; downloads limited to the repo's GitHub asset URLs and checked against SHA256SUMS; token kept out of error text; fallback to lastGood, cached last-good and older releases; held release served only for the same skill name and pack (gaps in edge-4, edge-5).
+- src/lib/server/kits/content-core.ts:118-157, 191-198: tar reader rejects `..`, absolute paths and links, caps size and entries; decide handles free, latest-following and held entitlements (path gap in inj-1).
+- src/app/api/oauth/consent/route.ts:16-43: same-origin, signed in, impersonation refused, rate limited, authorization re-checked on the server, account from the session.
 - src/app/api/oauth/register, token, revoke routes: rate limited, size capped, generic errors.
-- src/app/oauth/authorize/page.tsx:39-68 and Consent.tsx:11-30: sign-in before checks; `next` built from a local path; error links only after the redirect URI is verified; framing blocked (src/proxy.ts:27, next.config.ts:8).
-- src/app/.well-known/* routes: static metadata from server config, S256 and `none` client auth only.
-- src/app/motiv/account/actions.ts:37-45 and KitsSection.tsx:12-83: scoped to account.id; disconnect refused during impersonation; grant id UUID-checked; billing and disconnect hidden in read-only mode; bundle failures caught.
-- src/app/admin/kits/actions.ts:13-44 and page.tsx:12-44: admin plus recent sign-in; inputs validated; parameterized; duplicate-grant check with `is not distinct from`; audited (revoke gap in logic-1).
-- src/app/api/kits/checkout/route.ts:15-56: salesOpen flag, same-origin, signed-in, rate limited; price from a server lookup key so amount and currency come from Stripe; account and ref in metadata set on the server; lifetime expires_at 35 minutes, in seconds.
-- src/app/api/kits/portal/route.ts:16-18: entitlement scoped by account_id.
-- src/app/api/stripe/webhook/route.ts:17-72: signature checked before any work; event-id dedupe with rollback on failure; kits and Motiv routed by product metadata on signed events.
-- src/lib/server/stripe.ts:167-203: kit handler runs only when no Motiv licence matched; subId passed through for subscription charges; only full refunds act.
-- src/lib/server/kits/sales.ts:18-35, 66-95, 110-134: price cache; lifetime count; insert idempotent by the unique checkout-session index; refunds cancel the Stripe subscription before revoking and target only the matching payment intent or subscription.
-- src/lib/server/db.ts:36-55: rateLimitCheck parameterized, retry_after at least 1; rateLimit behaviour unchanged; alert keys mask emails.
-- src/lib/server/alerts.ts: new event kinds with thresholds and cooldowns; no tokens or emails in keys.
-- netlify/database/migrations/021_mcp_oauth.sql: new tables only; hashes as keys; CHECK constraints on pack, through_ref, source and kind (cascade risk in sens-1).
-- netlify/database/migrations/022_kit_sales.sql: nullable columns and indexes only; the partial unique index matches the `on conflict ... where` in onKitCheckoutCompleted.
-- netlify/functions/purge-deleted.mts:23-30: fixed deletes with no input; used refresh tokens kept until expiry so reuse detection still works (dead-grant gap in edge-10).
-- src/content/kits.ts:13-42: display prices only; the charge uses the Stripe price.
-- src/app/kits/thanks/page.tsx:8-37: static; ignores session_id.
+- src/app/oauth/authorize/page.tsx:39-68 and Consent.tsx:11-30: sign-in before checks; error links only after the redirect URI is verified and only on click; framing blocked (next.config.ts:8, src/proxy.ts:27).
+- src/app/.well-known/* routes: static metadata from server config.
+- src/app/motiv/account/actions.ts:38-45 and KitsSection.tsx:12-83: scoped to account.id; UUID check; impersonation refused; loads in parallel; bundle failure falls back to null.
+- src/app/admin/kits/actions.ts:14-71 and page.tsx:26-47: admin plus recent sign-in; inputs validated; duplicate-grant check with `is not distinct from`; Stripe subscription cancelled before revoke and revoke stops if Stripe refuses; grants list limited to 500; messages rendered as React text (race in logic-5).
+- src/app/api/kits/checkout/route.ts:15-68: sales flag, same-origin, signed in, impersonation refused, rate limited, Stripe errors caught; price from a server lookup key so Stripe sets amount and currency; metadata and client_reference_id set on the server; every session expires, at least 30 minutes.
+- src/app/api/kits/portal/route.ts:10-30: entitlement scoped to account_id; impersonation refused; errors caught.
+- src/app/api/stripe/webhook/route.ts:17-77: signature checked before work; event-id dedupe with rollback on failure; async_payment_succeeded routed to kits only; events routed by product metadata.
+- src/lib/server/stripe.ts:167-203: only full refunds and lost disputes act; kit handler only when no Motiv licence matched; subscription id taken from the invoice.
+- src/lib/server/kits/sales.ts:76-105, 128-157: unpaid delayed sessions skipped then re-entered on async success; pack, plan and release validated; insert idempotent on the checkout-session index; refunds cancel the Stripe subscription first and scope upgrade revocation to upgrades granted after the refunded purchase.
+- src/lib/server/kits/sales-core.ts:47-85: holding, canBuy and lifetimeOpen handle the bundle, staff grants, upgrades and lifetime; bad cap date fails closed.
+- src/lib/server/accounts.ts:90-114: claimEmail moves kit entitlements, revokes the merged account's grants and refresh tokens, audits, then deletes; parameterized; reached only from the verified-email claim (gap in edge-1).
+- src/lib/server/db.ts:36-55 and alerts.ts: rateLimitCheck parameterized, retry_after at least 1; alert keys hold no tokens or emails.
+- src/lib/server/config.ts:33-39: sales flag defaults off; lifetime cap and end date from the server.
+- netlify/database/migrations/021_mcp_oauth.sql: new tables; hashes as keys; CHECK constraints on pack, through_ref, source and kind; mcp_audit keeps rows on account delete.
+- netlify/database/migrations/022_kit_sales.sql: nullable columns and indexes; partial unique index matches the `on conflict ... where` clause.
+- netlify/database/migrations/023_kit_entitlements_keep.sql: dropped constraint name matches Postgres's default for 021's inline FK; `on delete restrict` makes a missed move fail; claimEmail is the only account delete in the repo.
+- netlify/functions/purge-deleted.mts:23-30: fixed deletes with no input; used refresh tokens kept until expiry so reuse detection works (gap in edge-6).
+- src/app/kits/page.tsx:18-52, 218-219: bundle and lifetime errors caught; notice limited to an allowlist via Object.hasOwn.
+- src/app/kits/thanks/page.tsx, src/content/kits.ts: static; display prices only, the charge uses the Stripe price.
 
 ## Dropped
 - No finding was dropped as a false positive.
-- Duplicates merged: edge-3 into sens-2 and sens-3; edge-6 into sens-5; sens-6 into inj-1; logic-4 into inj-2; edge-2 into logic-2; edge-7 into logic-3; edge-5, sens-7 and edge-9 into logic-5; edge-12 into logic-6.
-- Severity lowered by the verifier: sens-3 High to Medium (connected apps keep working; only new registrations blocked); sens-4 Medium to Low (client ids are random and not widely exposed; effect is an hour of refresh throttling); inj-1 Medium to Low (actor is an admin already impersonating; matches the existing Motiv portal route); edge-1 Medium to Low (strict rotation per OAuth 2.1; cost is a reconnect); edge-8 Medium to Low (lastGood keeps the current bundle; cost is re-reads and memory); edge-5 Medium to Low as part of logic-5 (needs the user to pay twice).
+- Duplicates merged: sens-1, logic-2 and logic-6 into edge-1; logic-3 into sens-4; logic-4 into edge-7.
+- Severity lowered by the verifier: edge-3 Medium to Low (needs a DB failure in a narrow window; the cost is a reconnect); edge-4 Medium to Low (serving uses lastGood directly; cost is re-unpacking and a memory spike on an admin-only page); sens-2 Medium to Low (applies only if plan switching is turned on in the Stripe portal, which is off by default).
 
 ## Not reviewed
 - Runtime behaviour: nothing was run. Tests, the dev server and Stripe or GitHub calls were not exercised.
-- Stripe Dashboard settings that decide whether sens-5 and logic-3 happen (failed-retry action, enabled payment methods).
+- Stripe Dashboard settings that decide whether sens-2 and edge-2 happen (portal plan switching, event delivery order).
 - Netlify environment variables, Blobs contents and the GitHub release repo.
-- Three lanes (injection, edge cases, and one other) had shell access refused and read the files at head directly from the clean working tree rather than from `git diff`; findings cite head lines.
+- Three lanes (injection and data access, edge cases, sensitive paths) had shell access refused and read files at head directly from the clean working tree rather than from `git diff`. The logic lane and the verifier did not report this. The edge-case lane did not see the diff of src/app/motiv/account/page.tsx and did not read the .well-known routes or Consent.tsx (the other lanes covered them).
 - CHANGELOG.md, docs/*.md, .env.example, package.json, package-lock.json, LAUNCH/ files.
 - src/components/AccountMenu.tsx, src/components/Footer.tsx, src/content/navigation.ts, src/app/page.tsx, src/app/services/page.tsx, src/app/sitemap.ts: link and copy changes, covered only by the general lanes' file lists.
 - LAUNCH/changelog.md was not updated, at the owner's request that this commit change only the record.

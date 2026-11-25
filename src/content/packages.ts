@@ -706,3 +706,18 @@ export const addOnLines: AddOnLine[] = [
 
 export const addOnLineByPath = (path: string) => addOnLines.find((l) => l.path === path);
 export const addOnHref = (a: { family: AddOnFamily }) => `/products/${addOnLines.find((l) => l.slug === a.family)!.path}`;
+
+/**
+ * The Managed Security tile, shared by the home page and the Services page so
+ * they always match. The icon is added where it is rendered.
+ */
+export const MANAGED_SECURITY_CARD = {
+  title: 'Managed Security',
+  description: `${SOC_LINE}, at the level of protection you need.`,
+  href: '/products/compare',
+  benefits: ['EDR, MDR, XDR and ΔDR editions, plus individual services', 'Grow from endpoint protection to identity and data risk', 'Compare every edition side by side'],
+  color: 'slate' as const,
+  ctaLabel: 'Compare editions',
+  ctaStyle: 'link' as const,
+  note: POWERED_BY,
+};

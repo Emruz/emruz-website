@@ -94,6 +94,7 @@ export function adminLinks(me: Me | null): AdminLink[] {
     { label: 'Staff', href: '/workbench/staff', description: 'Who can use the Workbench and who is an admin' },
     { label: 'Partners', href: '/workbench/partners', description: 'Partner organizations and their teams' },
     { label: 'Motiv', href: '/admin/motiv', description: 'Subscriptions, seats and computers', divider: true },
+    { label: 'Emruz kits', href: '/admin/kits', description: 'Kit grants and connected apps' },
     { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
     { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
     { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },

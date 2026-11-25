@@ -20,7 +20,12 @@ const purgeDeleted = async () => {
     for (const k of keys) await store.delete(k.blob_key).catch(() => {});
     const e = await sql`delete from engagements where deleted_at < now() - make_interval(days => ${RETENTION_DAYS})`;
     const a = await sql`delete from assessments where deleted_at < now() - make_interval(days => ${RETENTION_DAYS})`;
-    console.log(`purge-deleted: ${e.count} engagements (${keys.length} files), ${a.count} self-assessments`);
+    // Emruz kits (#67): expired codes and refresh tokens, revoked grants after a year, audit after a year
+    await sql`delete from oauth_codes where expires_at < now()`;
+    await sql`delete from oauth_refresh_tokens where expires_at < now()`;
+    await sql`delete from oauth_grants where revoked_at < now() - interval '365 days'`;
+    const m = await sql`delete from mcp_audit where at < now() - interval '365 days'`;
+    console.log(`purge-deleted: ${e.count} engagements (${keys.length} files), ${a.count} self-assessments, ${m.count} kit audit rows`);
     return new Response('ok');
   } finally {
     await sql.end();

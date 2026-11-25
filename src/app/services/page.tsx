@@ -18,7 +18,7 @@ import {
 import Link from 'next/link';
 import PackagePortfolio from '@/components/PackagePortfolio';
 import IndividualServices from '@/components/IndividualServices';
-import { POWERED_BY, SOC_LINE } from '@/content/packages';
+import { MANAGED_SECURITY_CARD } from '@/content/packages';
 
 
 export const metadata = {
@@ -74,17 +74,7 @@ export default function Services() {
       benefits: ['AI strategy and use cases', 'AI governance', 'Team enablement'],
       color: 'blue' as const,
     },
-    {
-      icon: ShieldCheck,
-      title: 'Managed Security',
-      description: `${SOC_LINE}, at the level of protection you need.`,
-      href: '/products/compare',
-      benefits: ['EDR, MDR, XDR and ΔDR editions, plus individual services', 'Grow from endpoint protection to identity and data risk', 'Compare every edition side by side'],
-      color: 'slate' as const,
-      ctaLabel: 'Compare editions',
-      ctaStyle: 'link' as const,
-      note: POWERED_BY,
-    },
+    { icon: ShieldCheck, ...MANAGED_SECURITY_CARD },
   ];
 
   const engagementModels = [
@@ -128,10 +118,10 @@ export default function Services() {
                 description={service.description}
                 benefits={service.benefits}
                 href={service.href}
-                ctaLabel={service.ctaLabel ?? 'Learn more'}
+                ctaLabel={('ctaLabel' in service ? service.ctaLabel : undefined) ?? 'Learn more'}
                 color={service.color}
-                note={service.note}
-                ctaStyle={service.ctaStyle}
+                note={'note' in service ? service.note : undefined}
+                ctaStyle={'ctaStyle' in service ? service.ctaStyle : undefined}
               />
             ))}
           </div>

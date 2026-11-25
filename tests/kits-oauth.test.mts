@@ -58,6 +58,11 @@ assert.equal(redirectUriProblem('com.example.app:/oauth'), null, 'reverse-domain
 assert.ok(redirectUriProblem('http://evil.example/cb'), 'plain http elsewhere');
 assert.ok(redirectUriProblem('https://claude.ai/cb#frag'), 'fragment');
 assert.ok(redirectUriProblem('javascript:alert(1)'), 'javascript scheme');
+assert.equal(redirectUriProblem('com.example.my-app+dev:/cb'), null, 'reverse-domain scheme with - and +');
+assert.ok(redirectUriProblem('myapp:/cb'), 'single-part private scheme');
+assert.ok(redirectUriProblem('com..example:/cb'), 'empty part in scheme');
+assert.ok(redirectUriProblem('com.example.:/cb'), 'scheme ending in a dot');
+assert.ok(redirectUriProblem(`a${'.a'.repeat(400)}!:/cb`), 'long invalid scheme is rejected');
 assert.ok(redirectUriProblem('https://user:pw@claude.ai/cb'), 'credentials');
 assert.ok(redirectMatches(['http://127.0.0.1:1000/cb'], 'http://127.0.0.1:5555/cb'), 'loopback port may change');
 assert.ok(!redirectMatches(['http://127.0.0.1:1000/cb'], 'http://127.0.0.1:5555/other'));

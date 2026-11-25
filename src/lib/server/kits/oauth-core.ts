@@ -128,7 +128,9 @@ export function redirectUriProblem(raw: unknown): string | null {
   if (u.protocol === 'https:') return u.hostname ? null : 'redirect_uri needs a host';
   if (u.protocol === 'http:') return LOOPBACK.has(u.hostname) ? null : 'http redirect URIs are only allowed on loopback addresses';
   const scheme = u.protocol.slice(0, -1);
-  if (/^[a-z][a-z0-9+-]*(\.[a-z0-9+-]+)+$/.test(scheme)) return null;
+  // Reverse-domain scheme: letters, digits, + and - in dot-separated parts, at least two parts.
+  // One character class and a split instead of a nested group, so the check stays linear.
+  if (/^[a-z][a-z0-9+.-]*$/.test(scheme) && scheme.includes('.') && scheme.split('.').every((part) => part.length > 0)) return null;
   return 'redirect_uri scheme is not allowed';
 }
 

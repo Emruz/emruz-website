@@ -169,6 +169,7 @@ export async function revokeKitsForPayment(paymentIntent: string | null, subscri
     where (revoked_at is null or (revoked_by = 'stripe' and revoked_reason = 'subscription unpaid')) and (
       (${paymentIntent}::text is not null and stripe_payment_intent_id = ${paymentIntent})
       or (${subscriptionId}::text is not null and stripe_subscription_id = ${subscriptionId}))`;
+  let ended = 0;
   for (const r of rows) {
     if (r.stripe_subscription_id) {
       const sub = await stripe().subscriptions.retrieve(r.stripe_subscription_id);
@@ -176,7 +177,13 @@ export async function revokeKitsForPayment(paymentIntent: string | null, subscri
     }
     const reason = category === 'refund' ? 'refunded in Stripe' : 'disputed and lost in Stripe';
     // Overwrites an unpaid revocation too, so a later payment cannot restore a refunded kit
-    await db()`update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${reason} where id = ${r.id}`;
+    // Same condition as the read: a row revoked meanwhile (by staff or another event) is left as it is
+    const changed = await db()`
+      update kit_entitlements set revoked_at = now(), revoked_by = 'stripe', revoked_reason = ${reason}
+      where id = ${r.id} and (revoked_at is null or (revoked_by = 'stripe' and revoked_reason = 'subscription unpaid'))
+      returning id`;
+    if (!changed.length) continue;
+    ended++;
     await audit('kit_revoked', r.account_id, { pack: r.pack, reason, by: 'stripe' });
     if (r.kind === 'once') {
       // An upgrade builds on the purchase it upgrades; refunding that purchase ends the upgrades bought after it,
@@ -191,5 +198,5 @@ export async function revokeKitsForPayment(paymentIntent: string | null, subscri
       if (ups.length) await audit('kit_revoked', r.account_id, { pack: r.pack, reason: 'upgraded purchase reversed', count: ups.length, by: 'stripe' });
     }
   }
-  return rows.length;
+  return ended;
 }

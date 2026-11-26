@@ -1,6 +1,6 @@
 import 'server-only';
 import { db } from '@/lib/server/db';
-import type { Answers, Profile, Tier } from '@/content/self-assessment';
+import { SELF_FRAMEWORK, type Answers, type Profile, type Tier } from '@/content/self-assessment';
 
 export interface SelfRow {
   id: string;
@@ -51,7 +51,8 @@ export async function selfAssessments(opts: { accountId: string; all: boolean; i
     left join accounts st on st.id = s.assigned_to
     left join accounts pb on pb.id = s.performed_by
     left join partners pn on pn.id = s.partner_id
-    where (${opts.partnerId ?? null}::uuid is null or s.partner_id = ${opts.partnerId ?? null})
+    where s.framework = ${SELF_FRAMEWORK}
+      and (${opts.partnerId ?? null}::uuid is null or s.partner_id = ${opts.partnerId ?? null})
       and (${opts.all} or s.assigned_to = ${opts.accountId} or s.performed_by = ${opts.accountId})
       and (${opts.id ?? null}::uuid is null or s.id = ${opts.id ?? null})
     order by coalesce(s.completed_at, s.updated_at) desc

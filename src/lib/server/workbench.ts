@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { notFound } from 'next/navigation';
 import { db } from './db';
+import type { Sql, TransactionSql } from 'postgres';
 import { isAdmin, requireAccount, type Account } from './session';
 import { sendEmail } from './email';
 import { isUuid } from './api';
@@ -185,12 +186,21 @@ export interface RequestRow {
 
 export async function getRequests(engagementId: string): Promise<RequestRow[]> {
   return db()<RequestRow[]>`
-    select r.id, r.subcategory, r.erl_id, r.text, r.status, r.created_at, r.closed_at,
-           (select count(*)::int from evidence e
-             where e.engagement_id = r.engagement_id
-               and (e.request_id = r.id or (r.erl_id is not null and exists (
-                 select 1 from evidence_erl_links x where x.evidence_id = e.id and x.erl_id = r.erl_id)))) as evidence_count
-    from evidence_requests r where r.engagement_id = ${engagementId}
+    -- Counted once per engagement and joined, not a subquery per request (#76, review edgeB-1).
+    -- Evidence filed against a request and linked to its ERL item counts once.
+    with ev as (select id, request_id from evidence where engagement_id = ${engagementId}),
+    answers as (
+      select ev.request_id as request_id, ev.id as evidence_id from ev where ev.request_id is not null
+      union
+      select q.id, x.evidence_id from evidence_requests q
+      join evidence_erl_links x on x.erl_id = q.erl_id
+      join ev on ev.id = x.evidence_id
+      where q.engagement_id = ${engagementId} and q.erl_id is not null
+    ),
+    counts as (select request_id, count(*)::int as n from answers group by request_id)
+    select r.id, r.subcategory, r.erl_id, r.text, r.status, r.created_at, r.closed_at, coalesce(c.n, 0) as evidence_count
+    from evidence_requests r left join counts c on c.request_id = r.id
+    where r.engagement_id = ${engagementId}
     order by (r.status = 'open') desc, r.created_at desc`;
 }
 
@@ -204,8 +214,8 @@ export async function getObligationRatings(engagementId: string) {
 }
 
 /** When evidence answers a request raised from the SCF Evidence Request List, link it to that ERL item. */
-export async function linkEvidenceToRequestErl(evidenceId: string, requestId: string, engagementId: string) {
-  await db()`
+export async function linkEvidenceToRequestErl(evidenceId: string, requestId: string, engagementId: string, sql: Sql | TransactionSql = db()) {
+  await sql`
     insert into evidence_erl_links (evidence_id, erl_id)
     select ${evidenceId}, r.erl_id from evidence_requests r
     where r.id = ${requestId} and r.engagement_id = ${engagementId} and r.erl_id is not null

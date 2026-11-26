@@ -27,7 +27,9 @@ export default function RequestGroup({
   linkAction: (form: FormData) => Promise<void>;
 }) {
   const open = requests.filter((r) => r.status === 'open');
-  const [picked, setPicked] = useState<string[]>(open.length === 1 ? [open[0].id] : []);
+  const [chosen, setPicked] = useState<string[]>(open.length === 1 ? [open[0].id] : []);
+  // Requests answered since (after an upload) drop out of the selection
+  const picked = chosen.filter((id) => open.some((r) => r.id === id));
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   return (
@@ -36,10 +38,12 @@ export default function RequestGroup({
         {requests.map((r) => (
           <li key={r.id}>
             <label className="flex gap-2 text-sm">
-              {r.status === 'open' && !readOnly ? (
-                <input type="checkbox" className="mt-1" checked={picked.includes(r.id)} onChange={() => toggle(r.id)} />
-              ) : (
+              {r.status !== 'open' ? (
                 <span className="mt-0.5 text-emerald-700" aria-label="Received">✓</span>
+              ) : readOnly ? (
+                <span className="mt-0.5 w-[1ch] text-gray-400" aria-label="Open">○</span>
+              ) : (
+                <input type="checkbox" className="mt-1" checked={picked.includes(r.id)} onChange={() => toggle(r.id)} />
               )}
               <span className={r.status === 'open' ? 'text-gray-900' : 'text-gray-500'}>
                 {r.text} <span className="text-xs text-gray-500">({r.label})</span>

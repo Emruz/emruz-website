@@ -11,7 +11,7 @@ Business settings live in the database (`site_settings`, migration 027) and are 
 | Computers per new licence | `MOTIV_DEFAULT_SEATS` | 2 | 1 to 50 |
 | Lease length (days) | `MOTIV_LEASE_DAYS` | 14 | 1 to 60 |
 | Past-due grace (days) | `MOTIV_PAST_DUE_GRACE_DAYS` | 7 | 0 to 30 |
-| Motiv Pro monthly, annual, lifetime price | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME` | Not set (that checkout is off) | Exists in this Stripe account, active, and recurs monthly, recurs yearly, or is one time |
+| Motiv Pro monthly, annual, lifetime price | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME` | Not set (that checkout is off) | Exists in this Stripe account, active, in USD, not a kits price, recurs monthly, recurs yearly, or is one time, and all three are for the same product |
 | Sales tax at checkout | `STRIPE_AUTOMATIC_TAX` | On | On or off (off only in a sandbox) |
 | Contact form to | `CONTACT_TO` | info@emruz.com | One email address |
 | Assessment notices to | `ASSESSMENT_NOTIFY_TO` | sales@emruz.com | One email address |
@@ -20,9 +20,9 @@ Business settings live in the database (`site_settings`, migration 027) and are 
 
 The kits launch date (#71) is stored here too, as `kits_launch_date`, and is set on `/admin/kits`.
 
-Until a setting is saved on `/admin/settings`, the site reads the Netlify variable it replaced (if set and valid), so nothing changes on deploy. Once saved, the database value wins. `/admin/settings` names any variable still set in Netlify so it can be removed after its value is saved.
+Until a setting is saved on `/admin/settings`, the site reads the Netlify variable it replaced (if set and valid), so nothing changes on deploy. Once saved, the database value wins. The page shows each value in effect and where it comes from (saved, Netlify variable or default), and fills the form with any Netlify value still in effect, so saving the form keeps it. Choosing Default or emptying a field while the Netlify variable is still set saves an explicit clear, so the default applies and the variable no longer does. The page names any variable still set in Netlify so it can be removed after its value is saved.
 
-If the database can't be read, the site uses the last values it read, or the defaults.
+If the database can't be read, the site uses the last values it read and tries again after 5 seconds. A server instance that has never read them uses the Netlify variables and defaults, and the kits keep serving the last good release rather than move to the newest, since the release hold is unknown.
 
 ## Kept in Netlify
 

@@ -52,6 +52,8 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
   if (!isAdmin(account)) notFound();
   const locked = needsStepUp(account);
   const [stored, changes, tags] = await Promise.all([storedSettings(), settingChanges(), releaseTags()]);
+  // An empty value is an explicit clear while a Netlify variable is set
+  const shown = (v: string | null) => (v === '' ? 'default (cleared)' : v ?? 'default');
   const labelFor = (key: string) => SETTINGS.find((s) => s.key === key)?.label ?? key;
   const current = Object.fromEntries([...stored].map(([k, r]) => [k, r.value]));
   const effective = new Map(SETTINGS.map((s) => [s.key, effectiveSetting(s, current)]));
@@ -126,7 +128,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
               {changes.map((c, i) => (
                 <li key={i} className="p-4 break-words">
                   <span className="font-semibold text-gray-900">{labelFor(c.detail.key)}</span>
-                  <span className="text-gray-600"> · {c.detail.old || 'default'} → {c.detail.new || 'default'}</span>
+                  <span className="text-gray-600"> · {shown(c.detail.old)} → {shown(c.detail.new)}</span>
                   <span className="block text-xs text-gray-500">{fmtDate(c.at)} · {(c.actor ?? '').replace(/^admin:/, '')}</span>
                 </li>
               ))}

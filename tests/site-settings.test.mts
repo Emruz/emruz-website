@@ -196,6 +196,7 @@ console.log('site settings env fallback passed');
   const actions = readFileSync('src/app/admin/settings/actions.ts', 'utf8');
   assert.match(page, /effectiveSetting\(/, 'Now shows the value in effect');
   assert.doesNotMatch(page, /no longer read/, 'the notice no longer says the variables are ignored');
+  assert.match(page, /v === '' \? 'default \(cleared\)'/, 'the change log names an explicit clear');
   assert.match(actions, /storedForm\(def, c\.value\)/, 'Default is stored as a clear while the variable is set');
   assert.match(actions, /same Stripe product/, 'Motiv prices are checked for one product');
 }

@@ -7,7 +7,7 @@ import ObligationViews from './ObligationViews';
 const fmt = (d: string | null) =>
   d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Los_Angeles' }) : null;
 const lvl = (n: number | null) => (n === null ? '–' : String(n));
-const relLabel = { cmmc: 'CMMC', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
+const relLabel = { cmmc: 'CMMC', nist171: '800-171', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
 const profileName: Record<number, string> = { 1: 'Essential', 2: 'Standard', 3: 'Advanced' };
 
 function Paragraphs({ text }: { text: string }) {

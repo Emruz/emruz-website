@@ -384,7 +384,8 @@ export interface ReportFinding {
   unverified: boolean;
   overrideReason: string | null;
   evidence: { id: string; title: string; kind: 'file' | 'link' }[];
-  related: Partial<Record<'cmmc' | 'iso' | 'soc2', string[]>>;
+  /** cmmc is on reports made before #73; newer reports use nist171 (SCF mappings). */
+  related: Partial<Record<'cmmc' | 'nist171' | 'iso' | 'soc2', string[]>>;
 }
 
 export interface ReportContent {

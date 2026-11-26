@@ -18,7 +18,7 @@ export interface Framework {
   itemLabel: string;
   /** Targets come from a target profile (Essential, Standard, Advanced) and ratings can be pre-filled from a self-assessment. */
   usesProfile: boolean;
-  /** Has crosswalks to CMMC, ISO 27001 and SOC 2. */
+  /** Has obligation views and related 800-171, ISO 27001 and SOC 2 IDs (through the SCF). */
   crosswalk: boolean;
   functions: FwFunction[];
   categories: FwCategory[];

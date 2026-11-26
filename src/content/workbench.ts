@@ -17,7 +17,6 @@
 import { frameworkFor, type Framework } from './frameworks';
 import { allIntakeFields, intakeSectionsFor, type IntakeField } from './engagement-types';
 import { categories, inScope, NOT_SURE, type Answers, type Profile, type Tier } from './self-assessment';
-import { relatedIds, type FrameworkKey } from './crosswalk';
 import { csfSubcategories } from './csf';
 
 export const maturityLevels = [
@@ -131,7 +130,7 @@ export function rollup(ratings: Record<string, Rating>, fw: Framework = framewor
   };
 }
 
-/* ---------- Crosswalk from CSF back to the other frameworks ---------- */
+/* ---------- Pre-fill from the self-assessment ---------- */
 
 /** Self-assessment questions that rate each CSF subcategory. */
 const questionsForCsf = (() => {
@@ -139,21 +138,6 @@ const questionsForCsf = (() => {
   for (const c of categories) for (const q of c.questions) for (const id of q.csf) m.set(id, [...(m.get(id) ?? []), q.id]);
   return m;
 })();
-
-/** Related IDs in CMMC, ISO and SOC 2, through the shared questions. */
-export function relatedFor(csfId: string): Partial<Record<Exclude<FrameworkKey, 'csf'>, string[]>> {
-  const out: Partial<Record<Exclude<FrameworkKey, 'csf'>, Set<string>>> = {};
-  for (const qid of questionsForCsf.get(csfId) ?? []) {
-    for (const k of ['cmmc', 'iso', 'soc2'] as const) {
-      for (const id of relatedIds(qid, k)) (out[k] ??= new Set()).add(id);
-    }
-  }
-  const sorted: Partial<Record<Exclude<FrameworkKey, 'csf'>, string[]>> = {};
-  for (const [k, v] of Object.entries(out)) {
-    sorted[k as Exclude<FrameworkKey, 'csf'>] = [...v].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
-  }
-  return sorted;
-}
 
 /**
  * Starting ratings for the full CSF 2.0 engagement from a completed

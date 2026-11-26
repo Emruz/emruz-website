@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Check, Link2, FileText, Paperclip } from 'lucide-react';
 import { frameworkFor } from '@/content/frameworks';
-import { flagsFor, flagInfo, maturityLevels, priorityFor, relatedFor, EVIDENCE_REQUIRED_AT, type Flag, type Rating } from '@/content/workbench';
+import { flagsFor, flagInfo, maturityLevels, priorityFor, EVIDENCE_REQUIRED_AT, type Flag, type Rating } from '@/content/workbench';
 import { saveRating, setEvidenceLink } from '../../../actions';
 
 interface Ev {
@@ -35,9 +35,12 @@ const filters: { key: string; label: string; test: (f: Flag[], r: Rating) => boo
   { key: 'gaps', label: 'Gaps', test: (_f, r) => !!priorityFor(r.current_level, r.target_level) && !r.na },
 ];
 
-const relatedLabel = { cmmc: 'CMMC', iso: 'ISO', soc2: 'SOC 2' } as const;
+const relatedLabel = { nist171: '800-171', iso: 'ISO', soc2: 'SOC 2' } as const;
+type Related = Partial<Record<keyof typeof relatedLabel, string[]>>;
 
-export default function AssessGrid({ id, type, initial, evidence: initialEvidence, initialFilter, initialFn }: {
+export default function AssessGrid({ id, type, initial, evidence: initialEvidence, initialFilter, initialFn, related }: {
+  /** 800-171, ISO and SOC 2 IDs per item, from the SCF (computed on the server) */
+  related: Record<string, Related>;
   id: string;
   type: string;
   initial: Record<string, Rating>;
@@ -163,7 +166,7 @@ export default function AssessGrid({ id, type, initial, evidence: initialEvidenc
                     const linked = linkedCount.get(s.id) ?? [];
                     const isOpen = open.has(s.id);
                     const prio = r.na ? null : priorityFor(r.current_level, r.target_level);
-                    const rel: ReturnType<typeof relatedFor> = fw.crosswalk ? relatedFor(s.id) : {};
+                    const rel: Related = related[s.id] ?? {};
                     return (
                       <li key={s.id} id={s.id} className={`bg-white border rounded-xl ${flags.some((f) => flagInfo[f].tone === 'red') ? 'border-red-200' : 'border-gray-200'}`}>
                         <div className="p-4 flex flex-col lg:flex-row lg:items-start gap-3">

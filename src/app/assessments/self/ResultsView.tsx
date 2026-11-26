@@ -19,9 +19,9 @@ import {
   type Tier,
 } from '@/content/self-assessment';
 import { addOnHref, addOnLabel, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
-import Crosswalk from './Crosswalk';
 import ObligationViews from '@/components/assessment/ObligationViews';
-import { cleanObligations, obligationView } from '@/content/obligations';
+import { obligationView } from '@/content/obligations';
+import { obligationsOf } from '@/content/obligation-keys';
 import { prefillFromSelf } from '@/content/workbench';
 
 /** Results of one assessment. No hooks, so it renders on the server. */
@@ -52,7 +52,7 @@ export default function ResultsView({
   const afterAll = overallScore(projectedAll, ig, profile);
   const cols = 2 + (rec.pkg ? 1 : 0) + (extras.length ? 1 : 0);
   const unsure = Object.values(answers).filter((v) => v === NOT_SURE).length;
-  const obligations = cleanObligations(profile.obligations);
+  const obligations = obligationsOf(profile);
   const csfRatings = obligations.length ? prefillFromSelf(answers, profile, ig) : {};
   const views = obligations.map((k) => obligationView(k, csfRatings));
 
@@ -272,14 +272,6 @@ export default function ResultsView({
           )}
         </div>
       </div>
-
-      <Crosswalk
-        answers={answers}
-        tier={ig}
-        profile={profile}
-        withPkg={rec.pkg ? { label: displayCode(rec.pkg.code), answers: projected } : null}
-        withAll={extras.length ? { codes: extras.map((a) => addOnLabel(a)), plus: !!rec.pkg, answers: projectedAll } : null}
-      />
 
       <ObligationViews views={views} csvName="poam-self-assessment.csv" />
 

@@ -19,7 +19,6 @@ import {
   type Profile,
   type Tier,
 } from '@/content/self-assessment';
-import { frameworks } from '@/content/crosswalk';
 import { OBLIGATION_KEYS, obligationInfo } from '@/content/obligation-keys';
 import { finish, saveProgress } from './actions';
 
@@ -165,32 +164,6 @@ function Intro({
             </fieldset>
           ))}
 
-          <fieldset>
-            <legend className="font-semibold text-gray-900 mb-1">Which frameworks matter to you?</legend>
-            <p className="text-sm text-gray-500 mb-2">Optional. Pick any. Your report maps your answers to each one.</p>
-            <div className="flex flex-wrap gap-2">
-              {frameworks.map((f) => {
-                const chosen = profile.frameworks ?? [];
-                const on = chosen.includes(f.key);
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() =>
-                      setProfile({ ...profile, frameworks: on ? chosen.filter((k) => k !== f.key) : [...chosen, f.key] })
-                    }
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                      on ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
-                    }`}
-                  >
-                    {on && <Check className="w-4 h-4 inline -mt-0.5 mr-1" aria-hidden />}
-                    {f.name}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
 
           <fieldset>
             <legend className="font-semibold text-gray-900 mb-1">Which obligations do you answer to?</legend>
@@ -252,7 +225,7 @@ function Intro({
           <ol className="space-y-3 text-sm text-gray-700">
             <li><span className="font-semibold">1.</span> Answer one or two questions for each of the 22 Categories in the NIST Cybersecurity Framework 2.0, grouped by Govern, Identify, Protect, Detect, Respond and Recover.</li>
             <li><span className="font-semibold">2.</span> Rate each one from &ldquo;Not in place&rdquo; to &ldquo;Fully&rdquo;. Pick &ldquo;Not sure&rdquo; if you don&rsquo;t know.</li>
-            <li><span className="font-semibold">3.</span> Get your score, your biggest gaps, what closes them and how you map to NIST CSF, CMMC, ISO 27001 and SOC 2.</li>
+            <li><span className="font-semibold">3.</span> Get your score, your biggest gaps, what closes them and how you stand against HIPAA, NIST 800-171, ISO 27001, SOC 2 or your cyber insurer.</li>
           </ol>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-6">

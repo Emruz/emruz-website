@@ -21,7 +21,9 @@ import {
   type Tier,
 } from '@/content/self-assessment';
 import { addOnLabel, displayCode, capabilities } from '@/content/packages';
-import { frameworks, frameworkResult } from '@/content/crosswalk';
+import { obligationView } from '@/content/obligations';
+import { obligationInfo, obligationsOf } from '@/content/obligation-keys';
+import { prefillFromSelf } from '@/content/workbench';
 
 export interface Registration {
   account_id: string;
@@ -195,13 +197,17 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
     ...(rec.addOns.length
       ? [`Add-on services for the remaining gaps: ${rec.addOns.map((x) => `${addOnLabel(x)} (${x.name})`).join('; ')}`, '']
       : []),
-    a.profile.frameworks?.length ? 'Framework readiness (indicative, not a compliance finding; * marks your focus):' : 'Framework readiness (indicative, not a compliance finding):',
-    ...frameworks.map((f) => {
-      const r = frameworkResult(f.key, a.answers, tier, a.profile);
-      return `- ${f.name}: ${r.score}% (${r.counts.gap} gaps)${a.profile.frameworks?.includes(f.key) ? ' *' : ''}`;
-    }),
-    '',
-    `Full report with the category-by-category results and framework crosswalk: ${link}`,
+    ...(obligationsOf(a.profile).length
+      ? [
+          'Your obligations (an estimate, not a compliance finding):',
+          ...obligationsOf(a.profile).map((k) => {
+            const v = obligationView(k, prefillFromSelf(a.answers, a.profile, tier));
+            return `- ${v.name}: ${v.sprs ? `estimated SPRS ${v.sprs.score} of 110, ` : ''}${v.counts.met} of ${v.requirements.length} met`;
+          }),
+          '',
+        ]
+      : []),
+    `Full report with the category-by-category results${obligationsOf(a.profile).length ? ' and obligation views' : ''}: ${link}`,
     '',
     'We will be in touch to walk through your results. Reply to this email if you have questions, or if you would rather not hear from us about this assessment.',
     '',
@@ -226,9 +232,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
         `Score ${score}% at ${tierInfo[tier].name}, Essential ${essential}%`,
         rec.pkg ? `Suggested: ${displayCode(rec.pkg.code)}` : '',
         rec.addOns.length ? `Add-ons: ${rec.addOns.map((x) => x.code).join(', ')}` : '',
-        a.profile.frameworks?.length
-          ? `Frameworks: ${a.profile.frameworks.map((k) => frameworks.find((f) => f.key === k)!.short).join(', ')}`
-          : '',
+        obligationsOf(a.profile).length ? `Obligations: ${obligationsOf(a.profile).map((k) => obligationInfo[k].short).join(', ')}` : '',
         partner ? `Partner: ${partner.name}` : '',
         ...gaps.map((g) => `Gap: ${g.category} (${g.score}%)`),
         '',

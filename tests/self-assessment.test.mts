@@ -1,5 +1,5 @@
 // Self-assessment on NIST CSF 2.0 (#72): question set, target profiles, scoring,
-// recommendations, crosswalk, workbench pre-fill, and no CIS content in the site.
+// recommendations, obligation carry-over, workbench pre-fill, and no CIS content in the site.
 // Run: node --conditions=react-server --experimental-strip-types tests/self-assessment.test.mts
 import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
@@ -20,8 +20,8 @@ registerHooks({
 
 const sa = await import('../src/content/self-assessment.ts');
 const { csfCategories, csfFunctions, csfSubcategories, subcategoryById } = await import('../src/content/csf.ts');
-const { crosswalk, frameworks, frameworkResult, relatedIds } = await import('../src/content/crosswalk.ts');
-const { prefillFromSelf, relatedFor, defaultTarget } = await import('../src/content/workbench.ts');
+const { relatedForCsf, requirements } = await import('../src/content/obligations.ts');
+const { prefillFromSelf, defaultTarget } = await import('../src/content/workbench.ts');
 const {
   categories, allQuestions, functions, NOT_SURE, targetTier, tierOf, inScope, notApplicable, categoryScore,
   functionScore, overallScore, recommend, withPackage, cleanAnswers, cleanProfile, isComplete, GAP_THRESHOLD,
@@ -134,24 +134,13 @@ assert.ok(overallScore(withPackage(all(0), weak.pkg, ...weak.addOns), 2, full) >
 
 // ---------- Cleaning stored input ----------
 assert.deepEqual(cleanAnswers({ '1a': 4, '17c': 2, 'PR.AA-a': 3, 'PR.AA-b': 9, 'GV.PO-a': NOT_SURE }), { 'PR.AA-a': 3, 'GV.PO-a': NOT_SURE });
-assert.deepEqual(cleanProfile({ size: 'mid', data: 'x', frameworks: ['cis', 'iso', 'csf'] }), { size: 'mid', frameworks: ['iso', 'csf'] });
+// Frameworks chosen before obligation views (#73) carry over as obligations; CIS and CSF have no view.
+assert.deepEqual(cleanProfile({ size: 'mid', data: 'x', frameworks: ['cis', 'iso', 'csf', 'cmmc'] }), { size: 'mid', obligations: ['nist171', 'iso27001'] });
+assert.deepEqual(cleanProfile({ size: 'mid', obligations: ['soc2'], frameworks: ['soc2'] }), { size: 'mid', obligations: ['soc2'] });
 
-// ---------- Crosswalk ----------
-assert.deepEqual(frameworks.map((f) => f.key).sort(), ['cmmc', 'csf', 'iso', 'soc2']);
-assert.deepEqual(Object.keys(crosswalk).sort(), allQuestions.map((q) => q.id).sort(), 'every question has a crosswalk entry');
-for (const q of allQuestions) {
-  for (const f of frameworks) {
-    for (const id of relatedIds(q.id, f.key)) assert.ok(f.ids[id], `${f.short} ${id} (from ${q.id}) has a title`);
-  }
-}
-for (const f of frameworks) {
-  assert.equal(frameworkResult(f.key, all(4), 3, full).score, 100);
-  assert.equal(frameworkResult(f.key, all(0), 3, full).counts.met, 0);
-  for (const i of frameworkResult(f.key, all(2), 3, full).items) {
-    for (const c of i.categories) assert.ok(categories.some((x) => x.id === c));
-  }
-}
-assert.deepEqual(Object.keys(relatedFor('PR.AA-03')).sort(), ['cmmc', 'iso', 'soc2']);
+// ---------- Related requirements (SCF, replaces the hand-made crosswalk) ----------
+assert.deepEqual(Object.keys(relatedForCsf('PR.AA-03')).sort(), ['iso', 'nist171', 'soc2']);
+assert.ok(relatedForCsf('PR.AA-03').nist171!.includes('3.5.3') || relatedForCsf('PR.AA-03').nist171!.length > 0);
 
 // ---------- Workbench pre-fill ----------
 const pre = prefillFromSelf(all(3), full, 3);
@@ -191,7 +180,5 @@ for (const f of files) {
   const text = readFileSync(f, 'utf8');
   for (const [re, what] of banned) assert.doesNotMatch(text, re, `${f} contains ${what}`);
 }
-// CIS safeguard IDs would show up as crosswalk IDs without a known framework title (checked above);
-// ISO Annex A IDs are the only bare n.n IDs left, all in clauses 5 to 8.
-const iso = frameworks.find((f) => f.key === 'iso')!;
-for (const id of Object.keys(iso.ids)) assert.match(id, /^[5-8]\.\d{1,2}$/, `ISO ${id}`);
+// ISO Annex A IDs are all in clauses 5 to 8 (no CIS safeguard IDs).
+for (const r of requirements.iso27001) assert.match(r.id, /^A\.[5-8]\.\d{1,2}$/, `ISO ${r.id}`);

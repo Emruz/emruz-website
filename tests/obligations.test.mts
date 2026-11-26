@@ -75,6 +75,11 @@ for (const r of requirements.iso27001) {
 }
 for (const r of requirements.hipaa) assert.match(r.id, /^§ 164\.3\d\d\([a-z]\)(\(\d+\))?$/);
 assert.ok(requirements.hipaa.length >= 30);
+assert.ok(requirements.soc2.length >= 30 && requirements.soc2.every((r) => /^(CC|PI|A|C|P)\d+\.\d+$/.test(r.id) && r.title === `Criterion ${r.id}`), 'SOC 2 by criterion ID only');
+assert.ok(requirements.nist171.every((r) => r.title.length > 20 && !/^Access Control 3/.test(r.title)), '800-171 Rev. 2 shows the requirement text');
+assert.ok(ob.nist171Rev3.every((r) => r.title !== r.id), 'Rev. 3 titles');
+assert.equal(requirements.hipaa.find((r) => r.id === '§ 164.306(a)(1)')!.title, 'General requirements');
+assert.ok(requirements.hipaa.find((r) => r.id === '§ 164.308(a)(1)')!.refs!.includes('§ 164.308(a)(1)(ii)(A) Risk analysis (R)'));
 assert.ok(requirements.insurance.some((r) => r.id === 'INS-MFA-REMOTE') && requirements.insurance.some((r) => r.id === 'INS-EDR'));
 for (const k of OBLIGATION_KEYS) {
   for (const r of requirements[k]) {
@@ -161,8 +166,34 @@ assert.ok(requirements.nist171.some((r) => r.bridged) && requirements.nist171.so
   assert.ok(ob.erlForScope([], []).length === 0);
 }
 
+// ---------- Grouped evidence requests ----------
+{
+  const rows = [
+    { id: '1', erl_id: null, status: 'open' },
+    { id: '2', erl_id: 'E-IAC-05', status: 'open' },
+    { id: '3', erl_id: 'E-IAC-06', status: 'received' },
+    { id: '4', erl_id: 'E-NOT-REAL', status: 'open' },
+  ];
+  const { adhoc, groups } = ob.groupByErlArea(rows);
+  assert.deepEqual(adhoc.map((r) => r.id), ['1', '4'], 'hand-raised and unknown items stay ungrouped');
+  const area = scf.scfEvidenceById.get('E-IAC-05')!.area;
+  const g = groups.find((x) => x.area === area)!;
+  assert.ok(g && g.requests.some((r) => r.id === '2') && g.waiting >= 1);
+  assert.equal(groups.reduce((n, x) => n + x.requests.length, 0), 2);
+}
+
+// Uploads and links can answer several requests, only on their own engagement.
+for (const f of ['src/app/api/workbench/evidence/route.ts', 'src/app/portal/actions.ts']) {
+  const src = read(f);
+  assert.match(src, /getAll\('request_id'\)/, `${f} takes several requests`);
+  assert.match(src, /from evidence_requests where engagement_id = .* and id = any/, `${f} scopes requests to the engagement`);
+}
+
 // ---------- Scoping and profile ----------
 assert.deepEqual(ob.cleanObligations(['hipaa', 'x', 'nist171', 5]), ['hipaa', 'nist171']);
+const { obligationsOf } = await import('../src/content/obligation-keys.ts');
+assert.deepEqual(obligationsOf({ frameworks: ['cmmc', 'iso', 'soc2', 'csf'] }), ['nist171', 'iso27001', 'soc2']);
+assert.deepEqual(obligationsOf(null), []);
 assert.deepEqual(ob.cleanObligations('hipaa'), []);
 assert.deepEqual(sa.cleanProfile({ size: 'mid', obligations: ['insurance', 'bogus'] }).obligations, ['insurance']);
 assert.ok(ob.isReqStatus('met') && !ob.isReqStatus('auto'));

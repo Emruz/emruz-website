@@ -10,11 +10,8 @@
  */
 import { addOns, packages, type AddOn, type CapabilityCode, type ServicePackage } from './packages';
 import { csfFunctions, type FunctionId } from './csf';
-import { cleanObligations, type ObligationKey } from './obligation-keys';
+import { obligationsOf, type ObligationKey } from './obligation-keys';
 
-/** Keys of the frameworks in the readiness crosswalk (kept here to avoid an import cycle). */
-export type FrameworkKey = 'cmmc' | 'iso' | 'csf' | 'soc2';
-const FRAMEWORK_KEYS: FrameworkKey[] = ['cmmc', 'iso', 'csf', 'soc2'];
 
 /** Stored in assessments.framework for every self-assessment. */
 export const SELF_FRAMEWORK = 'csf-2.0';
@@ -29,7 +26,7 @@ export interface Question {
   id: string;
   tier: Tier;
   text: string;
-  /** CSF 2.0 Subcategories this question rates (used for the workbench pre-fill and crosswalk) */
+  /** CSF 2.0 Subcategories this question rates (used for the workbench pre-fill and obligation views) */
   csf: string[];
   needs?: Needs;
   /** Managed capabilities that fully deliver this question when included in a package */
@@ -330,8 +327,6 @@ export interface Profile {
   dev?: 'yes' | 'no';
   network?: 'onprem' | 'cloud';
   providers?: 'yes' | 'no';
-  /** Frameworks the organization cares about (optional) */
-  frameworks?: FrameworkKey[];
   /** Obligations the organization answers to; each adds a view to the report (optional) */
   obligations?: ObligationKey[];
 }
@@ -580,10 +575,9 @@ export function cleanProfile(input: unknown): Profile {
       const v = src[q.key];
       if (typeof v === 'string' && q.options.some((o) => o.value === v)) out[q.key] = v;
     }
-    if (Array.isArray(src.frameworks)) {
-      out.frameworks = FRAMEWORK_KEYS.filter((k) => (src.frameworks as unknown[]).includes(k));
-    }
-    if (Array.isArray(src.obligations)) out.obligations = cleanObligations(src.obligations);
+    // Frameworks chosen before obligation views (#73) carry over as obligations.
+    const obligations = obligationsOf(src);
+    if (obligations.length || Array.isArray(src.obligations)) out.obligations = obligations;
   }
   return out as Profile;
 }

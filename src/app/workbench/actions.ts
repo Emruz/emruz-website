@@ -39,7 +39,6 @@ import {
   flagInfo,
   prefillFromSelf,
   priorityFor,
-  relatedFor,
   rollup,
   EVIDENCE_REQUIRED_AT,
   type EngagementStatus,
@@ -53,6 +52,7 @@ import {
   isObligation,
   isReqStatus,
   obligationView,
+  relatedForCsf,
   requirements as obligationRequirements,
   staffHours,
   type ObligationKey,
@@ -595,7 +595,7 @@ export async function generateReport(form: FormData) {
         unverified: !r?.na && (r?.current_level ?? 0) >= EVIDENCE_REQUIRED_AT && evs.length === 0,
         overrideReason: r?.override_reason ?? null,
         evidence: evs.map((x) => ({ id: x.id, title: x.title, kind: x.kind })),
-        related: fw.crosswalk ? relatedFor(s.id) : {},
+        related: fw.crosswalk ? relatedForCsf(s.id) : {},
       };
     }),
     flags: fw.items

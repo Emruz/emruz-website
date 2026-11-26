@@ -14,7 +14,8 @@
  * ISO 27001 is shown by control number only (ISO text is copyrighted).
  */
 import { csfSubcategories } from './csf';
-import { erlFor, mapsFor, scfControls, type ScfControl, type ScfMapKey } from './scf/index';
+import { nist171r2Text, nist171r3Titles } from './nist171';
+import { erlFor, mapsFor, scfControls, scfEvidenceById, type ScfControl, type ScfMapKey } from './scf/index';
 
 import { obligationInfo, type ObligationKey } from './obligation-keys';
 
@@ -188,6 +189,52 @@ const hipaaTitles: Record<string, string> = {
   '§ 164.316(b)(2)': 'Documentation',
 };
 
+/** Implementation specifications: (R) required, (A) addressable. */
+const hipaaSpecs: Record<string, string> = {
+  '§ 164.308(a)(1)(ii)(A)': 'Risk analysis (R)',
+  '§ 164.308(a)(1)(ii)(B)': 'Risk management (R)',
+  '§ 164.308(a)(1)(ii)(C)': 'Sanction policy (R)',
+  '§ 164.308(a)(1)(ii)(D)': 'Information system activity review (R)',
+  '§ 164.308(a)(3)(ii)(A)': 'Authorization and/or supervision (A)',
+  '§ 164.308(a)(3)(ii)(B)': 'Workforce clearance procedure (A)',
+  '§ 164.308(a)(3)(ii)(C)': 'Termination procedures (A)',
+  '§ 164.308(a)(4)(ii)(A)': 'Isolating health care clearinghouse functions (R)',
+  '§ 164.308(a)(4)(ii)(B)': 'Access authorization (A)',
+  '§ 164.308(a)(4)(ii)(C)': 'Access establishment and modification (A)',
+  '§ 164.308(a)(5)(ii)(A)': 'Security reminders (A)',
+  '§ 164.308(a)(5)(ii)(B)': 'Protection from malicious software (A)',
+  '§ 164.308(a)(5)(ii)(C)': 'Log-in monitoring (A)',
+  '§ 164.308(a)(5)(ii)(D)': 'Password management (A)',
+  '§ 164.308(a)(6)(ii)': 'Response and reporting (R)',
+  '§ 164.308(a)(7)(ii)(A)': 'Data backup plan (R)',
+  '§ 164.308(a)(7)(ii)(B)': 'Disaster recovery plan (R)',
+  '§ 164.308(a)(7)(ii)(C)': 'Emergency mode operation plan (R)',
+  '§ 164.308(a)(7)(ii)(D)': 'Testing and revision procedures (A)',
+  '§ 164.308(a)(7)(ii)(E)': 'Applications and data criticality analysis (A)',
+  '§ 164.308(b)(3)': 'Written contract or other arrangement (R)',
+  '§ 164.310(a)(2)(i)': 'Contingency operations (A)',
+  '§ 164.310(a)(2)(ii)': 'Facility security plan (A)',
+  '§ 164.310(a)(2)(iii)': 'Access control and validation procedures (A)',
+  '§ 164.310(a)(2)(iv)': 'Maintenance records (A)',
+  '§ 164.310(d)(2)(i)': 'Disposal (R)',
+  '§ 164.310(d)(2)(ii)': 'Media re-use (R)',
+  '§ 164.310(d)(2)(iii)': 'Accountability (A)',
+  '§ 164.310(d)(2)(iv)': 'Data backup and storage (A)',
+  '§ 164.312(a)(2)(i)': 'Unique user identification (R)',
+  '§ 164.312(a)(2)(ii)': 'Emergency access procedure (R)',
+  '§ 164.312(a)(2)(iii)': 'Automatic logoff (A)',
+  '§ 164.312(a)(2)(iv)': 'Encryption and decryption (A)',
+  '§ 164.312(c)(2)': 'Mechanism to authenticate electronic protected health information (A)',
+  '§ 164.312(e)(2)(i)': 'Integrity controls (A)',
+  '§ 164.312(e)(2)(ii)': 'Encryption (A)',
+  '§ 164.316(b)(2)(i)': 'Time limit (R)',
+  '§ 164.316(b)(2)(ii)': 'Availability (R)',
+  '§ 164.316(b)(2)(iii)': 'Updates (R)',
+};
+
+/** Title for a standard citation: exact, else its paragraph without the numbered part. */
+export const hipaaTitle = (id: string): string | undefined => hipaaTitles[id] ?? hipaaTitles[id.replace(/\(\d+\)$/, '')];
+
 /** Standard-level citation: section plus paragraph, plus the numbered paragraph when there is one. */
 export function hipaaStandard(token: string): string | null {
   const m = token.match(/^§\s*(164\.3\d\d)(\([a-z]\))(\(\d+\))?/);
@@ -230,10 +277,10 @@ function hipaaRequirements(): Requirement[] {
     .map(([id, r]) => {
       const links = linkFields(r.scf);
       const section = id.match(/164\.3\d\d/)![0];
-      const specs = [...r.tokens].filter((t) => t !== id).sort(byNum);
+      const specs = [...r.tokens].filter((t) => t !== id).sort(byNum).map((t) => (hipaaSpecs[t] ? `${t} ${hipaaSpecs[t]}` : t));
       return {
         id,
-        title: hipaaTitles[id] ?? hipaaSection[section],
+        title: hipaaTitle(id) ?? hipaaSection[section],
         group: `§ ${section} ${hipaaSection[section]}`,
         ...links,
         refs: [...specs, ...hicpFor(links.scf)],
@@ -290,7 +337,7 @@ function nist171r2(): Requirement[] {
       const links = linkFields(scf);
       return {
         id,
-        title: `${families171[id.split('.')[1]]} ${id}`,
+        title: nist171r2Text[id],
         group: families171[id.split('.')[1]],
         ...links,
         refs: uniq(links.scf.flatMap((s) => r3ByScf.get(s) ?? [])).map((x) => `Rev. 3 ${x}`),
@@ -305,7 +352,7 @@ function nist171r3(): Requirement[] {
     .sort(([a], [b]) => byNum(a, b))
     .map(([id, r]) => {
       const fam = String(Number(id.split('.')[1]));
-      return { id, title: `${families171[fam]} ${id}`, group: families171[fam], ...linkFields(r.scf) };
+      return { id, title: nist171r3Titles[id] ?? id, group: families171[fam], ...linkFields(r.scf) };
     });
 }
 
@@ -318,6 +365,23 @@ function isoAnnexA(): Requirement[] {
   return [...fromScf('iso27002', (t) => (/^[5-8]\.\d+$/.test(t) ? t : null)).entries()]
     .sort(([a], [b]) => byNum(a, b))
     .map(([n, r]) => ({ id: `A.${n}`, title: `Annex A ${n}`, group: isoThemes[n.split('.')[0]], ...linkFields(r.scf) }));
+}
+
+/* ---------- SOC 2 Trust Services Criteria (IDs only) ---------- */
+
+const tscGroups: [RegExp, string][] = [
+  [/^CC/, 'Common criteria (security)'],
+  [/^A/, 'Availability'],
+  [/^C/, 'Confidentiality'],
+  [/^PI/, 'Processing integrity'],
+  [/^P/, 'Privacy'],
+];
+
+function soc2Criteria(): Requirement[] {
+  // Points of focus (e.g. CC1.1-POF1) roll up to their criterion.
+  return [...fromScf('soc2', (t) => t.match(/^(CC|PI|A|C|P)\d+\.\d+/)?.[0] ?? null).entries()]
+    .sort(([a], [b]) => byNum(a, b))
+    .map(([id, r]) => ({ id, title: `Criterion ${id}`, group: tscGroups.find(([re]) => re.test(id))![1], ...linkFields(r.scf) }));
 }
 
 /* ---------- Cyber insurance checklist (ours) ---------- */
@@ -360,6 +424,7 @@ export const requirements: Record<ObligationKey, Requirement[]> = {
   hipaa: hipaaRequirements(),
   nist171: nist171r2(),
   iso27001: isoAnnexA(),
+  soc2: soc2Criteria(),
   insurance: insuranceRequirements(),
 };
 export const nist171Rev3: Requirement[] = nist171r3();
@@ -529,3 +594,41 @@ export function evidenceIndex(rows: { id: string; subcategories: string[]; erl_i
 }
 
 export const isReqStatus = (v: unknown): v is ReqStatus => v === 'met' || v === 'partial' || v === 'not_met' || v === 'unknown';
+
+/* ---------- Related requirements for a CSF Subcategory ---------- */
+
+export type RelatedKey = 'nist171' | 'iso' | 'soc2';
+export const relatedLabel: Record<RelatedKey, string> = { nist171: '800-171', iso: 'ISO 27001', soc2: 'SOC 2' };
+
+const relatedIndex = (() => {
+  const out = new Map<string, Partial<Record<RelatedKey, string[]>>>();
+  const add = (key: RelatedKey, reqs: Requirement[]) => {
+    for (const r of reqs) {
+      if (r.bridged) continue; // SCF mappings only
+      for (const s of r.csf) ((out.get(s) ?? out.set(s, {}).get(s)!)[key] ??= []).push(r.id);
+    }
+  };
+  add('nist171', requirements.nist171);
+  add('iso', requirements.iso27001);
+  add('soc2', requirements.soc2);
+  return out;
+})();
+
+/** Requirements in 800-171 Rev. 2, ISO 27001 Annex A and SOC 2 that the SCF maps to a CSF Subcategory. */
+export const relatedForCsf = (csfId: string): Partial<Record<RelatedKey, string[]>> => relatedIndex.get(csfId) ?? {};
+
+/* ---------- Grouping evidence requests ---------- */
+
+/** Requests raised by hand first, then SCF Evidence Request List requests grouped by area of focus (with waiting count). */
+export function groupByErlArea<T extends { erl_id: string | null; status: string }>(rows: T[]) {
+  const adhoc = rows.filter((r) => !r.erl_id || !scfEvidenceById.has(r.erl_id));
+  const byArea = new Map<string, T[]>();
+  for (const r of rows) {
+    const e = r.erl_id ? scfEvidenceById.get(r.erl_id) : undefined;
+    if (e) byArea.set(e.area, [...(byArea.get(e.area) ?? []), r]);
+  }
+  const groups = [...byArea.entries()]
+    .map(([area, requests]) => ({ area, requests: [...requests].sort((a, b) => byNum(a.erl_id!, b.erl_id!)), waiting: requests.filter((r) => r.status === 'open').length }))
+    .sort((a, b) => Number(b.waiting > 0) - Number(a.waiting > 0) || a.area.localeCompare(b.area));
+  return { adhoc, groups };
+}

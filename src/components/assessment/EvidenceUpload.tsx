@@ -10,12 +10,15 @@ export default function EvidenceUpload({
   engagementId,
   subcategory,
   requestId,
+  requestIds,
   subcategories,
   compact = false,
 }: {
   engagementId: string;
   subcategory?: string;
   requestId?: string;
+  /** Several requests answered by one file (grouped evidence requests) */
+  requestIds?: string[];
   /** Show a subcategory picker (workbench only) */
   subcategories?: { id: string; text: string }[];
   compact?: boolean;
@@ -33,6 +36,10 @@ export default function EvidenceUpload({
     if (file.size > MAX_UPLOAD_BYTES) return setError(`Files must be under ${MAX_UPLOAD_BYTES / 1024 / 1024} MB. Share a link for larger files.`);
     fd.set('engagement_id', engagementId);
     if (requestId) fd.set('request_id', requestId);
+    if (requestIds) {
+      if (!requestIds.length) return setError('Tick the requests this file answers.');
+      for (const r of requestIds) fd.append('request_id', r);
+    }
     setState('busy');
     setError(null);
     try {

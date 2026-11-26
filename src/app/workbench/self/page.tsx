@@ -4,7 +4,7 @@ import { DetailHeader, Container } from '@/components';
 import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { categories, inScope, maturity, recommend, targetTier, tierInfo, tierOf } from '@/content/self-assessment';
 import { addOnLabel, displayCode } from '@/content/packages';
-import { frameworks } from '@/content/crosswalk';
+import { obligationInfo, obligationsOf } from '@/content/obligation-keys';
 import { WorkbenchNav, btn, card, fmtDate } from '../ui';
 import { Plus } from 'lucide-react';
 import AssignSelect from '../AssignSelect';
@@ -74,7 +74,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                   <th className="p-3 font-medium">Organization</th>
                   <th className="p-3 font-medium">Result</th>
                   <th className="p-3 font-medium">Suggested</th>
-                  <th className="p-3 font-medium">Frameworks</th>
+                  <th className="p-3 font-medium">Obligations</th>
                   <th className="p-3 font-medium">Analyst</th>
                   <th className="p-3 font-medium">Follow-up</th>
                 </tr>
@@ -122,7 +122,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                         {!rec && <span className="text-gray-400">–</span>}
                       </td>
                       <td className="p-3 text-xs text-gray-700">
-                        {r.profile.frameworks?.length ? r.profile.frameworks.map((k) => frameworks.find((f) => f.key === k)?.short).join(', ') : <span className="text-gray-400">–</span>}
+                        {obligationsOf(r.profile).length ? obligationsOf(r.profile).map((k) => obligationInfo[k].short).join(', ') : <span className="text-gray-400">–</span>}
                       </td>
                       <td className="p-3">
                         {all ? <AssignSelect id={r.id} value={r.assigned_to} staff={people} /> : <span className="text-gray-700">{r.assigned_label}</span>}

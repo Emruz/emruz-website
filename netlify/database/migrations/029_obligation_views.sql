@@ -2,7 +2,7 @@
 -- insurer checklist on reports, with evidence from the SCF Evidence Request List.
 -- Additive only, so the previous deploy still runs on this schema.
 
--- Obligations chosen for an engagement (hipaa, nist171, iso27001, insurance).
+-- Obligations chosen for an engagement (hipaa, nist171, iso27001, soc2, insurance).
 alter table engagements add column if not exists obligations text[] not null default '{}';
 
 -- SCF Evidence Request List item (e.g. E-IAC-05) a request was raised from.
@@ -23,7 +23,7 @@ alter table staff add column if not exists credentials text;
 -- from CSF ratings (used where the SCF has no CSF mapping, or to correct one).
 create table if not exists obligation_ratings (
   engagement_id  uuid not null references engagements(id) on delete cascade,
-  obligation     text not null check (obligation in ('hipaa', 'nist171', 'iso27001', 'insurance')),
+  obligation     text not null check (obligation in ('hipaa', 'nist171', 'iso27001', 'soc2', 'insurance')),
   requirement    text not null,
   status         text not null check (status in ('met', 'partial', 'not_met', 'unknown')),
   note           text,

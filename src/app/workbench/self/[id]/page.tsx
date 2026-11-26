@@ -4,7 +4,7 @@ import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
 import { purgeDate, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
 import { categories, inScope, profileSummary, tierOf } from '@/content/self-assessment';
-import { frameworks } from '@/content/crosswalk';
+import { obligationInfo, obligationsOf } from '@/content/obligation-keys';
 import ResultsView from '@/app/assessments/self/ResultsView';
 import PrintButton from '@/app/assessments/self/PrintButton';
 import { editSelf, engagementFromSelf, markSelfDeleted, moveSelfToPartner, restoreSelf, toggleSelfFollowUp } from '../../actions';
@@ -86,8 +86,8 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
             <div>
               <p className="text-gray-500">Profile</p>
               <p className="text-gray-800">{profileSummary(r.profile)}</p>
-              <p className="text-gray-500 mt-2">Frameworks</p>
-              <p className="text-gray-800">{r.profile.frameworks?.length ? r.profile.frameworks.map((k) => frameworks.find((f) => f.key === k)?.short).join(', ') : 'None chosen'}</p>
+              <p className="text-gray-500 mt-2">Obligations</p>
+              <p className="text-gray-800">{obligationsOf(r.profile).length ? obligationsOf(r.profile).map((k) => obligationInfo[k].short).join(', ') : 'None chosen'}</p>
             </div>
             <div>
               <p className="text-gray-500 mb-1">Analyst</p>

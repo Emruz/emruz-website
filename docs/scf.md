@@ -1,6 +1,6 @@
 # Secure Controls Framework (SCF) content
 
-Obligation views (HIPAA Security Rule, NIST SP 800-171, ISO/IEC 27001:2022 Annex A and the cyber insurance checklist) are rated through NIST CSF 2.0 using SCF mappings, and evidence requests come from the SCF Evidence Request List.
+Obligation views (HIPAA Security Rule, NIST SP 800-171, ISO/IEC 27001:2022 Annex A, SOC 2 Trust Services Criteria and the cyber insurance checklist) are rated through NIST CSF 2.0 using SCF mappings, and evidence requests come from the SCF Evidence Request List.
 
 ## License
 
@@ -15,7 +15,9 @@ The SCF is licensed under Creative Commons Attribution-NoDerivatives 4.0 (CC BY-
 - The Emruz bridge (`BRIDGE` in `src/content/obligations.ts`): SCF domain to CSF Subcategories, used only when the SCF has no CSF mapping for a requirement's controls. Labelled "Emruz mapping" in reports; assessors can override the status on the Obligations tab.
 - HIPAA and 800-171 titles, HHS 405(d) HICP references and the insurer checklist.
 - SPRS weights, from the NIST SP 800-171 DoD Assessment Methodology v1.2.1 (a U.S. government work).
-- ISO/IEC 27001 is shown by control number only.
+- ISO/IEC 27001 and SOC 2 are shown by control and criterion ID only (ISO and AICPA text is copyrighted).
+- NIST SP 800-171 Rev. 2 requirement text and Rev. 3 titles (`src/content/nist171.ts`) come from NIST's CPRT export and OSCAL catalog through `scripts/nist171-import.py`; both are public domain.
+- Related 800-171, ISO and SOC 2 IDs on each CSF Subcategory (assess page and reports) use SCF mappings only. They replace the hand-made crosswalk; frameworks chosen in older self-assessments carry over as obligations.
 
 ## Refresh on a new SCF release
 

@@ -2,8 +2,8 @@
  * Obligation keys and labels, kept apart from ./obligations so client code
  * (the self-assessment scoping step) does not bundle the SCF content.
  */
-export type ObligationKey = 'hipaa' | 'nist171' | 'iso27001' | 'insurance';
-export const OBLIGATION_KEYS: ObligationKey[] = ['hipaa', 'nist171', 'iso27001', 'insurance'];
+export type ObligationKey = 'hipaa' | 'nist171' | 'iso27001' | 'soc2' | 'insurance';
+export const OBLIGATION_KEYS: ObligationKey[] = ['hipaa', 'nist171', 'iso27001', 'soc2', 'insurance'];
 
 export const obligationInfo: Record<ObligationKey, { name: string; short: string; scoping: string; note: string }> = {
   hipaa: {
@@ -24,6 +24,12 @@ export const obligationInfo: Record<ObligationKey, { name: string; short: string
     scoping: 'ISO/IEC 27001 (we are certified or working toward it)',
     note: 'Annex A controls by number only; see your copy of the standard for the control text. Status is an estimate, not a certification audit.',
   },
+  soc2: {
+    name: 'SOC 2 Trust Services Criteria',
+    short: 'SOC 2',
+    scoping: 'SOC 2 (customers ask for our SOC 2 report)',
+    note: '2017 Trust Services Criteria (revised points of focus, 2022) by criterion ID only; see the AICPA criteria for the text. Status is an estimate, not a SOC 2 examination.',
+  },
   insurance: {
     name: 'Cyber insurance controls',
     short: 'Insurance',
@@ -37,3 +43,13 @@ export const cleanObligations = (v: unknown): ObligationKey[] =>
   Array.isArray(v) ? OBLIGATION_KEYS.filter((k) => v.includes(k)) : [];
 
 export const isObligation = (v: unknown): v is ObligationKey => OBLIGATION_KEYS.includes(v as ObligationKey);
+
+/** Frameworks chosen before #73 (readiness crosswalk), mapped to obligation views. */
+const LEGACY: Record<string, ObligationKey> = { cmmc: 'nist171', iso: 'iso27001', soc2: 'soc2' };
+
+/** Obligations from a stored profile, including frameworks chosen before obligation views existed. */
+export function obligationsOf(p: { obligations?: unknown; frameworks?: unknown } | null | undefined): ObligationKey[] {
+  if (!p) return [];
+  const legacy = Array.isArray(p.frameworks) ? p.frameworks.map((k) => LEGACY[k as string]).filter(Boolean) : [];
+  return cleanObligations([...(Array.isArray(p.obligations) ? p.obligations : []), ...legacy]);
+}

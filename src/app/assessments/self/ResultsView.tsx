@@ -112,8 +112,9 @@ export default function ResultsView({
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* By CSF Function and Category */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 md:p-8">
+        <div className="lg:col-span-2 min-w-0 bg-white border border-gray-200 rounded-xl p-4 sm:p-6 md:p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">By CSF Function and Category</h2>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm border-separate border-spacing-0">
             {(rec.pkg || extras.length > 0) && (
               <thead>
@@ -121,13 +122,13 @@ export default function ResultsView({
                   <th />
                   <th />
                   {rec.pkg && (
-                    <th className="bg-slate-900/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
+                    <th className="bg-slate-900/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-20 min-w-20 max-w-20 sm:w-28 sm:min-w-28 sm:max-w-28">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">With</span>
                       <span className="block font-extrabold text-base whitespace-nowrap">{displayCode(rec.pkg.code)}</span>
                     </th>
                   )}
                   {extras.length > 0 && (
-                    <th className="bg-indigo-800/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-28 min-w-28 max-w-28">
+                    <th className="bg-indigo-800/80 text-white rounded-t-lg px-2 pt-3 pb-2 text-center align-bottom w-20 min-w-20 max-w-20 sm:w-28 sm:min-w-28 sm:max-w-28">
                       <span className="block text-[10px] font-bold uppercase tracking-widest text-white/90">{rec.pkg ? 'Plus' : 'With'}</span>
                       <span className="block font-extrabold text-xs leading-tight">{extras.map((a, i) => (
                         <Fragment key={a.code}>
@@ -166,10 +167,10 @@ export default function ResultsView({
                   <tr key={c.id}>
                     <td className="py-1.5 pr-4 align-top">
                       <span className="text-gray-800">
-                        <span className="text-gray-400 font-mono text-xs w-14 inline-block">{c.id}</span>
+                        <span className="text-gray-400 font-mono text-xs block sm:inline-block sm:w-14">{c.id}</span>
                         {c.title}
                       </span>
-                      <div className="ml-14 mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="sm:ml-14 mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         {s !== null && <div className={`h-full ${cm!.bar}`} style={{ width: `${Math.max(s, 2)}%` }} />}
                       </div>
                     </td>
@@ -177,7 +178,7 @@ export default function ResultsView({
                       {s === null ? (na ? 'Not applicable' : 'Not in scope') : `${s}%`}
                     </td>
                     {rec.pkg && (
-                      <td className={`bg-slate-900/80 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-slate-900/80 px-1.5 sm:px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
                           <span className="text-white/80">–</span>
                         ) : (
@@ -186,7 +187,7 @@ export default function ResultsView({
                       </td>
                     )}
                     {extras.length > 0 && (
-                      <td className={`bg-indigo-800/80 px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
+                      <td className={`bg-indigo-800/80 px-1.5 sm:px-3 py-1.5 align-top text-center whitespace-nowrap ${last ? 'rounded-b-lg pb-3' : ''}`}>
                         {s === null ? (
                           <span className="text-white/80">–</span>
                         ) : (
@@ -200,6 +201,7 @@ export default function ResultsView({
               })}
             </tbody>
           </table>
+          </div>
           {(rec.pkg || extras.length > 0) && (
             <p className="text-xs text-gray-500 mt-4">
               Shaded columns show your score with the suggested services in place. Overall {score}%

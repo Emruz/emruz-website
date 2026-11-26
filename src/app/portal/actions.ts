@@ -7,7 +7,7 @@ import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
-import { getEngagement, isClientContact, logActivity } from '@/lib/server/workbench';
+import { getEngagement, isClientContact, linkEvidenceToRequestErl, logActivity } from '@/lib/server/workbench';
 
 /** A client shares a link (SharePoint, Drive...) for an evidence request. */
 export async function clientAddLink(form: FormData) {
@@ -19,9 +19,11 @@ export async function clientAddLink(form: FormData) {
   if (!/^https:\/\//i.test(url)) redirect(`/portal/e/${id}?error=url`);
   const requestId = form.get('request_id');
   const title = (typeof form.get('title') === 'string' && (form.get('title') as string).trim().slice(0, 200)) || url;
-  await db()`
+  const [ev] = await db()<{ id: string }[]>`
     insert into evidence (engagement_id, kind, title, url, from_client, request_id, uploaded_by)
-    values (${id}, 'link', ${title}, ${url}, true, ${isUuid(requestId) ? requestId : null}, ${account.id})`;
+    values (${id}, 'link', ${title}, ${url}, true, ${isUuid(requestId) ? requestId : null}, ${account.id})
+    returning id`;
+  if (isUuid(requestId)) await linkEvidenceToRequestErl(ev.id, requestId, id);
   if (isUuid(requestId)) await db()`update evidence_requests set status = 'received' where id = ${requestId} and engagement_id = ${id} and status = 'open'`;
   await logActivity(id, account.email, 'client_link_added', { title });
   if (e.lead_email) {

@@ -51,7 +51,7 @@ export default async function EngagementLayout({ children, params }: { children:
             <span className="text-xs font-semibold text-gray-700">{assessmentType(e.assessment_type).name}</span>
             {fw.usesProfile && <span className="text-xs text-gray-500">{({ 1: 'Essential', 2: 'Standard', 3: 'Advanced' } as Record<number, string>)[e.target_ig] ?? 'Standard'} target</span>}
           </div>
-          <Tabs id={id} counts={{ flags: blocking, requests: requests.filter((r) => r.status === 'open').length }} />
+          <Tabs id={id} counts={{ flags: blocking, requests: requests.filter((r) => r.status === 'open').length, obligations: fw.type === 'security' }} />
           {children}
         </Container>
       </section>

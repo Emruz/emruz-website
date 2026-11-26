@@ -3,7 +3,7 @@ import { currentAccount } from '@/lib/server/session';
 import { isUuid, sameOrigin } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
-import { canAccessEngagement, getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
+import { canAccessEngagement, getEngagement, isClientContact, linkEvidenceToRequestErl, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
 import { frameworkFor } from '@/content/frameworks';
 import { MAX_UPLOAD_BYTES } from '@/content/workbench';
 import { detectType } from '@/lib/server/filetype';
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
   await db()`update evidence set blob_key = ${key} where id = ${ev.id}`;
   if (staff && frameworkFor(e.assessment_type).items.some((s) => s.id === sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
   if (isUuid(requestId)) {
+    await linkEvidenceToRequestErl(ev.id, requestId, e.id);
     await db()`update evidence_requests set status = 'received' where id = ${requestId} and engagement_id = ${e.id} and status = 'open'`;
   }
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'file', from_client: client });

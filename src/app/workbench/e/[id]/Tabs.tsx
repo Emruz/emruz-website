@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function Tabs({ id, counts }: { id: string; counts: { flags: number; requests: number } }) {
+export default function Tabs({ id, counts }: { id: string; counts: { flags: number; requests: number; obligations?: boolean } }) {
   const path = usePathname();
   const base = `/workbench/e/${id}`;
   const tabs = [
@@ -11,6 +11,7 @@ export default function Tabs({ id, counts }: { id: string; counts: { flags: numb
     { href: `${base}/intake`, label: 'Intake' },
     { href: `${base}/assess`, label: 'Assess', badge: counts.flags },
     { href: `${base}/evidence`, label: 'Evidence', badge: counts.requests },
+    ...(counts.obligations ? [{ href: `${base}/obligations`, label: 'Obligations' }] : []),
     { href: `${base}/report`, label: 'Report' },
   ];
   return (

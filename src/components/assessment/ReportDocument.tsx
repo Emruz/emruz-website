@@ -2,6 +2,7 @@ import { intakeFields, maturityLevels, EVIDENCE_REQUIRED_AT } from '@/content/wo
 import { frameworkFor, tierFor as fwTier } from '@/content/frameworks';
 import { assessmentType } from '@/content/engagement-types';
 import type { ReportContent } from '@/lib/server/workbench';
+import ObligationViews from './ObligationViews';
 
 const fmt = (d: string | null) =>
   d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Los_Angeles' }) : null;
@@ -40,6 +41,8 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
   const csfCategories = fw.categories;
   const scopeKeys = ['overview', 'in_scope', 'out_of_scope', 'crown_jewels', ...at.intake.fields.filter((f) => f.type !== 'number').map((f) => f.key), 'regulations', 'method', 'constraints'];
   const overall = c.rollup.overall.current;
+  const obligations = c.obligations ?? [];
+  const evTitles = Object.fromEntries(c.evidenceIndex.map((e, i) => [e.id, `[E${i + 1}] ${e.title}`]));
 
   const evRefs = (evs: { id: string }[]) =>
     evs.length ? (
@@ -62,7 +65,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
         <p className="text-lg text-gray-600 mt-1">{c.title}</p>
         <dl className="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
           <div><dt className="text-gray-500">Assessment period</dt><dd>{[fmt(c.period.start), fmt(c.period.end)].filter(Boolean).join(' to ') || '–'}</dd></div>
-          <div><dt className="text-gray-500">Lead assessor</dt><dd>{c.assessor ?? '–'}</dd></div>
+          <div><dt className="text-gray-500">Lead assessor</dt><dd>{c.assessors?.[0]?.name ?? c.assessor ?? '–'}</dd></div>
           <div><dt className="text-gray-500">Report version</dt><dd>v{version}, {fmt(c.generatedAt)}</dd></div>
         </dl>
       </header>
@@ -101,6 +104,26 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
               </div>
             ))}
         </dl>
+        {c.assessors && c.assessors.length > 0 && (
+          <>
+            <h3 className="font-semibold text-gray-900 mb-2">Assessment team</h3>
+            <ul className="mb-5 space-y-1">
+              {c.assessors.map((a) => (
+                <li key={a.name}>
+                  <span className="font-semibold">{a.name}</span>
+                  {a.credentials ? `, ${a.credentials}` : ''}
+                  {a.title ? <span className="text-gray-600"> · {a.title}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {c.staffHours ? (
+          <p className="mb-5">
+            <span className="font-semibold text-gray-900">Client time:</span> about {c.staffHours} staff hours across interviews, walkthroughs and
+            evidence gathering.
+          </p>
+        ) : null}
         <h3 className="font-semibold text-gray-900 mb-2">Scoring method</h3>
         <p className="mb-2">
           We rated each of the {c.rollup.total} {at.ratedItems} on a six-point maturity scale, using interviews,
@@ -233,8 +256,15 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
         ))}
       </section>
 
+      {obligations.length > 0 && (
+        <section className="mb-10 break-before-page">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">6. Obligations</h2>
+          <ObligationViews views={obligations} evidenceTitles={evTitles} csvName={`poam-${c.client.replace(/[^\w-]+/g, '-').toLowerCase()}.csv`} />
+        </section>
+      )}
+
       <section className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">6. Limitations</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">{obligations.length ? 7 : 6}. Limitations</h2>
         <p className="mb-2">
           This assessment reflects what we observed and the evidence provided during the assessment period.{' '}
           {at.limitations}

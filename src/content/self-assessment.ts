@@ -10,6 +10,7 @@
  */
 import { addOns, packages, type AddOn, type CapabilityCode, type ServicePackage } from './packages';
 import { csfFunctions, type FunctionId } from './csf';
+import { cleanObligations, type ObligationKey } from './obligations';
 
 /** Keys of the frameworks in the readiness crosswalk (kept here to avoid an import cycle). */
 export type FrameworkKey = 'cmmc' | 'iso' | 'csf' | 'soc2';
@@ -331,6 +332,8 @@ export interface Profile {
   providers?: 'yes' | 'no';
   /** Frameworks the organization cares about (optional) */
   frameworks?: FrameworkKey[];
+  /** Obligations the organization answers to; each adds a view to the report (optional) */
+  obligations?: ObligationKey[];
 }
 
 export const profileQuestions = [
@@ -580,6 +583,7 @@ export function cleanProfile(input: unknown): Profile {
     if (Array.isArray(src.frameworks)) {
       out.frameworks = FRAMEWORK_KEYS.filter((k) => (src.frameworks as unknown[]).includes(k));
     }
+    if (Array.isArray(src.obligations)) out.obligations = cleanObligations(src.obligations);
   }
   return out as Profile;
 }

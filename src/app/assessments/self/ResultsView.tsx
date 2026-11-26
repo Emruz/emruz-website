@@ -20,6 +20,9 @@ import {
 } from '@/content/self-assessment';
 import { addOnHref, addOnLabel, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
 import Crosswalk from './Crosswalk';
+import ObligationViews from '@/components/assessment/ObligationViews';
+import { obligationView } from '@/content/obligations';
+import { prefillFromSelf } from '@/content/workbench';
 
 /** Results of one assessment. No hooks, so it renders on the server. */
 export default function ResultsView({
@@ -49,6 +52,9 @@ export default function ResultsView({
   const afterAll = overallScore(projectedAll, ig, profile);
   const cols = 2 + (rec.pkg ? 1 : 0) + (extras.length ? 1 : 0);
   const unsure = Object.values(answers).filter((v) => v === NOT_SURE).length;
+  const obligations = profile.obligations ?? [];
+  const csfRatings = obligations.length ? prefillFromSelf(answers, profile, ig) : {};
+  const views = obligations.map((k) => obligationView(k, csfRatings));
 
   const summary = [
     `NIST CSF 2.0 self-assessment: ${score}% (${m.label}), ${tierInfo[ig].name} profile`,
@@ -274,6 +280,8 @@ export default function ResultsView({
         withPkg={rec.pkg ? { label: displayCode(rec.pkg.code), answers: projected } : null}
         withAll={extras.length ? { codes: extras.map((a) => addOnLabel(a)), plus: !!rec.pkg, answers: projectedAll } : null}
       />
+
+      <ObligationViews views={views} csvName="poam-self-assessment.csv" />
 
       {!staffView && (
       <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:hidden">

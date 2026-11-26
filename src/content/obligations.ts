@@ -14,7 +14,7 @@
  * ISO 27001 is shown by control number only (ISO text is copyrighted).
  */
 import { csfSubcategories } from './csf';
-import { erlFor, mapsFor, scfControls, type ScfControl, type ScfMapKey } from './scf';
+import { erlFor, mapsFor, scfControls, type ScfControl, type ScfMapKey } from './scf/index';
 
 export type ObligationKey = 'hipaa' | 'nist171' | 'iso27001' | 'insurance';
 export const OBLIGATION_KEYS: ObligationKey[] = ['hipaa', 'nist171', 'iso27001', 'insurance'];
@@ -531,3 +531,30 @@ export function staffHours(opts: { categories: number; evidenceRequests: number;
   const h = opts.categories * 1.5 + opts.evidenceRequests * 0.5 + opts.obligations * 4 + 4;
   return Math.max(10, Math.round(h / 5) * 5);
 }
+
+/* ---------- Evidence requests from the SCF Evidence Request List ---------- */
+
+/** ERL items for an engagement: those supporting the CSF Categories assessed, plus every requirement of the chosen obligations. */
+export function erlForScope(categories: string[], obligations: ObligationKey[]): string[] {
+  const cats = new Set(categories);
+  const ids = new Set<string>();
+  for (const c of scfControls) {
+    if (csfForControl(c).some((s) => cats.has(s.split('-')[0]))) for (const e of erlFor(c)) ids.add(e);
+  }
+  for (const k of obligations) for (const r of requirements[k]) for (const e of r.erl) ids.add(e);
+  return uniq([...ids]);
+}
+
+/** Build the evidence index from evidence rows (ERL links and Subcategory links). */
+export function evidenceIndex(rows: { id: string; subcategories: string[]; erl_ids?: string[] }[]): EvidenceIndex {
+  const byErl: Record<string, string[]> = {};
+  const byCsf: Record<string, string[]> = {};
+  for (const r of rows) {
+    for (const e of r.erl_ids ?? []) (byErl[e] ??= []).push(r.id);
+    for (const s of r.subcategories) (byCsf[s] ??= []).push(r.id);
+  }
+  return { byErl, byCsf };
+}
+
+export const isReqStatus = (v: unknown): v is ReqStatus => v === 'met' || v === 'partial' || v === 'not_met' || v === 'unknown';
+export const isObligation = (v: unknown): v is ObligationKey => OBLIGATION_KEYS.includes(v as ObligationKey);

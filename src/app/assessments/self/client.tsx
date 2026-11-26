@@ -20,6 +20,7 @@ import {
   type Tier,
 } from '@/content/self-assessment';
 import { frameworks } from '@/content/crosswalk';
+import { OBLIGATION_KEYS, obligationInfo } from '@/content/obligations';
 import { finish, saveProgress } from './actions';
 
 /** One step per CSF Function */
@@ -185,6 +186,33 @@ function Intro({
                   >
                     {on && <Check className="w-4 h-4 inline -mt-0.5 mr-1" aria-hidden />}
                     {f.name}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="font-semibold text-gray-900 mb-1">Which obligations do you answer to?</legend>
+            <p className="text-sm text-gray-500 mb-2">Optional. Pick any. Your report adds a view for each one.</p>
+            <div className="flex flex-wrap gap-2">
+              {OBLIGATION_KEYS.map((k) => {
+                const chosen = profile.obligations ?? [];
+                const on = chosen.includes(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      setProfile({ ...profile, obligations: on ? chosen.filter((x) => x !== k) : [...chosen, k] })
+                    }
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium text-left transition-colors ${
+                      on ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+                    }`}
+                  >
+                    {on && <Check className="w-4 h-4 inline -mt-0.5 mr-1" aria-hidden />}
+                    {obligationInfo[k].scoping}
                   </button>
                 );
               })}

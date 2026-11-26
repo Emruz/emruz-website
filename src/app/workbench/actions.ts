@@ -17,9 +17,13 @@ import {
   deleteEvidenceFile,
   emailClientContacts,
   getEngagement,
+  assessorsFor,
   getEvidence,
+  getObligationRatings,
   getRatings,
   getReport,
+  getRequests,
+  linkEvidenceToRequestErl,
   isStaffEmail,
   logActivity,
   portalUrl,
@@ -41,6 +45,19 @@ import {
   type EngagementStatus,
 } from '@/content/workbench';
 import { frameworkFor } from '@/content/frameworks';
+import {
+  cleanObligations,
+  erlForScope,
+  evidenceIndex,
+  fromMaturity,
+  isObligation,
+  isReqStatus,
+  obligationView,
+  requirements as obligationRequirements,
+  staffHours,
+  type ObligationKey,
+} from '@/content/obligations';
+import { SCF_VERSION, scfEvidenceById } from '@/content/scf';
 import { assessmentType, isAssessmentType, type AssessmentType } from '@/content/engagement-types';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, functions, isComplete } from '@/content/self-assessment';
 import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
@@ -389,6 +406,12 @@ export async function addEvidenceLink(form: FormData) {
     insert into evidence (engagement_id, kind, title, url, uploaded_by) values (${e.id}, 'link', ${title}, ${url}, ${account.id}) returning id`;
   const sub = str(form.get('subcategory'), 20);
   if (hasItem(e, sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
+  const rid = form.get('request_id');
+  if (isUuid(rid)) {
+    await db()`update evidence set request_id = ${rid} where id = ${ev.id} and exists (select 1 from evidence_requests where id = ${rid} and engagement_id = ${e.id})`;
+    await linkEvidenceToRequestErl(ev.id, rid, e.id);
+    await db()`update evidence_requests set status = 'received' where id = ${rid} and engagement_id = ${e.id} and status = 'open'`;
+  }
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'link' });
   revalidatePath(ePath(e.id, 'evidence'));
 }
@@ -401,6 +424,24 @@ export async function setEvidenceLink(id: string, evidenceId: string, subcategor
   if (on) await db()`insert into evidence_links (evidence_id, subcategory) values (${evidenceId}, ${subcategory}) on conflict do nothing`;
   else await db()`delete from evidence_links where evidence_id = ${evidenceId} and subcategory = ${subcategory}`;
   return { ok: true };
+}
+
+/** Link an evidence item to an SCF Evidence Request List item, so it counts for every requirement that item supports. */
+export async function linkEvidenceErl(form: FormData) {
+  const { account, e } = await staffOn(form.get('id'));
+  const evId = form.get('evidence_id');
+  const erl = str(form.get('erl_id'), 40);
+  if (!isUuid(evId) || !scfEvidenceById.has(erl)) return;
+  const [ev] = await db()`select 1 from evidence where id = ${evId} and engagement_id = ${e.id}`;
+  if (!ev) return;
+  if (form.get('remove') === '1') {
+    await db()`delete from evidence_erl_links where evidence_id = ${evId} and erl_id = ${erl}`;
+  } else {
+    await db()`insert into evidence_erl_links (evidence_id, erl_id) values (${evId}, ${erl}) on conflict do nothing`;
+    await db()`update evidence_requests set status = 'received' where engagement_id = ${e.id} and erl_id = ${erl} and status = 'open'`;
+  }
+  await logActivity(e.id, account.email, 'evidence_erl_linked', { erl, remove: form.get('remove') === '1' });
+  revalidatePath(ePath(e.id, 'evidence'));
 }
 
 export async function deleteEvidence(form: FormData) {
@@ -446,11 +487,81 @@ export async function setRequestStatus(form: FormData) {
   revalidatePath(ePath(e.id, 'evidence'));
 }
 
+/* ---------- Obligations (#73) ---------- */
+
+/** Obligation views to show on the report. */
+export async function setObligations(form: FormData) {
+  const { account, e } = await staffOn(form.get('id'));
+  const obligations = cleanObligations(form.getAll('obligation'));
+  await db()`update engagements set obligations = ${obligations}, updated_at = now() where id = ${e.id}`;
+  await logActivity(e.id, account.email, 'obligations_set', { obligations });
+  revalidatePath(ePath(e.id));
+  revalidatePath(ePath(e.id, 'obligations'));
+}
+
+/** Assessor status for one requirement; "auto" goes back to the status from the CSF ratings. */
+export async function setObligationRating(form: FormData) {
+  const { account, e } = await staffOn(form.get('id'));
+  const obligation = form.get('obligation');
+  const requirement = str(form.get('requirement'), 40);
+  const status = form.get('status');
+  if (!isObligation(obligation) || !obligationRequirements[obligation].some((r) => r.id === requirement)) return;
+  if (status === 'auto') {
+    await db()`delete from obligation_ratings where engagement_id = ${e.id} and obligation = ${obligation} and requirement = ${requirement}`;
+  } else if (isReqStatus(status)) {
+    const note = str(form.get('note'), 1000) || null;
+    await db()`
+      insert into obligation_ratings (engagement_id, obligation, requirement, status, note, updated_by)
+      values (${e.id}, ${obligation}, ${requirement}, ${status}, ${note}, ${account.id})
+      on conflict (engagement_id, obligation, requirement)
+      do update set status = excluded.status, note = excluded.note, updated_by = excluded.updated_by, updated_at = now()`;
+  } else return;
+  await logActivity(e.id, account.email, 'obligation_rated', { obligation, requirement, status });
+  revalidatePath(ePath(e.id, 'obligations'));
+}
+
+/**
+ * Raise evidence requests from the SCF Evidence Request List: items that support
+ * the CSF Categories assessed (or all, before any rating) and the chosen obligations.
+ * Skips items already requested. Request text is the SCF wording, unchanged.
+ */
+export async function raiseErlRequests(form: FormData) {
+  const { account, e } = await staffOn(form.get('id'));
+  if (frameworkFor(e.assessment_type).type !== 'security') return;
+  const [ratings, existing] = await Promise.all([getRatings(e.id), getRequests(e.id)]);
+  const rated = Object.values(ratings).filter((r) => !r.na && r.current_level !== null).map((r) => r.subcategory.split('-')[0]);
+  const cats = rated.length ? [...new Set(rated)] : frameworkFor(e.assessment_type).categories.map((c) => c.id);
+  const have = new Set(existing.map((r) => r.erl_id).filter(Boolean));
+  const todo = erlForScope(cats, cleanObligations(e.obligations)).filter((id) => !have.has(id));
+  for (const id of todo) {
+    const item = scfEvidenceById.get(id)!;
+    await db()`
+      insert into evidence_requests (engagement_id, erl_id, text, created_by)
+      values (${e.id}, ${id}, ${`${item.artifact}: ${item.description}`}, ${account.id})`;
+  }
+  await logActivity(e.id, account.email, 'erl_requests_created', { count: todo.length });
+  if (todo.length && form.get('notify') === 'on') {
+    const sent = await emailClientContacts(
+      e.client_id,
+      `Evidence requested: ${e.title}`,
+      (n) => `Hi ${n},\n\nFor your ${e.title}, we've listed ${todo.length} items of evidence we need. One document can answer several requests.\n\nPlease upload them or share links in the client portal:\n${portalUrl(e.id)}\n\nThank you,\n${account.name || 'Emruz'}`,
+    );
+    if (sent.length) await logActivity(e.id, account.email, 'request_emailed', { to: sent });
+  }
+  revalidatePath(ePath(e.id, 'evidence'));
+}
+
 /* ---------- Reports ---------- */
 
 export async function generateReport(form: FormData) {
   const { account, e } = await staffOn(form.get('id'));
-  const [ratings, evidence] = await Promise.all([getRatings(e.id), getEvidence(e.id)]);
+  const [ratings, evidence, overrides, assessors, requests] = await Promise.all([
+    getRatings(e.id),
+    getEvidence(e.id),
+    getObligationRatings(e.id),
+    assessorsFor(e.id),
+    getRequests(e.id),
+  ]);
   const bySub = new Map<string, typeof evidence>();
   for (const ev of evidence) for (const s of ev.subcategories) bySub.set(s, [...(bySub.get(s) ?? []), ev]);
 
@@ -496,8 +607,19 @@ export async function generateReport(form: FormData) {
       filename: x.filename,
       fromClient: x.from_client,
       subcategories: x.subcategories,
+      erl: x.erl_ids,
     })),
+    assessors,
   };
+  if (fw.type === 'security') {
+    const obligations: ObligationKey[] = cleanObligations(e.obligations);
+    const csf = fromMaturity(Object.values(ratings));
+    const ev = evidenceIndex(evidence);
+    content.obligations = obligations.map((k) => obligationView(k, csf, ev, overrides[k] ?? {}));
+    content.scfVersion = SCF_VERSION;
+    const inScope = new Set(Object.values(ratings).filter((r) => !r.na).map((r) => r.subcategory.split('-')[0]));
+    content.staffHours = staffHours({ categories: inScope.size || fw.categories.length, evidenceRequests: requests.length, obligations: obligations.length });
+  }
   const [{ v }] = await db()<{ v: number }[]>`select coalesce(max(version), 0) + 1 as v from reports where engagement_id = ${e.id}`;
   const [r] = await db()<{ id: string }[]>`
     insert into reports (engagement_id, version, content, created_by) values (${e.id}, ${v}, ${db().json(content as never)}, ${account.id})
@@ -620,7 +742,8 @@ export async function updateStaff(form: FormData) {
   }
   await db()`update accounts set name = ${name || null} where id = ${id}`;
   await db()`
-    update staff set role = ${r}, title = ${str(form.get('title'), 120) || null}, phone = ${str(form.get('phone'), 40) || null},
+    update staff set role = ${r}, title = ${str(form.get('title'), 120) || null}, credentials = ${str(form.get('credentials'), 200) || null},
+      phone = ${str(form.get('phone'), 40) || null},
       notes = ${str(form.get('notes'), 2000) || null}, updated_at = now()
     where account_id = ${id}`;
   revalidatePath('/workbench/staff');

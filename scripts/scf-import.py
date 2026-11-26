@@ -168,7 +168,7 @@ def main():
     with open(os.path.join(OUT_DIR, "scf.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=0)
         f.write("\n")
-    with open(os.path.join(OUT_DIR, "scf.sha256"), "w") as f:
+    with open(os.path.join(OUT_DIR, "scf.sha256"), "w", encoding="utf-8") as f:
         f.write(checksum(data) + "\n")
     print(f"SCF {version}: {len(controls)} controls, {len(erl)} evidence requests -> src/content/scf/")
 

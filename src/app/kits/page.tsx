@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { Check, Plug, RefreshCw, ShieldCheck } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { BUNDLE_PACK, kitOffers, kitResults, LEAD_PACK, type KitOffer } from '@/content/kits';
-import { kits, SITE_URL } from '@/lib/server/config';
+import { SITE_URL } from '@/lib/server/config';
 import { currentBundle } from '@/lib/server/kits/content';
 import { PURCHASE_TRIGGERS } from '@/lib/server/kits/launch-core';
 import { lifetimeOffer } from '@/lib/server/kits/sales';
 import { canBuy, holding, LIFETIME_PACK, type Holding, type KitPlan } from '@/lib/server/kits/sales-core';
 import { entitlementsFor } from '@/lib/server/kits/store';
 import { currentAccount } from '@/lib/server/session';
+import { siteSettings } from '@/lib/server/settings';
 
 export const metadata = {
   title: 'Emruz Release Kit: Claude skills that check every release before it ships',
@@ -190,7 +191,7 @@ function OfferCard({
 export default async function KitsPage({ searchParams }: { searchParams: Promise<{ notice?: string }> }) {
   const { notice } = await searchParams;
   const { account, latest, counts, ents, life, lifetimeForMe } = await loadState();
-  const open = kits.salesOpen;
+  const open = (await siteSettings()).kitsSalesOpen;
   const card = (o: KitOffer, isLead = false) => (
     <OfferCard
       key={o.pack}

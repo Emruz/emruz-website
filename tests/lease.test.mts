@@ -41,10 +41,10 @@ module.registerHooks({
 });
 process.env.MOTIV_LICENSE_PRIVATE_KEY = key.export({ format: 'der', type: 'pkcs8' }).toString('base64');
 process.env.MOTIV_LICENSE_KID = 'ktest';
-const { issueLease } = await import('../src/lib/server/licensing.ts');
+const { issueLease, entitlementProblem } = await import('../src/lib/server/licensing.ts');
 const now = Date.parse('2026-11-14T12:00:00Z');
-const token = issueLease(
-  {
+const terms = { leaseDays: 14, pastDueGraceDays: 7 };
+const annual = {
     id: 'sub-row',
     subscription_id: 'MOTIV-7K2M-QX9R-4HTP-W3ND',
     account_id: null,
@@ -55,10 +55,8 @@ const token = issueLease(
     cancel_at_period_end: false,
     past_due_since: null,
     seats: 2,
-  } as Parameters<typeof issueLease>[0],
-  'device-1',
-  now,
-);
+  } as Parameters<typeof issueLease>[0];
+const token = issueLease(annual, 'device-1', terms, now);
 const [prefix, kid, body, sig] = token.split('.');
 assert.equal(prefix, 'MOTIV2');
 assert.equal(kid, 'ktest');
@@ -72,3 +70,18 @@ for (const f of ['assistant', 'action_items', 'speakers', 'awareness', 'calendar
   assert.ok(lease.features.includes(f), `new lease still includes "${f}"`);
 }
 console.log('issued lease includes "import"');
+
+// Lease length and grace come from the site settings (#74); the lease format does not change
+const DAY = 24 * 3600 * 1000;
+const decode = (t: string) => JSON.parse(Buffer.from(t.split('.')[2], 'base64url').toString('utf8'));
+assert.equal(Date.parse(decode(issueLease(annual, 'device-1', { leaseDays: 30, pastDueGraceDays: 7 }, now)).lease_expires), now + 30 * DAY);
+assert.equal(Date.parse(lease.lease_expires), now + 14 * DAY);
+assert.deepEqual(Object.keys(decode(issueLease(annual, 'device-1', { leaseDays: 30, pastDueGraceDays: 7 }, now))).sort(), Object.keys(lease).sort(), 'same lease fields');
+// Near the end of the paid period the lease stops at period end plus grace
+const ending = { ...annual, period_end: new Date(now + 2 * DAY) };
+assert.equal(Date.parse(decode(issueLease(ending, 'device-1', { leaseDays: 30, pastDueGraceDays: 3 }, now)).lease_expires), now + 5 * DAY);
+// Past due: grace from the setting
+const pastDue = { ...annual, status: 'past_due' as const, past_due_since: new Date(now - 5 * DAY) };
+assert.equal(entitlementProblem(pastDue, { leaseDays: 14, pastDueGraceDays: 7 }, now), null);
+assert.equal(entitlementProblem(pastDue, { leaseDays: 14, pastDueGraceDays: 3 }, now), 'past_due');
+console.log('lease terms from site settings');

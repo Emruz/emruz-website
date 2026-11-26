@@ -6,6 +6,7 @@ import { launchReport } from '@/lib/server/kits/launch';
 import { KILL_LINES, triggerLabel, type LineState } from '@/lib/server/kits/launch-core';
 import { fmtDate } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
+import { siteSettings } from '@/lib/server/settings';
 import { btn, danger, input, Notice, ReauthBanner } from '../motiv/ui';
 import { excludeEmail, grantKit, includeEmail, revokeKit, setLaunchDate } from './actions';
 
@@ -180,7 +181,7 @@ export default async function KitsAdmin({ searchParams }: { searchParams: Promis
     releaseError = e instanceof Error ? e.message : String(e);
   }
   const tags = await releaseTags();
-  const hold = process.env.SKILLS_REF?.trim() || null;
+  const hold = (await siteSettings()).skillsRef;
 
   const grants = await db()<{ id: string; email: string; pack: string; through_ref: string | null; source: string; note: string | null; granted_by: string | null; granted_at: Date }[]>`
     select e.id, a.email, e.pack, e.through_ref, e.source, e.note, e.granted_by, e.granted_at
@@ -203,7 +204,7 @@ export default async function KitsAdmin({ searchParams }: { searchParams: Promis
           <Notice msg={sp.msg} error={sp.err === '1'} />
 
           <div className="mb-8 rounded-lg border border-gray-200 p-5 text-sm">
-            <p className="font-semibold text-gray-900">Serving release {release?.ref ?? 'none'}{hold ? ' (held by SKILLS_REF)' : ''}</p>
+            <p className="font-semibold text-gray-900">Serving release {release?.ref ?? 'none'}{hold ? ' (held on Site settings)' : ''}</p>
             {release && <p className="text-gray-600">{release.skills} skills, {release.free} free · packs: {release.packs.join(', ')}</p>}
             {releaseError && <p role="alert" className="text-red-700">Could not load a release: {releaseError}</p>}
             <p className="text-gray-600">Published: {tags.slice(0, 5).join(', ') || 'none found'}</p>

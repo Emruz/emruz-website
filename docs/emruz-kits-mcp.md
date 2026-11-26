@@ -30,7 +30,7 @@ Access tokens are EdDSA JWTs, 10 minutes, audience `/api/mcp`. Refresh tokens ar
 
 The site follows the newest published GitHub Release of `SKILLS_REPO` (drafts and pre-releases are ignored), checked every 10 minutes. Publishing a release makes it live; no deploy needed. Each release's `.tar.gz` is checked against its `SHA256SUMS` asset and its manifest validated (source `emruz-kits`, a `pack` on every skill). If the newest release fails, the site keeps serving the last good one and emails a `kits_release_invalid` alert. Archives are cached in Netlify Blobs (`kits-releases`) and `.data/kits` locally.
 
-To hold the site at one release (for example to back out a bad release), set `SKILLS_REF` to its tag in Netlify and redeploy. Remove it to follow releases again.
+To hold the site at one release (for example to back out a bad release), choose it under Hold kits at release on `/admin/settings`; it applies within 30 seconds, no redeploy. Clear it to follow releases again.
 
 ## Sales (#68)
 
@@ -41,7 +41,7 @@ To hold the site at one release (for example to back out a bad release), set `SK
 | One-time | `kits_<pack>_once` | Held at the release current at checkout (`through_ref` = that tag) |
 | Upgrade | `kits_<pack>_upgrade` | Only for owners of an earlier release of that pack; adds a row held at the latest release |
 | Monthly, annual | `kits_<pack>_month`, `kits_<pack>_year` | Every release while the subscription lasts (`through_ref` empty) |
-| Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or `KITS_LIFETIME_UNTIL`) |
+| Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or the day set on `/admin/settings`) |
 
 `<pack>` is `release`, `founder`, `marketing` or `all`. Prices are found by lookup key, so there are no price environment variables; the amounts shown on `/kits` live in `src/content/kits.ts` and must match Stripe. Each product has tax code `txcd_10103001` (SaaS, business use). Promotion codes are allowed except on upgrades and lifetime.
 
@@ -57,9 +57,8 @@ Create the prices in a sandbox (or live) with the Stripe CLI, one product per pa
 | `MCP_TOKEN_KID` | `m1`. Change it together with the key when rotating; existing access tokens then fail and clients refresh. |
 | `SKILLS_REPO` | `Emruz/emruz-kits` |
 | `SKILLS_TOKEN` | Fine-grained token, that repo only, Contents read-only, with an expiry. Secret. Renew before it expires. |
-| `SKILLS_REF` | Optional hold, see above |
-| `KITS_SALES_OPEN` | `true` shows buy buttons on `/kits` |
-| `KITS_LIFETIME_UNTIL` | Optional. Last day of the founding lifetime offer, `YYYY-MM-DD`; default 2027-12-31. A past date ends the offer |
+
+The release hold, the kits sales switch and the last day of the founding lifetime offer are site settings on `/admin/settings` (see `docs/site-settings.md`).
 
 ## Launch conditions (#71)
 

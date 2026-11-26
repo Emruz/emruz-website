@@ -4,6 +4,7 @@ import { adminEmails } from '../config';
 import { releaseTags } from './content';
 import { isInternalEmail, launchReview, releaseCyclesSince, salesMetrics, type LaunchReview, type SalesMetrics } from './launch-core';
 import { lifetimeOffer } from './sales';
+import { siteSettings } from '../settings';
 
 /** Kits launch conditions (#71): sales outside Emruz against the kill lines, for /admin/kits. */
 export async function launchReport(now = new Date()): Promise<{
@@ -38,9 +39,8 @@ export async function launchReport(now = new Date()): Promise<{
     mcp.map((m) => ({ accountId: m.account_id, email: m.email })),
     (email) => isInternalEmail(email, leftOut),
   );
-  // Set on /admin/kits (#71)
-  const [setting] = await db()<{ value: string }[]>`select value from kit_settings where key = 'launch_date'`;
-  const launchDate = setting?.value ?? null;
+  // Set on /admin/kits (#71), kept with the site settings (#74)
+  const launchDate = (await siteSettings()).kitsLaunchDate;
   const cycles = launchDate ? releaseCyclesSince(launchDate, await releaseTags()) : 0;
   const offer = await lifetimeOffer(now);
   return {

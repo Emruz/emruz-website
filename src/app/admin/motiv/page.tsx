@@ -94,6 +94,7 @@ export default async function MotivAdmin({ searchParams }: { searchParams: Promi
             <LiveSearch server placeholder="Search customers by email" className="flex-1 min-w-64" />
             <Link href="/admin/motiv/archive" className={btn}>Archive</Link>
             <Link href="/admin/motiv/grant" className={btn}>Grant a licence</Link>
+            <Link href="/admin/settings" className={btn}>Site settings</Link>
           </div>
 
           {customers.length === 0 ? (

@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import type { TransactionSql } from 'postgres';
 import { db, logEvent } from './db';
 import { motiv } from './config';
+import { siteSettings } from './settings';
 import { PERPETUAL_LEASE_EXPIRES } from './revocation';
 import {
   iso,
@@ -77,8 +78,19 @@ export interface SubscriptionRow {
   seats: number;
 }
 
+/** Lease length and grace, from the site settings (#74). */
+export interface LeaseTerms {
+  leaseDays: number;
+  pastDueGraceDays: number;
+}
+
+export async function leaseTerms(): Promise<LeaseTerms> {
+  const s = await siteSettings();
+  return { leaseDays: s.motivLeaseDays, pastDueGraceDays: s.motivPastDueGraceDays };
+}
+
 /** Why a subscription can't get a lease right now, or null if it can. */
-export function entitlementProblem(s: SubscriptionRow, now = Date.now()): LicenseError | null {
+export function entitlementProblem(s: SubscriptionRow, terms: LeaseTerms, now = Date.now()): LicenseError | null {
   if (s.status === 'revoked') return 'revoked';
   if (s.status === 'canceled') {
     // Canceled subscriptions stay unlocked to the end of the paid period.
@@ -86,17 +98,17 @@ export function entitlementProblem(s: SubscriptionRow, now = Date.now()): Licens
   }
   if (s.status === 'past_due') {
     const since = s.past_due_since?.getTime() ?? now;
-    if (now > since + motiv.pastDueGraceDays * DAY) return 'past_due';
+    if (now > since + terms.pastDueGraceDays * DAY) return 'past_due';
   }
-  if (s.period_end && now > s.period_end.getTime() + motiv.pastDueGraceDays * DAY) return 'expired';
+  if (s.period_end && now > s.period_end.getTime() + terms.pastDueGraceDays * DAY) return 'expired';
   return null;
 }
 
-export function issueLease(s: SubscriptionRow, deviceId: string, now = Date.now()): string {
+export function issueLease(s: SubscriptionRow, deviceId: string, terms: LeaseTerms, now = Date.now()): string {
   const { key, kid } = signingKey();
   // Lifetime leases never expire; monthly and annual leases renew at each check-in
-  let end = s.plan === 'lifetime' ? PERPETUAL_LEASE_EXPIRES : now + motiv.leaseDays * DAY;
-  if (s.period_end) end = Math.min(end, s.period_end.getTime() + motiv.pastDueGraceDays * DAY);
+  let end = s.plan === 'lifetime' ? PERPETUAL_LEASE_EXPIRES : now + terms.leaseDays * DAY;
+  if (s.period_end) end = Math.min(end, s.period_end.getTime() + terms.pastDueGraceDays * DAY);
   return signLease(key, kid, {
     v: 2,
     lease_id: crypto.randomBytes(6).toString('hex'),
@@ -169,7 +181,8 @@ export async function entitle(
   opts: { requireRegistered?: boolean; actor?: string } = {},
 ): Promise<ApiResult> {
   if (!s) return fail('not_found');
-  const problem = entitlementProblem(s);
+  const terms = await leaseTerms();
+  const problem = entitlementProblem(s, terms);
   if (problem) return fail(problem);
 
   // Seat count and device insert happen in one transaction with the subscription row locked
@@ -198,7 +211,7 @@ export async function entitle(
   if (outcome === 'added') {
     await logEvent('device_activated', { device_id: deviceId, device_name: clean(info.device_name) }, { subscriptionId: s.id, actor: opts.actor ?? 'app' });
   }
-  return { status: 200, body: { lease: issueLease(s, deviceId) } };
+  return { status: 200, body: { lease: issueLease(s, deviceId, terms) } };
 }
 
 export async function deactivateDevice(s: SubscriptionRow, deviceId: string, actor: string) {
@@ -323,7 +336,7 @@ export async function approvePairing(
     ? await db()<SubscriptionRow[]>`select * from subscriptions where id = ${subscriptionUuid} and account_id = ${accountId}`
     : [];
   if (!s) return failed('Choose one of your subscriptions.');
-  const problem = entitlementProblem(s);
+  const problem = entitlementProblem(s, await leaseTerms());
   if (problem) return failed(messages[problem] ?? 'That subscription cannot be used.');
   // Seat check and approval in one transaction with the subscription row locked;
   // an approved pairing holds its seat until the app collects the lease.

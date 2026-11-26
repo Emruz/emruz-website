@@ -9,6 +9,8 @@ import { isDay } from '@/lib/server/kits/launch-core';
 import { oauthStore } from '@/lib/server/kits/store';
 import { stripe } from '@/lib/server/stripe';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
+import { saveSetting } from '@/lib/server/settings';
+import { KITS_LAUNCH_DATE } from '@/lib/server/settings-core';
 
 /** Staff grants and revocation of Emruz kit access (#67). */
 
@@ -103,14 +105,12 @@ export async function setLaunchDate(form: FormData) {
   const actor = await admin();
   const day = String(form.get('launch_date') || '').trim();
   if (!day) {
-    const rows = await db()`delete from kit_settings where key = 'launch_date' returning key`;
-    if (rows.length) await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: null, by: actor } });
+    const r = await saveSetting(KITS_LAUNCH_DATE, null, actor);
+    if (r !== 'unchanged') await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: null, by: actor } });
     back('Launch date cleared.');
   }
   if (!isDay(day)) back('Enter the launch date as a day, for example 2026-12-01.', true);
-  await db()`
-    insert into kit_settings (key, value, updated_by) values ('launch_date', ${day}, ${actor})
-    on conflict (key) do update set value = excluded.value, updated_by = excluded.updated_by, updated_at = now()`;
-  await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: day, by: actor } });
+  const r = await saveSetting(KITS_LAUNCH_DATE, day, actor);
+  if (r !== 'unchanged') await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: day, by: actor } });
   back(`Launch date set to ${day}.`);
 }

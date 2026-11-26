@@ -5,6 +5,7 @@ import { accountForEmail } from '../accounts';
 import { securityEvent } from '../alerts';
 import { sendEmail } from '../email';
 import { kits, SITE_URL } from '../config';
+import { siteSettings } from '../settings';
 import { stripe } from '../stripe';
 import { packTitle } from './content';
 import { isRef } from './content-core';
@@ -31,7 +32,7 @@ export async function kitPriceId(pack: string, plan: KitPlan): Promise<string | 
 /** Founding lifetime offer: sold so far (refunded ones count, so the cap is never exceeded by refunds) and whether it is open. */
 export async function lifetimeOffer(now = new Date()): Promise<{ open: boolean; sold: number; cap: number; until: string | null }> {
   const cap = kits.lifetimeCap;
-  const until = kits.lifetimeUntil;
+  const until = (await siteSettings()).kitsLifetimeUntil;
   if (!until) return { open: false, sold: 0, cap, until };
   const [r] = await db()<{ n: number }[]>`select count(*)::int as n from kit_entitlements where kind = 'lifetime' and source = 'purchase'`;
   return { open: lifetimeOpen(until, r.n, cap, now), sold: r.n, cap, until };

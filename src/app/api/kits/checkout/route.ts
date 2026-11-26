@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { sameOrigin } from '@/lib/server/api';
 import { rateLimitCheck } from '@/lib/server/db';
-import { kits, SITE_URL } from '@/lib/server/config';
+import { SITE_URL } from '@/lib/server/config';
 import { currentBundle } from '@/lib/server/kits/content';
 import { canBuy, isKitPlan, isSubscriptionPlan, type KitPlan } from '@/lib/server/kits/sales-core';
 import { isPurchaseTrigger, parseOffer, type PurchaseTrigger } from '@/lib/server/kits/launch-core';
 import { kitPriceId, lifetimeOffer } from '@/lib/server/kits/sales';
 import { entitlementsFor } from '@/lib/server/kits/store';
 import { currentAccount } from '@/lib/server/session';
+import { siteSettings } from '@/lib/server/settings';
 import { stripe } from '@/lib/server/stripe';
 
 const back = (q = '') => NextResponse.redirect(new URL(`/kits${q}#pricing`, SITE_URL), 303);
@@ -15,7 +16,7 @@ const back = (q = '') => NextResponse.redirect(new URL(`/kits${q}#pricing`, SITE
 // Buy buttons on /kits post { offer: pack:plan, trigger } here; we redirect to Stripe Checkout (#68, #71).
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return new NextResponse('Forbidden', { status: 403 });
-  if (!kits.salesOpen) return back();
+  if (!(await siteSettings()).kitsSalesOpen) return back();
   const form = await req.formData();
   const { pack, plan } = parseOffer(String(form.get('offer') || ''), String(form.get('pack') || ''), String(form.get('plan') || ''));
   if (!isKitPlan(plan)) return back();
@@ -53,8 +54,8 @@ async function startCheckout(account: { id: string; email: string }, pack: strin
   const session = await stripe().checkout.sessions.create({
     mode: subscription ? 'subscription' : 'payment',
     line_items: [{ price, quantity: 1 }],
-    // Stripe Tax can't be activated in a sandbox; set STRIPE_AUTOMATIC_TAX=false there
-    automatic_tax: { enabled: process.env.STRIPE_AUTOMATIC_TAX !== 'false' },
+    // Stripe Tax can't be activated in a sandbox; turn sales tax off on /admin/settings there
+    automatic_tax: { enabled: (await siteSettings()).stripeAutomaticTax },
     billing_address_collection: 'auto',
     allow_promotion_codes: plan !== 'upgrade' && plan !== 'lifetime',
     ...(subscription ? { subscription_data: { metadata } } : { customer_creation: 'always' as const }),

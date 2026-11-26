@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { db } from './db';
 import { signingKey, signLease, iso } from './lease';
 import { PROVIDERS, providerConfigured, providerLabel } from './oauth';
+import { siteSettings } from './settings';
 
 /** Public keys built into Motiv (frontend/src-tauri/license_public_keys.json). */
 export const MOTIV_APP_PUBLIC_KEYS: Record<string, string> = {
@@ -48,11 +49,14 @@ export async function systemChecks(): Promise<Check[]> {
 
   const has = (k: string) => !!process.env[k];
   checks.push({ name: 'Email (Resend)', ok: has('RESEND_API_KEY'), detail: has('RESEND_API_KEY') ? `Sending as ${process.env.EMAIL_FROM || 'default sender'}` : 'RESEND_API_KEY not set' });
-  const stripeVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_ANNUAL', 'STRIPE_PRICE_LIFETIME'];
-  const missing = stripeVars.filter((k) => !has(k));
+  const settings = await siteSettings();
+  const missing = [
+    ...['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].filter((k) => !has(k)),
+    ...(['monthly', 'annual', 'lifetime'] as const).filter((p) => !settings.stripePrices[p]).map((p) => `${p} price (/admin/settings)`),
+  ];
   checks.push({ name: 'Stripe', ok: missing.length === 0, detail: missing.length ? `Missing: ${missing.join(', ')}` : `Configured${process.env.STRIPE_SECRET_KEY?.startsWith('sk_test') ? ' (test mode)' : ''}` });
-  checks.push({ name: 'Sales tax at checkout', ok: true, detail: process.env.STRIPE_AUTOMATIC_TAX === 'false' ? 'Off (STRIPE_AUTOMATIC_TAX=false; turn on before selling)' : 'On (Stripe Tax)' });
-  checks.push({ name: 'Sales', ok: true, detail: process.env.MOTIV_SALES_OPEN === 'true' ? 'Buy buttons shown' : 'Closed (MOTIV_SALES_OPEN is not "true")' });
+  checks.push({ name: 'Sales tax at checkout', ok: true, detail: settings.stripeAutomaticTax ? 'On (Stripe Tax)' : 'Off (turn on in /admin/settings before selling)' });
+  checks.push({ name: 'Sales', ok: true, detail: settings.motivSalesOpen ? 'Buy buttons shown' : 'Closed (open on /admin/settings)' });
   for (const p of PROVIDERS) {
     checks.push({ name: `${providerLabel[p]} sign-in`, ok: providerConfigured(p), detail: providerConfigured(p) ? 'Configured' : 'Not configured (button hidden)' });
   }

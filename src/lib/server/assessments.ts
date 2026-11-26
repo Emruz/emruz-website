@@ -1,6 +1,7 @@
 import 'server-only';
 import { db, logEvent } from './db';
 import { sendEmail } from './email';
+import { siteSettings } from './settings';
 import { SITE_URL } from './config';
 import { accountForEmail } from './accounts';
 import {
@@ -93,8 +94,8 @@ export async function currentAssessment(accountId: string): Promise<AssessmentRo
   return created;
 }
 
-/** Where assessment notices go. */
-const NOTIFY_TO = process.env.ASSESSMENT_NOTIFY_TO || 'sales@emruz.com';
+/** Where assessment notices go, set on /admin/settings (#74). */
+const notifyTo = async () => (await siteSettings()).assessmentNotifyTo;
 
 /** The partner an assessment belongs to, for co-branding and notices. */
 async function assessmentPartner(partnerId: string | null | undefined) {
@@ -132,7 +133,7 @@ export async function notifyAssessmentStarted(assessmentId: string) {
     ]
       .filter((l, i, arr) => l !== '' || arr[i - 1] !== '')
       .join('\n');
-    await sendEmail(NOTIFY_TO, `Self-assessment started: ${c.company}`, text, { replyTo: c.email });
+    await sendEmail(await notifyTo(), `Self-assessment started: ${c.company}`, text, { replyTo: c.email });
     if (partner?.notify_email) {
       await sendEmail(partner.notify_email, `Self-assessment started: ${c.company}`, text, { replyTo: c.email }).catch((e) =>
         console.error('partner started email failed', e),
@@ -223,7 +224,7 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
       ]
         .filter((l, i, arr) => l !== '' || arr[i - 1] !== '')
         .join('\n');
-    await sendEmail(NOTIFY_TO, `Self-assessment completed: ${reg.company} (${score}%)`, adminText, { replyTo: account.email });
+    await sendEmail(await notifyTo(), `Self-assessment completed: ${reg.company} (${score}%)`, adminText, { replyTo: account.email });
     if (partner?.notify_email) {
       await sendEmail(partner.notify_email, `Self-assessment completed: ${reg.company} (${score}%)`, adminText, {
         replyTo: account.email,

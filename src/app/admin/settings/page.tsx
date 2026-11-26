@@ -4,7 +4,7 @@ import { releaseTags } from '@/lib/server/kits/content';
 import { fmtDate } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
 import { settingChanges, storedSettings } from '@/lib/server/settings';
-import { displayValue, SETTINGS, type SettingDef } from '@/lib/server/settings-core';
+import { displayValue, effectiveSetting, SETTINGS, type SettingDef } from '@/lib/server/settings-core';
 import { btn, input, Notice, ReauthBanner } from '../motiv/ui';
 import { saveSettings } from './actions';
 
@@ -53,8 +53,12 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
   const locked = needsStepUp(account);
   const [stored, changes, tags] = await Promise.all([storedSettings(), settingChanges(), releaseTags()]);
   const labelFor = (key: string) => SETTINGS.find((s) => s.key === key)?.label ?? key;
-  // Moved to the database (#74): a value still set in Netlify is ignored and can be removed
-  const leftover = SETTINGS.filter((s) => process.env[s.env] !== undefined).map((s) => s.env);
+  const current = Object.fromEntries([...stored].map(([k, r]) => [k, r.value]));
+  const effective = new Map(SETTINGS.map((s) => [s.key, effectiveSetting(s, current)]));
+  // Moved to the database (#74): a variable still set in Netlify applies until the setting is saved here
+  const leftover = SETTINGS.filter((s) => process.env[s.env] !== undefined);
+  const applying = leftover.filter((s) => effective.get(s.key)!.source === 'netlify').map((s) => s.env);
+  const ignored = leftover.filter((s) => effective.get(s.key)!.source !== 'netlify').map((s) => s.env);
 
   return (
     <>
@@ -67,9 +71,14 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
         <Container>
           {locked && <ReauthBanner next="/admin/settings" />}
           <Notice msg={sp.msg} error={sp.err === '1'} />
-          {leftover.length > 0 && (
-            <p className="mb-6 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              Still set in Netlify and no longer read: <span className="font-mono break-all">{leftover.join(', ')}</span>. Set the values here, then remove them from Netlify.
+          {applying.length > 0 && (
+            <p className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              Still set in Netlify and in effect until saved here: <span className="font-mono break-all">{applying.join(', ')}</span>. Save the settings below (the form shows the Netlify values), then remove the variables from Netlify.
+            </p>
+          )}
+          {ignored.length > 0 && (
+            <p className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+              Still set in Netlify but replaced by a value saved here: <span className="font-mono break-all">{ignored.join(', ')}</span>. They can be removed from Netlify.
             </p>
           )}
 
@@ -80,16 +89,25 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
                 <div className="space-y-6">
                   {SETTINGS.filter((s) => s.group === g).map((def) => {
                     const row = stored.get(def.key);
+                    const now = effective.get(def.key)!;
+                    // A value carried over from Netlify fills the field, so saving the form keeps it
+                    const fieldValue = now.source === 'netlify' ? now.value : row?.value || null;
+                    const by = row ? ` ${fmtDate(row.updated_at)} by ${row.updated_by.replace(/^admin:/, '')}` : '';
+                    const source =
+                      now.source === 'saved' ? ` · changed${by}`
+                      : now.source === 'netlify' ? ` · from Netlify variable ${def.env} (save to keep it here)`
+                      : now.source === 'cleared' ? ` · default, cleared${by}`
+                      : ' · default';
                     return (
                       <div key={def.key} className="text-sm">
                         <label htmlFor={`s-${def.key}`} className="font-semibold text-gray-900">{def.label}</label>
                         <p id={`s-${def.key}-help`} className="text-gray-600">
                           {def.help} Default: {displayValue(def, def.fallback)}.
                         </p>
-                        <div className="mt-2"><Field def={def} value={row?.value ?? null} tags={tags} /></div>
+                        <div className="mt-2"><Field def={def} value={fieldValue} tags={tags} /></div>
                         <p className="mt-1 text-xs text-gray-500 break-words">
-                          Now: <span className="font-medium text-gray-800">{displayValue(def, row?.value ?? def.fallback)}</span>
-                          {row ? ` · changed ${fmtDate(row.updated_at)} by ${row.updated_by.replace(/^admin:/, '')}` : ' · default'}
+                          Now: <span className="font-medium text-gray-800">{displayValue(def, now.value)}</span>
+                          {source}
                         </p>
                       </div>
                     );
@@ -108,7 +126,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
               {changes.map((c, i) => (
                 <li key={i} className="p-4 break-words">
                   <span className="font-semibold text-gray-900">{labelFor(c.detail.key)}</span>
-                  <span className="text-gray-600"> · {c.detail.old ?? 'default'} → {c.detail.new ?? 'default'}</span>
+                  <span className="text-gray-600"> · {c.detail.old || 'default'} → {c.detail.new || 'default'}</span>
                   <span className="block text-xs text-gray-500">{fmtDate(c.at)} · {(c.actor ?? '').replace(/^admin:/, '')}</span>
                 </li>
               ))}

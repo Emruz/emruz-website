@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { bundleFor } from '@/lib/server/kits/content';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
 import { saveSetting, storedSettings } from '@/lib/server/settings';
-import { checkSetting, priceProblem, SETTINGS, type SettingDef } from '@/lib/server/settings-core';
+import { checkSetting, effectiveSetting, priceProblem, SETTINGS, storedForm, type PriceFacts, type SettingDef } from '@/lib/server/settings-core';
 import { stripe } from '@/lib/server/stripe';
 
 /** Site settings (#74): change business settings without a redeploy. */
@@ -21,18 +21,46 @@ function back(msg: string, error = false): never {
   redirect(`/admin/settings?${error ? 'err=1&' : ''}msg=${encodeURIComponent(msg)}`);
 }
 
-/** A price ID must exist in this Stripe account and fit the plan. */
-async function checkPrice(def: SettingDef, id: string): Promise<string | null> {
+/** A Stripe price, or an error message. */
+async function stripePrice(def: SettingDef, id: string): Promise<PriceFacts | string> {
   try {
     const p = await stripe().prices.retrieve(id);
-    const problem = priceProblem(def.plan!, { active: p.active, type: p.type, recurring: p.recurring });
-    return problem ? `${def.label}: ${problem}` : null;
+    const product = typeof p.product === 'string' ? p.product : p.product.id;
+    return { active: p.active, type: p.type, recurring: p.recurring, currency: p.currency, lookup_key: p.lookup_key, product };
   } catch (e) {
     const code = (e as { code?: string }).code;
     if (code === 'resource_missing') return `${def.label}: Stripe has no price ${id} in this account.`;
     console.error('settings: Stripe price check failed', e);
     return `${def.label}: could not check the price with Stripe. Try again.`;
   }
+}
+
+/**
+ * Each changed Motiv price must exist in this Stripe account and fit its plan, and every
+ * Motiv price in effect after the save must be for the same product.
+ */
+async function checkPrices(changes: { def: SettingDef; value: string | null }[], current: Record<string, string>): Promise<string[]> {
+  const changed = changes.filter((c) => c.def.kind === 'price');
+  if (!changed.some((c) => c.value)) return [];
+  const errors: string[] = [];
+  const products = new Set<string>();
+  for (const def of SETTINGS.filter((d) => d.kind === 'price')) {
+    const change = changed.find((c) => c.def.key === def.key);
+    const id = change ? change.value : effectiveSetting(def, current).value;
+    if (!id) continue;
+    const p = await stripePrice(def, id);
+    if (typeof p === 'string') {
+      errors.push(p);
+      continue;
+    }
+    products.add(p.product);
+    if (change) {
+      const problem = priceProblem(def.plan!, p);
+      if (problem) errors.push(`${def.label}: ${problem}`);
+    }
+  }
+  if (products.size > 1) errors.push('Motiv Pro prices: the monthly, annual and lifetime prices must all be for the same Stripe product.');
+  return errors;
 }
 
 /** A held release must be published and pass its checks, or the kits would stop loading. */
@@ -58,13 +86,18 @@ export async function saveSettings(form: FormData) {
       errors.push(c.error);
       continue;
     }
-    if (c.value === (stored.get(def.key)?.value ?? null)) continue;
-    changes.push({ def, value: c.value });
+    // Default or blank is stored as an empty row while the Netlify variable is still set
+    const value = storedForm(def, c.value);
+    if (value === (stored.get(def.key)?.value ?? null)) continue;
+    changes.push({ def, value });
   }
+  const current = Object.fromEntries([...stored].map(([k, r]) => [k, r.value]));
+  errors.push(...(await checkPrices(changes, current)));
   for (const { def, value } of changes) {
-    if (value === null) continue;
-    const problem = def.kind === 'price' ? await checkPrice(def, value) : def.kind === 'release' ? await checkRelease(def, value) : null;
-    if (problem) errors.push(problem);
+    if (def.kind === 'release' && value) {
+      const problem = await checkRelease(def, value);
+      if (problem) errors.push(problem);
+    }
   }
   if (errors.length) back(`Nothing saved. ${errors.join(' ')}`, true);
   if (!changes.length) back('No changes.');

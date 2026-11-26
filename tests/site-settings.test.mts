@@ -3,9 +3,10 @@
 // Run: node --conditions=react-server --experimental-strip-types tests/site-settings.test.mts
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { registerHooks } from 'node:module';
 import path from 'node:path';
 import {
-  checkSetting, displayValue, isDay, KITS_LAUNCH_DATE, priceProblem, resolveSettings, settingDef, SETTINGS,
+  checkSetting, displayValue, effectiveSetting, isDay, KITS_LAUNCH_DATE, priceProblem, resolveSettings, settingDef, SETTINGS, storedForm,
 } from '../src/lib/server/settings-core.ts';
 
 const MOVED = [
@@ -105,8 +106,9 @@ const err = ok('motiv_lease_days', '999');
 assert.ok(!err.ok && err.error.startsWith('Lease length (days):'), 'errors name the setting');
 
 // ---------- Stripe prices ----------
-const rec = (interval: string, n = 1) => ({ active: true, type: 'recurring', recurring: { interval, interval_count: n } });
-const once = { active: true, type: 'one_time', recurring: null };
+const base = { currency: 'usd', lookup_key: null, product: 'prod_motiv' };
+const rec = (interval: string, n = 1) => ({ ...base, active: true, type: 'recurring', recurring: { interval, interval_count: n } });
+const once = { ...base, active: true, type: 'one_time', recurring: null };
 assert.equal(priceProblem('monthly', rec('month')), null);
 assert.equal(priceProblem('annual', rec('year')), null);
 assert.equal(priceProblem('lifetime', once), null);
@@ -115,6 +117,11 @@ assert.ok(priceProblem('monthly', rec('month', 3)), 'every month, not every 3 mo
 assert.ok(priceProblem('annual', once));
 assert.ok(priceProblem('lifetime', rec('year')));
 assert.ok(priceProblem('lifetime', { ...once, active: false }), 'archived price');
+// Product and currency (review sens-5)
+assert.match(priceProblem('monthly', { ...rec('month'), currency: 'eur' })!, /USD/, 'US dollars only');
+assert.match(priceProblem('lifetime', { ...once, lookup_key: 'kits_release_once' })!, /kits price/, 'not a kits price');
+assert.equal(priceProblem('monthly', rec('month'), 'prod_motiv'), null, 'same product as the other prices');
+assert.match(priceProblem('monthly', rec('month'), 'prod_other')!, /different Stripe product/);
 
 // ---------- Display ----------
 assert.equal(displayValue(def('stripe_automatic_tax'), 'true'), 'On');
@@ -160,3 +167,93 @@ console.log('site settings tests passed');
   assert.equal(resolveSettings({}, {}).skillsRef, null);
 }
 console.log('site settings env fallback passed');
+
+// Value in effect and its source; clearing while a Netlify variable is set (review logicA-1)
+{
+  const tax = def('stripe_automatic_tax');
+  const env = { STRIPE_AUTOMATIC_TAX: 'false' };
+  assert.deepEqual(effectiveSetting(tax, {}, {}), { value: 'true', source: 'default' });
+  assert.deepEqual(effectiveSetting(tax, {}, env), { value: 'false', source: 'netlify' });
+  assert.deepEqual(effectiveSetting(tax, { stripe_automatic_tax: 'true' }, env), { value: 'true', source: 'saved' });
+  assert.deepEqual(effectiveSetting(tax, { stripe_automatic_tax: '' }, env), { value: 'true', source: 'cleared' }, 'an empty row is the default, not the variable');
+  assert.deepEqual(effectiveSetting(tax, { stripe_automatic_tax: 'maybe' }, env), { value: 'true', source: 'default' });
+  assert.equal(effectiveSetting(def('skills_ref'), {}, { SKILLS_REF: 'main' }).source, 'default', 'a bad variable is not shown as in effect');
+  // Default or blank is stored as an empty row while the variable is set, and removed otherwise
+  assert.equal(storedForm(tax, null, env), '');
+  assert.equal(storedForm(tax, null, { STRIPE_AUTOMATIC_TAX: '  ' }), null);
+  assert.equal(storedForm(tax, null, {}), null);
+  assert.equal(storedForm(tax, 'false', env), 'false');
+  const cleared = resolveSettings({ stripe_automatic_tax: '', skills_ref: '', kits_sales_open: '' }, { STRIPE_AUTOMATIC_TAX: 'false', SKILLS_REF: 'v2026.11.2', KITS_SALES_OPEN: 'true' });
+  assert.equal(cleared.stripeAutomaticTax, true);
+  assert.equal(cleared.skillsRef, null, 'a cleared hold stays cleared');
+  assert.equal(cleared.kitsSalesOpen, false);
+  assert.equal(resolveSettings({ ['__proto__' as string]: 'x' }, {}).kitsSalesOpen, false);
+}
+
+// The page shows the value in effect and saves Default as an explicit clear
+{
+  const page = readFileSync('src/app/admin/settings/page.tsx', 'utf8');
+  const actions = readFileSync('src/app/admin/settings/actions.ts', 'utf8');
+  assert.match(page, /effectiveSetting\(/, 'Now shows the value in effect');
+  assert.doesNotMatch(page, /no longer read/, 'the notice no longer says the variables are ignored');
+  assert.match(actions, /storedForm\(def, c\.value\)/, 'Default is stored as a clear while the variable is set');
+  assert.match(actions, /same Stripe product/, 'Motiv prices are checked for one product');
+}
+
+// Settings cache: read failures and saves (review sens-2, logicA-3). The database is faked.
+{
+  type Rows = { key: string; value: string; updated_by: string; updated_at: Date }[];
+  const fake = { reads: 0, next: null as null | (() => Promise<Rows>) };
+  (globalThis as Record<string, unknown>).__settingsDb = fake;
+  const dbSource = `export const db = () => {
+    const f = globalThis.__settingsDb;
+    const tag = () => { f.reads++; return f.next(); };
+    tag.begin = async (cb) => { const tx = async () => []; tx.json = (v) => v; return cb(tx); };
+    return tag;
+  };`;
+  registerHooks({
+    resolve(spec, ctx, next) {
+      if (spec === './db' && ctx.parentURL?.endsWith('/settings.ts')) return { url: 'fake:db', shortCircuit: true };
+      try {
+        return next(spec, ctx);
+      } catch (e) {
+        if (spec.startsWith('.') && !/\.[cm]?[jt]sx?$/.test(spec)) return next(`${spec}.ts`, ctx);
+        throw e;
+      }
+    },
+    load(url, ctx, next) {
+      if (url === 'fake:db') return { format: 'module', source: dbSource, shortCircuit: true };
+      return next(url, ctx);
+    },
+  });
+  const st = await import('../src/lib/server/settings.ts');
+  const row = (key: string, value: string) => ({ key, value, updated_by: 'admin:a@emruz.com', updated_at: new Date() });
+
+  // First read fails: Netlify variables and defaults are used, marked unread, and not retried on every request
+  fake.next = () => Promise.reject(new Error('db down'));
+  const err = console.error;
+  console.error = () => {};
+  assert.equal((await st.siteSettings()).kitsSalesOpen, false);
+  console.error = err;
+  assert.equal(st.settingsUnread(), true, 'values are a fallback until the settings are read');
+  assert.equal(fake.reads, 1);
+  await st.siteSettings();
+  assert.equal(fake.reads, 1, 'the failure is cached briefly');
+
+  // A save clears the cache; a read that started before the save is not cached
+  let release!: (r: Rows) => void;
+  fake.next = () => new Promise<Rows>((r) => (release = r));
+  await st.saveSetting('kits_sales_open', 'true', 'admin:a@emruz.com');
+  const stale = st.siteSettings();
+  await st.saveSetting('kits_sales_open', 'false', 'admin:a@emruz.com');
+  release([row('kits_sales_open', 'true')]);
+  await stale;
+  fake.next = () => Promise.resolve([row('kits_sales_open', 'false')]);
+  const before = fake.reads;
+  assert.equal((await st.siteSettings()).kitsSalesOpen, false, 'the read from before the save was not cached');
+  assert.equal(fake.reads, before + 1);
+  assert.equal(st.settingsUnread(), false);
+  await st.siteSettings();
+  assert.equal(fake.reads, before + 1, 'a good read is cached');
+}
+console.log('site settings cache passed');

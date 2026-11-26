@@ -149,11 +149,11 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
             <p className={label}>Type</p>
             <p className="text-sm text-gray-800">Assessment: {assessmentType(e.assessment_type).name}</p>
           </div>
-          {fw.usesIg && (
+          {fw.usesProfile && (
           <div>
             <label className={label} htmlFor="target_ig">Target</label>
             <select id="target_ig" name="target_ig" defaultValue={String(e.target_ig)} className={input}>
-              <option value="1">IG1</option><option value="2">IG2</option><option value="3">IG3</option>
+              <option value="1">Essential</option><option value="2">Standard</option><option value="3">Advanced</option>
             </select>
           </div>
           )}

@@ -17,23 +17,16 @@ export const SITE_URL = (
 
 export const IS_PROD = process.env.NODE_ENV === 'production' && SITE_URL.startsWith('https://');
 
+/** Fixed Motiv values. Seats, lease length, grace and the sales switch are site settings (#74). */
 export const motiv = {
-  leaseDays: Number(process.env.MOTIV_LEASE_DAYS || 14),
-  pastDueGraceDays: Number(process.env.MOTIV_PAST_DUE_GRACE_DAYS || 7),
-  defaultSeats: Number(process.env.MOTIV_DEFAULT_SEATS || 2),
   pairingMinutes: 10,
   pollIntervalSeconds: 5,
   features: ['assistant', 'action_items', 'speakers', 'awareness', 'calendars', 'terms', 'cleanup', 'templates', 'trim', 'import'],
   manageUrl: `${SITE_URL}/motiv/account`,
-  /** Checkout buttons show only when this is "true". */
-  salesOpen: process.env.MOTIV_SALES_OPEN === 'true',
 };
 
-/** Emruz kit pack sales (#68). Buy buttons show only when this is "true". */
+/** Emruz kit pack sales (#68). The sales switch and the offer's last day are site settings (#74). */
 export const kits = {
-  salesOpen: process.env.KITS_SALES_OPEN === 'true',
-  /** Founding lifetime offer on the all-kits bundle: last day (YYYY-MM-DD, inclusive). KITS_LIFETIME_UNTIL overrides, for example to end it early. */
-  lifetimeUntil: process.env.KITS_LIFETIME_UNTIL?.trim() || '2027-12-31',
   /** Founding lifetime offer: most buyers. */
   lifetimeCap: 152,
 };

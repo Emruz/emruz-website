@@ -213,9 +213,9 @@ export default function Services() {
                   'Governance, risk management, and compliance aligned to NIST CSF.',
               },
               {
-                title: 'CIS Controls',
+                title: 'ISO 27001 and SOC 2',
                 description:
-                  'Technical controls and operational maturity aligned to CIS standards.',
+                  'Security programs and controls ready for certification audits and customer assurance reviews.',
               },
               {
                 title: 'CMMC',

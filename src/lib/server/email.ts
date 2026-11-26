@@ -1,5 +1,6 @@
 import 'server-only';
 import { IS_PROD } from './config';
+import { siteSettings } from './settings';
 
 // Sends transactional email through Resend (RESEND_API_KEY, EMAIL_FROM).
 // Without a key in development the message is printed to the server log.
@@ -20,7 +21,7 @@ export async function sendEmail(to: string, subject: string, text: string, opts:
       subject,
       text,
       ...(opts.html ? { html: opts.html } : {}),
-      reply_to: opts.replyTo || process.env.EMAIL_REPLY_TO || 'info@emruz.com',
+      reply_to: opts.replyTo || (await siteSettings()).emailReplyTo,
     }),
   });
   if (!res.ok) throw new Error(`Email send failed: ${res.status} ${await res.text()}`);

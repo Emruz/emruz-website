@@ -2,11 +2,13 @@ import { intakeFields, maturityLevels, EVIDENCE_REQUIRED_AT } from '@/content/wo
 import { frameworkFor, tierFor as fwTier } from '@/content/frameworks';
 import { assessmentType } from '@/content/engagement-types';
 import type { ReportContent } from '@/lib/server/workbench';
+import ObligationViews from './ObligationViews';
 
 const fmt = (d: string | null) =>
   d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Los_Angeles' }) : null;
 const lvl = (n: number | null) => (n === null ? '–' : String(n));
-const relLabel = { cis: 'CIS', cmmc: 'CMMC', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
+const relLabel = { cmmc: 'CMMC', nist171: '800-171', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
+const profileName: Record<number, string> = { 1: 'Essential', 2: 'Standard', 3: 'Advanced' };
 
 function Paragraphs({ text }: { text: string }) {
   return (
@@ -39,6 +41,8 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
   const csfCategories = fw.categories;
   const scopeKeys = ['overview', 'in_scope', 'out_of_scope', 'crown_jewels', ...at.intake.fields.filter((f) => f.type !== 'number').map((f) => f.key), 'regulations', 'method', 'constraints'];
   const overall = c.rollup.overall.current;
+  const obligations = c.obligations ?? [];
+  const evTitles = Object.fromEntries(c.evidenceIndex.map((e, i) => [e.id, `[E${i + 1}] ${e.title}`]));
 
   const evRefs = (evs: { id: string }[]) =>
     evs.length ? (
@@ -61,7 +65,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
         <p className="text-lg text-gray-600 mt-1">{c.title}</p>
         <dl className="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
           <div><dt className="text-gray-500">Assessment period</dt><dd>{[fmt(c.period.start), fmt(c.period.end)].filter(Boolean).join(' to ') || '–'}</dd></div>
-          <div><dt className="text-gray-500">Lead assessor</dt><dd>{c.assessor ?? '–'}</dd></div>
+          <div><dt className="text-gray-500">Lead assessor</dt><dd>{c.assessors?.[0]?.name ?? c.assessor ?? '–'}</dd></div>
           <div><dt className="text-gray-500">Report version</dt><dd>v{version}, {fmt(c.generatedAt)}</dd></div>
         </dl>
       </header>
@@ -77,7 +81,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Target</p>
             <p className="text-3xl font-bold text-gray-900">{c.rollup.overall.target ?? '–'}<span className="text-base text-gray-500"> / 5</span></p>
-            <p className="text-sm text-gray-600">{fw.usesIg ? `CIS IG${c.targetIg} profile` : 'Agreed target maturity'}</p>
+            <p className="text-sm text-gray-600">{fw.usesProfile ? `${profileName[c.targetIg] ?? 'Standard'} target profile` : 'Agreed target maturity'}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Priority findings</p>
@@ -100,6 +104,26 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
               </div>
             ))}
         </dl>
+        {c.assessors && c.assessors.length > 0 && (
+          <>
+            <h3 className="font-semibold text-gray-900 mb-2">Assessment team</h3>
+            <ul className="mb-5 space-y-1">
+              {c.assessors.map((a) => (
+                <li key={a.name}>
+                  <span className="font-semibold">{a.name}</span>
+                  {a.credentials ? `, ${a.credentials}` : ''}
+                  {a.title ? <span className="text-gray-600"> · {a.title}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {c.staffHours ? (
+          <p className="mb-5">
+            <span className="font-semibold text-gray-900">Client time:</span> about {c.staffHours} staff hours across interviews, walkthroughs and
+            evidence gathering.
+          </p>
+        ) : null}
         <h3 className="font-semibold text-gray-900 mb-2">Scoring method</h3>
         <p className="mb-2">
           We rated each of the {c.rollup.total} {at.ratedItems} on a six-point maturity scale, using interviews,
@@ -118,20 +142,20 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           </tbody>
         </table>
         <p className="text-sm text-gray-600">
-          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Scores map to {fw.usesIg ? 'CSF tiers' : 'maturity levels'}:
+          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Scores map to {fw.usesProfile ? 'CSF tiers' : 'maturity levels'}:
           under 1.5 {fw.tiers[0].split(': ')[1]}, under 2.5 {fw.tiers[1].split(': ')[1]}, under 3.5 {fw.tiers[2].split(': ')[1]}, otherwise {fw.tiers[3].split(': ')[1]}.
         </p>
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by {fw.usesIg ? 'function' : 'area'}</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by {fw.usesProfile ? 'function' : 'area'}</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b border-gray-200">
-              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Function' : 'Area'}</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesProfile ? 'Function' : 'Area'}</th>
               <th className="py-2 pr-3 font-medium">Current</th>
               <th className="py-2 pr-3 font-medium">Target</th>
-              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Tier' : 'Level'}</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesProfile ? 'Tier' : 'Level'}</th>
               <th className="py-2 font-medium w-1/3" aria-label="Chart" />
             </tr>
           </thead>
@@ -185,7 +209,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
               ) : (
                 draft && <p className="mt-1 text-red-700 italic">Recommendation missing.</p>
               )}
-              {Object.keys(f.related).length > 0 && (
+              {(Object.keys(relLabel) as (keyof typeof relLabel)[]).some((k) => f.related[k]?.length) && (
                 <p className="mt-1 text-xs text-gray-500">
                   Related:{' '}
                   {(Object.keys(relLabel) as (keyof typeof relLabel)[])
@@ -232,8 +256,15 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
         ))}
       </section>
 
+      {obligations.length > 0 && (
+        <section className="mb-10 break-before-page">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">6. Obligations</h2>
+          <ObligationViews expanded views={obligations} evidenceTitles={c.evidenceIndex.length ? evTitles : undefined} csvName={`poam-${c.client.replace(/[^\w-]+/g, '-').toLowerCase()}.csv`} />
+        </section>
+      )}
+
       <section className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">6. Limitations</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">{obligations.length ? 7 : 6}. Limitations</h2>
         <p className="mb-2">
           This assessment reflects what we observed and the evidence provided during the assessment period.{' '}
           {at.limitations}

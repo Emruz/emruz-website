@@ -42,6 +42,7 @@ export default async function StaffMember({ params }: { params: Promise<{ id: st
               <div><label className={label} htmlFor="name">Full name</label><input id="name" name="name" defaultValue={s.name ?? ''} className={input} /></div>
               <div><label className={label}>Email</label><p className="text-sm text-gray-700">{s.email}</p></div>
               <div><label className={label} htmlFor="title">Title</label><input id="title" name="title" defaultValue={s.title ?? ''} className={input} /></div>
+              <div><label className={label} htmlFor="credentials">Credentials <span className="font-normal text-gray-500">(shown on reports)</span></label><input id="credentials" name="credentials" defaultValue={s.credentials ?? ''} placeholder="CISSP, CISA" className={input} /></div>
               <div><label className={label} htmlFor="phone">Phone</label><input id="phone" name="phone" type="tel" defaultValue={s.phone ?? ''} className={input} /></div>
               <div>
                 <label className={label} htmlFor="role">Role</label>

@@ -30,7 +30,7 @@ Access tokens are EdDSA JWTs, 10 minutes, audience `/api/mcp`. Refresh tokens ar
 
 The site follows the newest published GitHub Release of `SKILLS_REPO` (drafts and pre-releases are ignored), checked every 10 minutes. Publishing a release makes it live; no deploy needed. Each release's `.tar.gz` is checked against its `SHA256SUMS` asset and its manifest validated (source `emruz-kits`, a `pack` on every skill). If the newest release fails, the site keeps serving the last good one and emails a `kits_release_invalid` alert. Archives are cached in Netlify Blobs (`kits-releases`) and `.data/kits` locally.
 
-To hold the site at one release (for example to back out a bad release), set `SKILLS_REF` to its tag in Netlify and redeploy. Remove it to follow releases again.
+To hold the site at one release (for example to back out a bad release), choose it under Hold kits at release on `/admin/settings`; it applies within 30 seconds, no redeploy. Clear it to follow releases again.
 
 ## Sales (#68)
 
@@ -41,7 +41,7 @@ To hold the site at one release (for example to back out a bad release), set `SK
 | One-time | `kits_<pack>_once` | Held at the release current at checkout (`through_ref` = that tag) |
 | Upgrade | `kits_<pack>_upgrade` | Only for owners of an earlier release of that pack; adds a row held at the latest release |
 | Monthly, annual | `kits_<pack>_month`, `kits_<pack>_year` | Every release while the subscription lasts (`through_ref` empty) |
-| Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or `KITS_LIFETIME_UNTIL`) |
+| Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or the day set on `/admin/settings`) |
 
 `<pack>` is `release`, `founder`, `marketing` or `all`. Prices are found by lookup key, so there are no price environment variables; the amounts shown on `/kits` live in `src/content/kits.ts` and must match Stripe. Each product has tax code `txcd_10103001` (SaaS, business use). Promotion codes are allowed except on upgrades and lifetime.
 
@@ -57,13 +57,22 @@ Create the prices in a sandbox (or live) with the Stripe CLI, one product per pa
 | `MCP_TOKEN_KID` | `m1`. Change it together with the key when rotating; existing access tokens then fail and clients refresh. |
 | `SKILLS_REPO` | `Emruz/emruz-kits` |
 | `SKILLS_TOKEN` | Fine-grained token, that repo only, Contents read-only, with an expiry. Secret. Renew before it expires. |
-| `SKILLS_REF` | Optional hold, see above |
-| `KITS_SALES_OPEN` | `true` shows buy buttons on `/kits` |
-| `KITS_LIFETIME_UNTIL` | Optional. Last day of the founding lifetime offer, `YYYY-MM-DD`; default 2027-12-31. A past date ends the offer |
+
+The release hold, the kits sales switch and the last day of the founding lifetime offer are site settings on `/admin/settings` (see `docs/site-settings.md`).
+
+## Launch conditions (#71)
+
+From the founder board review of the kits:
+
+- `/kits` leads with the Release Kit; the Founder and Marketing Kits are shown as add-ons, then the all-kits bundle.
+- `/kits/security` is the security and data statement for the MCP server, linked from `/kits`, the consent page and the privacy policy. Token lifetimes, the scope and rate limits on it are read from the code.
+- The buy form asks what made the buyer buy now (`launch`, `customer_request`, `pricing_fundraise`, `incident`, `other`). It goes to Stripe as checkout metadata `trigger` and is stored in `kit_entitlements.purchase_trigger` (migration 024). Checkouts started before #71 have none.
+- `/admin/kits` shows sales outside Emruz (emruz.com addresses, `ADMIN_EMAILS` and the emails under Left out are not counted; staff add and remove those on the page, stored in `kit_excluded_emails`, migration 025): paying accounts by kit and plan, free to paid (accounts that ever connected an MCP app vs those that pay), purchase triggers, founding lifetime sold, and the review against the kill lines: under 20 paying at 90 days after the launch date (set on `/admin/kits`, stored in `kit_settings`, migration 026), reprice or narrow; under 25 after two release cycles, stop new kit development. A release cycle is a calendar month after the launch month with a kits release (tags are `vYYYY.MM.N`).
+- The results section on `/kits` stays hidden until `kitResults` in `src/content/kits.ts` has a published customer result, each with a link to where the customer published or approved it.
 
 ## Rate limits
 
-Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per IP. Token 60/hour per client and 120/hour per IP. MCP without a valid token 60/hour per IP; signed in 600/hour per account and 300/hour per client; 5,000/hour in total. Over a limit: 429 with Retry-After. Edge rate limiting is a follow-up.
+Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per IP. Token 60/hour per client and 120/hour per IP. MCP without a valid token 60/hour per IP (these never count toward the total); signed in 600/hour per account and 300/hour per client, checked before the 5,000/hour total. Over a limit: 429 with Retry-After. Edge rate limiting is a follow-up.
 
 ## Connecting
 
@@ -71,6 +80,12 @@ Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per 
 - Claude Code: `claude mcp add --transport http emruz-kits https://emruz.com/api/mcp`, then `/mcp` to sign in.
 
 ## Data
+
+Migration 026 adds `kit_settings`, kits settings changed on `/admin/kits` (`launch_date`).
+
+Migration 025 adds `kit_excluded_emails`, the addresses left out of the sales metrics.
+
+Migration 024 adds `purchase_trigger` and `subscription_type` (`monthly` or `annual`, subscriptions only; kept up to date when Stripe switches the plan) to `kit_entitlements`.
 
 Migration 022 adds `kind` and the Stripe checkout, payment intent, subscription and customer IDs to `kit_entitlements`.
 

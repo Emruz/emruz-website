@@ -17,11 +17,11 @@ Check signing still matches the app: `npm run test:lease` (uses the test vectors
 
 ## 3. Stripe
 1. Turn on Stripe Tax and add your tax registrations.
-2. Create one product "Motiv Pro" with three prices: $9/month recurring, $99/year recurring, $299 one-time. Set each price's tax behavior. Put the price IDs in `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME`.
+2. Create one product "Motiv Pro" with three prices: $9/month recurring, $99/year recurring, $299 one-time. Set each price's tax behavior. Enter the price IDs on `/admin/settings` (Stripe group); each is checked against Stripe.
 3. Add a webhook endpoint `https://emruz.com/api/stripe/webhook` for: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `charge.dispute.closed`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
 4. Configure the Customer Portal (Settings > Billing > Customer portal): allow cancel, update payment method and invoice history.
 5. Set `STRIPE_SECRET_KEY`. Use test-mode keys first; `stripe listen --forward-to localhost:8888/api/stripe/webhook` works with `netlify dev`.
-6. When ready to sell, set `MOTIV_SALES_OPEN=true` and redeploy. Until then /motiv shows prices with "Get notified at launch".
+6. When ready to sell, turn on Motiv sales open on `/admin/settings` (no redeploy). Until then /motiv shows prices with "Get notified at launch".
 
 ## 4. Email (Resend)
 Create a Resend account, verify the emruz.com domain (DNS records), set `RESEND_API_KEY` and `EMAIL_FROM`. Without a key in development, emails print to the server log.

@@ -28,7 +28,7 @@
 "Strategy and execution. Technical clarity without the overhead."
 
 ### H2: Hero Subheadline
-"Emruz helps organizations understand their security, cloud, and AI landscape—and how to evolve it. Through frameworks like NIST and CIS. Through outcomes we can measure."
+"Emruz helps organizations understand their security, cloud, and AI landscape—and how to evolve it. Through frameworks like NIST CSF and ISO 27001. Through outcomes we can measure."
 
 ### H3: Capabilities Section Heading
 "Core Capabilities"
@@ -55,7 +55,7 @@
 ### Value Propositions (H4, 3 bullets)
 
 **1. Framework-First Methodology**
-"Every engagement grounded in NIST CSF, CIS Controls, or equivalent. We speak the language of compliance, auditors, and boards."
+"Every engagement grounded in NIST CSF, ISO 27001, or equivalent industry frameworks. We speak the language of compliance, auditors, and boards."
 
 **2. Assessment-Driven Engagement**
 "No guessing. We start by understanding where you are, what's at risk, and what's possible. Then we design and deliver based on real gaps, not assumptions."
@@ -79,7 +79,7 @@
 "Why Teams Trust Emruz"
 
 **Proof Points:**
-1. "Framework-Grounded" → "Every engagement aligned to NIST CSF, CIS Controls, or CSF. Auditor-ready."
+1. "Framework-Grounded" → "Every engagement aligned to NIST CSF, ISO 27001, or other industry frameworks. Auditor-ready."
 2. "Scale & Delivery" → "Delivered across 200+ organizations. Real outcomes, real delivery."
 3. "Team Depth" → "Leadership with 15+ years in security, cloud, and operations. Certifications: CISSP, CCSK, AWS, Azure, GCP."
 
@@ -134,7 +134,7 @@
 
 We're a team of security, cloud, and AI leaders. We've spent years building programs, leading security functions, architecting cloud environments, and delivering at scale. We know what works and what doesn't.
 
-Emruz combines the strategic clarity of a top consultancy with the execution capability of a mature operations team. We start with frameworks (NIST, CIS, CSF) so organizations know we speak the language of compliance and boards. Then we deliver outcomes, not just recommendations.
+Emruz combines the strategic clarity of a top consultancy with the execution capability of a mature operations team. We start with frameworks (NIST CSF, ISO 27001, SOC 2) so organizations know we speak the language of compliance and boards. Then we deliver outcomes, not just recommendations.
 
 That's Emruz. Strategy and execution. Technical clarity without the overhead."
 
@@ -143,7 +143,7 @@ That's Emruz. Strategy and execution. Technical clarity without the overhead."
 **Core Principles (H3):**
 
 1. **Frameworks First**
-"Every engagement is grounded in NIST CSF, CIS Controls, or equivalent. No bespoke frameworks. No guesswork. Your auditors will recognize our approach."
+"Every engagement is grounded in NIST CSF, ISO 27001, or equivalent industry frameworks. No bespoke frameworks. No guesswork. Your auditors will recognize our approach."
 
 2. **Assess Before You Act**
 "Clarity first. We spend time understanding your current state, risk, and constraints before designing solutions. Diagnosis before prescription."
@@ -222,7 +222,7 @@ Example:
 "Leadership with 15+ years in security operations, cloud architecture, and governance. Certifications: CISSP, CCSK, AWS Security Specialty, Azure Administrator."
 
 ### Framework Alignment
-"Every engagement grounded in NIST CSF, CIS Controls, or industry-specific frameworks. Auditor-ready. Board-ready."
+"Every engagement grounded in NIST CSF, ISO 27001, or industry-specific frameworks. Auditor-ready. Board-ready."
 
 ---
 
@@ -235,7 +235,7 @@ Example:
 "Every engagement starts with clarity. In 3-4 weeks, we'll assess where you are, what's at risk, what's possible, and what comes next. No consultants-in-title. No sales pitch. Just honest diagnosis and a clear roadmap."
 
 ### Service Page Hero: GRC (Medium, 4-5 lines)
-"Compliance doesn't have to consume your team. We'll help you build a GRC program grounded in NIST, CIS, or ISO 27001—then maintain it without it becoming a second job. Starting with a diagnostic assessment."
+"Compliance doesn't have to consume your team. We'll help you build a GRC program grounded in NIST CSF or ISO 27001—then maintain it without it becoming a second job. Starting with a diagnostic assessment."
 
 ### Service Page Hero: Cloud (Medium, 4-5 lines)
 "Cloud without strategy costs more and risks more. We'll help you architect cloud for security, cost, and organizational capability—then deliver the implementation. Starting with a cloud readiness assessment."
@@ -245,7 +245,7 @@ Example:
 
 We're a team of security, cloud, and AI leaders. We've run security operations, led cloud transformations, built GRC programs, and delivered at scale. We know what works.
 
-Emruz combines strategic clarity with execution capability. We start with frameworks—NIST CSF, CIS Controls, CSF—so organizations know we speak the language of auditors and boards. Then we deliver outcomes.
+Emruz combines strategic clarity with execution capability. We start with frameworks—NIST CSF, ISO 27001, SOC 2—so organizations know we speak the language of auditors and boards. Then we deliver outcomes.
 
 That's us. Strategy and execution. Technical clarity without overhead."
 
@@ -253,7 +253,7 @@ That's us. Strategy and execution. Technical clarity without overhead."
 "Fractional security leadership matters most when it's strategic. Our vCISO model combines board-level reporting and governance design with hands-on team enablement. We spend the first 3-4 weeks understanding your situation, risk, and goals. Then we design and execute a roadmap that works for your organization, not a templated playbook."
 
 ### Service Page: GRC (Medium, methodology intro)
-"Building a compliance program is about clarity and discipline, not busywork. We start with an assessment—where you are, what's required, what's missing. Then we design a program grounded in your chosen framework (NIST CSF, CIS Controls, ISO 27001, etc.). Finally, we help you roll it out and make it sustainable. The result: audit confidence and a program that doesn't feel like a second job."
+"Building a compliance program is about clarity and discipline, not busywork. We start with an assessment—where you are, what's required, what's missing. Then we design a program grounded in your chosen framework (NIST CSF, ISO 27001, SOC 2, etc.). Finally, we help you roll it out and make it sustainable. The result: audit confidence and a program that doesn't feel like a second job."
 
 ---
 
@@ -263,7 +263,7 @@ Before publishing any page copy, check:
 
 - [ ] No buzzwords (innovative, synergistic, leverage, transform, empower)
 - [ ] No vendor-speak (managed services, solutions, best-in-class, industry-leading)
-- [ ] Frameworks mentioned (NIST, CIS, CSF visible where relevant)
+- [ ] Frameworks mentioned (NIST CSF, ISO 27001, SOC 2 visible where relevant)
 - [ ] Problem-first (starts with buyer pain or goal)
 - [ ] Outcome-focused (what improves, what changes)
 - [ ] Specific not vague ("improve compliance posture by X score points" not "improve security")

@@ -123,6 +123,19 @@ export default function Assessments() {
         </Container>
       </section>
 
+      <section className="py-10 bg-gray-50">
+        <Container>
+          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <p className="text-gray-700">
+              See what you get: a redacted security assessment report with CSF 2.0 scores, HIPAA and cyber insurance views.
+            </p>
+            <Link href="/assessments/sample-report" className="inline-flex items-center gap-1.5 font-semibold text-blue-700 whitespace-nowrap">
+              Sample report <ArrowRight className="w-4 h-4" aria-hidden />
+            </Link>
+          </div>
+        </Container>
+      </section>
+
       <section className="py-12 md:py-16">
         <Container>
           <SectionIntro

@@ -34,7 +34,7 @@ export const rules = {
   register: (ip: string) => [rule('registerPerIp', ip), rule('registerTotal', 'all')],
   authorize: (ip: string) => [rule('authorizePerIp', ip)],
   token: (ip: string, clientId: string) => [rule('tokenPerIp', ip), rule('tokenPerClient', clientId.slice(0, 200))],
-  /** After a valid token signature: the global circuit breaker. */
+  /** After a valid token signature and the per-account and per-client limits: the global circuit breaker. */
   mcpTotal: () => [rule('mcpTotal', 'all')],
   /** No token, or one that failed verification. */
   mcpAnon: (ip: string) => [rule('mcpAnonPerIp', ip)],

@@ -114,6 +114,8 @@ export interface Engagement {
   intake: Record<string, string>;
   summary: string;
   self_assessment_id: string | null;
+  /** Obligation views chosen for the report (hipaa, nist171, iso27001, insurance). */
+  obligations: string[];
   start_date: string | null;
   due_date: string | null;
   created_at: Date;
@@ -152,13 +154,16 @@ export interface EvidenceRow {
   uploaded_by_email: string | null;
   created_at: Date;
   subcategories: string[];
+  /** SCF Evidence Request List items this evidence answers. */
+  erl_ids: string[];
 }
 
 export async function getEvidence(engagementId: string): Promise<EvidenceRow[]> {
   return db()<EvidenceRow[]>`
     select ev.id, ev.kind, ev.title, ev.url, ev.filename, ev.content_type, ev.size_bytes::int as size_bytes,
            ev.from_client, ev.request_id, a.email as uploaded_by_email, ev.created_at,
-           coalesce(array_agg(l.subcategory order by l.subcategory) filter (where l.subcategory is not null), '{}') as subcategories
+           coalesce(array_agg(l.subcategory order by l.subcategory) filter (where l.subcategory is not null), '{}') as subcategories,
+           coalesce((select array_agg(x.erl_id order by x.erl_id) from evidence_erl_links x where x.evidence_id = ev.id), '{}') as erl_ids
     from evidence ev
     left join accounts a on a.id = ev.uploaded_by
     left join evidence_links l on l.evidence_id = ev.id
@@ -170,6 +175,7 @@ export async function getEvidence(engagementId: string): Promise<EvidenceRow[]> 
 export interface RequestRow {
   id: string;
   subcategory: string | null;
+  erl_id: string | null;
   text: string;
   status: 'open' | 'received' | 'closed';
   created_at: Date;
@@ -179,10 +185,41 @@ export interface RequestRow {
 
 export async function getRequests(engagementId: string): Promise<RequestRow[]> {
   return db()<RequestRow[]>`
-    select r.id, r.subcategory, r.text, r.status, r.created_at, r.closed_at,
-           (select count(*)::int from evidence e where e.request_id = r.id) as evidence_count
+    select r.id, r.subcategory, r.erl_id, r.text, r.status, r.created_at, r.closed_at,
+           (select count(*)::int from evidence e
+             where e.engagement_id = r.engagement_id
+               and (e.request_id = r.id or (r.erl_id is not null and exists (
+                 select 1 from evidence_erl_links x where x.evidence_id = e.id and x.erl_id = r.erl_id)))) as evidence_count
     from evidence_requests r where r.engagement_id = ${engagementId}
     order by (r.status = 'open') desc, r.created_at desc`;
+}
+
+/** Assessor overrides of obligation requirement status, by obligation. */
+export async function getObligationRatings(engagementId: string) {
+  const rows = await db()<{ obligation: string; requirement: string; status: import('@/content/obligations').ReqStatus; note: string | null }[]>`
+    select obligation, requirement, status, note from obligation_ratings where engagement_id = ${engagementId}`;
+  const out: Record<string, import('@/content/obligations').Overrides> = {};
+  for (const r of rows) (out[r.obligation] ??= {})[r.requirement] = { status: r.status, note: r.note };
+  return out;
+}
+
+/** When evidence answers a request raised from the SCF Evidence Request List, link it to that ERL item. */
+export async function linkEvidenceToRequestErl(evidenceId: string, requestId: string, engagementId: string) {
+  await db()`
+    insert into evidence_erl_links (evidence_id, erl_id)
+    select ${evidenceId}, r.erl_id from evidence_requests r
+    where r.id = ${requestId} and r.engagement_id = ${engagementId} and r.erl_id is not null
+    on conflict do nothing`;
+}
+
+/** Name, title and credentials of the lead and everyone who rated the engagement, for the report. */
+export async function assessorsFor(engagementId: string) {
+  return db()<{ name: string; title: string | null; credentials: string | null }[]>`
+    select coalesce(a.name, a.email) as name, s.title, s.credentials
+    from staff s join accounts a on a.id = s.account_id
+    where s.account_id = (select lead_account_id from engagements where id = ${engagementId})
+       or s.account_id in (select distinct updated_by from engagement_ratings where engagement_id = ${engagementId} and updated_by is not null)
+    order by (s.account_id = (select lead_account_id from engagements where id = ${engagementId})) desc, coalesce(a.name, a.email)`;
 }
 
 export interface ReportRow {
@@ -201,9 +238,11 @@ export interface ReportRow {
   sent_to: string[] | null;
 }
 
-export async function getReports(engagementId: string): Promise<ReportRow[]> {
-  return db()<ReportRow[]>`
-    select r.*, cb.email as created_by_email, rb.email as reviewed_by_email
+/** Report versions for lists. content is left out (it can be large); open one with getReport. */
+export async function getReports(engagementId: string): Promise<Omit<ReportRow, 'content'>[]> {
+  return db()<Omit<ReportRow, 'content'>[]>`
+    select r.id, r.engagement_id, r.version, r.status, r.created_at, r.submitted_at, r.reviewed_at, r.review_note, r.sent_at, r.sent_to,
+           cb.email as created_by_email, rb.email as reviewed_by_email
     from reports r
     left join accounts cb on cb.id = r.created_by
     left join accounts rb on rb.id = r.reviewed_by
@@ -231,6 +270,7 @@ export interface StaffMember {
   name: string | null;
   role: 'lead' | 'assessor';
   title: string | null;
+  credentials: string | null;
   phone: string | null;
   notes: string | null;
   active: boolean;
@@ -247,7 +287,7 @@ export interface StaffMember {
 /** Active staff, for pickers. Pass all: true for the staff admin page. */
 export async function staffList(opts: { all?: boolean } = {}) {
   return db()<StaffMember[]>`
-    select s.account_id, a.email, a.name, s.role, s.title, s.phone, s.notes, s.active, s.is_admin, s.added_by, s.added_at,
+    select s.account_id, a.email, a.name, s.role, s.title, s.credentials, s.phone, s.notes, s.active, s.is_admin, s.added_by, s.added_at,
            exists(select 1 from identities i where i.account_id = s.account_id and i.email_verified
                   and lower(i.email) = any(${adminEmails()})) as permanent_admin,
            (select count(*)::int from engagements e where e.lead_account_id = s.account_id and e.deleted_at is null and e.status <> 'closed') as engagements,
@@ -349,7 +389,8 @@ export interface ReportFinding {
   unverified: boolean;
   overrideReason: string | null;
   evidence: { id: string; title: string; kind: 'file' | 'link' }[];
-  related: Partial<Record<'cis' | 'cmmc' | 'iso' | 'soc2', string[]>>;
+  /** cmmc is on reports made before #73; newer reports use nist171 (SCF mappings). */
+  related: Partial<Record<'cmmc' | 'nist171' | 'iso' | 'soc2', string[]>>;
 }
 
 export interface ReportContent {
@@ -366,5 +407,10 @@ export interface ReportContent {
   rollup: import('@/content/workbench').Rollup;
   findings: ReportFinding[];
   flags: { id: string; flags: string[] }[];
-  evidenceIndex: { id: string; title: string; kind: 'file' | 'link'; filename: string | null; fromClient: boolean; subcategories: string[] }[];
+  evidenceIndex: { id: string; title: string; kind: 'file' | 'link'; filename: string | null; fromClient: boolean; subcategories: string[]; erl?: string[] }[];
+  /** Obligation views (#73); missing on earlier reports. */
+  obligations?: import('@/content/obligations').ObligationView[];
+  scfVersion?: string;
+  assessors?: { name: string; title: string | null; credentials: string | null }[];
+  staffHours?: number;
 }

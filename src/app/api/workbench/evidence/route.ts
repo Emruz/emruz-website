@@ -41,7 +41,12 @@ export async function POST(req: Request) {
   const contentType = (await detectType(bytes)) ?? 'application/octet-stream';
   const safeName = file.name.replace(/[^\w.\- ]+/g, '_').slice(-120) || 'file';
   const title = (typeof form.get('title') === 'string' && (form.get('title') as string).trim().slice(0, 200)) || safeName;
-  const requestId = form.get('request_id');
+  // One file can answer several requests (max 100), all on this engagement.
+  const asked = [...new Set(form.getAll('request_id').filter(isUuid))].slice(0, 100) as string[];
+  const requestIds = asked.length
+    ? (await db()<{ id: string }[]>`select id from evidence_requests where engagement_id = ${e.id} and id = any(${asked}::uuid[])`).map((r) => r.id)
+    : [];
+  const requestId = requestIds[0] ?? null;
   const sub = String(form.get('subcategory') ?? '');
 
   const [ev] = await db()<{ id: string }[]>`
@@ -59,8 +64,16 @@ export async function POST(req: Request) {
   }
   await db()`update evidence set blob_key = ${key} where id = ${ev.id}`;
   if (staff && frameworkFor(e.assessment_type).items.some((s) => s.id === sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
-  if (isUuid(requestId)) {
-    await db()`update evidence_requests set status = 'received' where id = ${requestId} and engagement_id = ${e.id} and status = 'open'`;
+  if (requestIds.length) {
+    // Every request this evidence answers: link its ERL item and mark it received, in one transaction.
+    await db().begin(async (tx) => {
+      await tx`
+        insert into evidence_erl_links (evidence_id, erl_id)
+        select ${ev.id}, r.erl_id from evidence_requests r
+        where r.engagement_id = ${e.id} and r.id = any(${requestIds}::uuid[]) and r.erl_id is not null
+        on conflict do nothing`;
+      await tx`update evidence_requests set status = 'received' where engagement_id = ${e.id} and id = any(${requestIds}::uuid[]) and status = 'open'`;
+    });
   }
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'file', from_client: client });
 

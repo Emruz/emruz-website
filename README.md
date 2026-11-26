@@ -44,6 +44,14 @@ After cloning, turn on the git hooks once: `scripts/install-hooks.sh`
 
 After opening the pull request, ship polls it every 15 seconds and prints the check progress. It merges when GitHub shows the pull request mergeable, stops on any failed check, and gives up after 30 minutes. `SHIP_CHECK_TIMEOUT` (seconds) and `SHIP_CHECK_INTERVAL` change these. Don't use Update branch on GitHub: rebase on main and run the review again.
 
+## Site settings
+
+Sales switches, Stripe price IDs, lease length, seats, the kits release hold and contact and alert addresses are changed on `/admin/settings`, not in Netlify. See `docs/site-settings.md`.
+
+## SCF content
+
+Obligation views use the Secure Controls Framework (CC BY-ND 4.0) unmodified. Refresh it with `python3 scripts/scf-import.py <workbook.xlsx>`; see `docs/scf.md`.
+
 ## Tests
 
 Run every test file in `tests/` with `npm test`. It exits non-zero if any file fails. `npm run ship`, `npm run preview` and `npm run local` run it after lint (`npm run local -- --fast` skips it), and CI runs it on every pull request. New test files named `tests/*.test.mts` are picked up automatically.

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Check, Lock, Cpu, EyeOff, CalendarCheck } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
 import { MOTIV_DOWNLOAD_URL, motivFree, motivPremium, motivPrivacy } from '@/content/products';
-import { motiv } from '@/lib/server/config';
+import { siteSettings } from '@/lib/server/settings';
 
 export const metadata = {
   title: 'Motiv: private AI meeting assistant',
@@ -18,8 +18,8 @@ const plans = [
   { plan: 'lifetime', name: 'Lifetime', price: '$299', period: 'one time', note: 'One payment. Pro never expires, and keeps working after support ends. Updates while Emruz offers Motiv.' },
 ];
 
-export default function MotivPage() {
-  const salesOpen = motiv.salesOpen;
+export default async function MotivPage() {
+  const { motivSalesOpen: salesOpen } = await siteSettings();
   return (
     <>
       <DetailHeader

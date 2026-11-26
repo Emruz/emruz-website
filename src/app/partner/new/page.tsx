@@ -1,6 +1,6 @@
 import { DetailHeader, Container } from '@/components';
 import { requirePartner } from '@/lib/server/partners';
-import { CONSENT_TEXT } from '@/content/cis-assessment';
+import { CONSENT_TEXT } from '@/content/self-assessment';
 import { createGuidedPartner, invitePartnerCustomer } from '../actions';
 import { btn, card, input, label } from '@/app/workbench/ui';
 

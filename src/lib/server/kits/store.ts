@@ -58,6 +58,10 @@ export const oauthStore: OAuthStore = {
     const [seen] = await db()<{ grant_id: string }[]>`select grant_id from oauth_refresh_tokens where token_hash = ${tokenHash}`;
     return seen ? { status: 'used', grantId: seen.grant_id } : { status: 'missing' };
   },
+  async refreshGrant(tokenHash: string) {
+    const [r] = await db()<{ grant_id: string }[]>`select grant_id from oauth_refresh_tokens where token_hash = ${tokenHash}`;
+    return r?.grant_id ?? null;
+  },
   async audit(kind, f) {
     await db()`
       insert into mcp_audit (kind, account_id, client_id, grant_id, ip, detail)

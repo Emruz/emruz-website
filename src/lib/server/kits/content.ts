@@ -2,13 +2,14 @@ import 'server-only';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { securityEvent } from '../alerts';
+import { siteSettings } from '../settings';
 import { asText, isRef, parseSums, publishedRefs, readTarGz, sha256, skillFiles, validateManifest, type Bundle, type ManifestItem, type ReleaseInfo } from './content-core';
 
 /**
  * Emruz kits content from GitHub releases (#67).
  *
  * The site follows the latest published release of SKILLS_REPO (drafts and
- * pre-releases are ignored), checked every 10 minutes. SKILLS_REF, when set,
+ * pre-releases are ignored), checked every 10 minutes. The skills_ref site setting, when set,
  * holds the site at that tag. A release's tarball is checked against its
  * SHA256SUMS and its manifest validated; if either fails, the site keeps
  * serving the last good release and sends an alert.
@@ -171,14 +172,13 @@ export function bundleFor(ref: string): Promise<Bundle> {
 let lastGood: Bundle | null = null;
 
 /**
- * The release the site serves now: SKILLS_REF if set, else the newest published
+ * The release the site serves now: the held release if set on /admin/settings (#74), else the newest published
  * release. Falls back to the last good release when that one is rejected.
  */
 export async function currentBundle(): Promise<Bundle> {
-  const hold = process.env.SKILLS_REF?.trim();
+  const hold = (await siteSettings()).skillsRef;
   let candidates: string[];
-  if (hold) {
-    if (!isRef(hold)) throw new Error('SKILLS_REF must be a release tag like v2026.11.5');
+  if (hold && isRef(hold)) {
     candidates = [hold];
   } else {
     try {

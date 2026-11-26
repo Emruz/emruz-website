@@ -10,12 +10,15 @@ export default function EvidenceUpload({
   engagementId,
   subcategory,
   requestId,
+  requestIds,
   subcategories,
   compact = false,
 }: {
   engagementId: string;
   subcategory?: string;
   requestId?: string;
+  /** Several requests answered by one file (grouped evidence requests) */
+  requestIds?: string[];
   /** Show a subcategory picker (workbench only) */
   subcategories?: { id: string; text: string }[];
   compact?: boolean;
@@ -33,6 +36,10 @@ export default function EvidenceUpload({
     if (file.size > MAX_UPLOAD_BYTES) return setError(`Files must be under ${MAX_UPLOAD_BYTES / 1024 / 1024} MB. Share a link for larger files.`);
     fd.set('engagement_id', engagementId);
     if (requestId) fd.set('request_id', requestId);
+    if (requestIds) {
+      if (!requestIds.length) return setError('Tick the requests this file answers.');
+      for (const r of requestIds) fd.append('request_id', r);
+    }
     setState('busy');
     setError(null);
     try {
@@ -65,7 +72,7 @@ export default function EvidenceUpload({
           </select>
         </div>
       )}
-      <input name="file" type="file" required className="text-sm" onChange={() => setState('idle')} />
+      <input name="file" type="file" required className="text-sm max-w-full min-w-0" onChange={() => setState('idle')} />
       <button disabled={state === 'busy'} className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50">
         <Upload className="w-4 h-4" /> {state === 'busy' ? 'Uploading…' : 'Upload'}
       </button>

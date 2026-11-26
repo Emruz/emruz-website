@@ -1,6 +1,6 @@
 import { DetailHeader, Container } from '@/components';
 import { requireStaff } from '@/lib/server/workbench';
-import { CONSENT_TEXT } from '@/content/cis-assessment';
+import { CONSENT_TEXT } from '@/content/self-assessment';
 import { createGuided } from '../../actions';
 import { btn, card, input, label } from '../../ui';
 

@@ -1,12 +1,14 @@
 import 'server-only';
 import Stripe from 'stripe';
 import { db, logEvent } from './db';
-import { motiv, type Plan } from './config';
+import type { Plan } from './config';
 import { accountForEmail } from './accounts';
 import { sendEmail } from './email';
 import { sendMotivProEmail } from './motiv-emails';
 import { newSubscriptionId } from './lease';
 import { REVOKE_LABELS, type RevokeCategory } from './revocation';
+import { siteSettings } from './settings';
+import type { SiteSettings } from './settings-core';
 
 let client: Stripe | null = null;
 export function stripe(): Stripe {
@@ -18,12 +20,9 @@ export function stripe(): Stripe {
   return client;
 }
 
-export function priceId(plan: Plan): string | undefined {
-  return {
-    monthly: process.env.STRIPE_PRICE_MONTHLY,
-    annual: process.env.STRIPE_PRICE_ANNUAL,
-    lifetime: process.env.STRIPE_PRICE_LIFETIME,
-  }[plan];
+/** Stripe price for a Motiv plan, set on /admin/settings (#74). */
+export function priceId(plan: Plan, settings: SiteSettings): string | null {
+  return settings.stripePrices[plan];
 }
 
 const toDate = (unix: number | null | undefined) => (unix ? new Date(unix * 1000) : null);
@@ -78,7 +77,7 @@ export async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
   const rows = await db()<{ id: string }[]>`
     insert into subscriptions (subscription_id, account_id, customer_email, plan, status, period_end, seats,
       stripe_customer_id, stripe_subscription_id, stripe_payment_intent_id, stripe_checkout_session)
-    values (${subscriptionId}, ${accountId}, ${email.toLowerCase()}, ${plan}, ${status}, ${end}, ${motiv.defaultSeats},
+    values (${subscriptionId}, ${accountId}, ${email.toLowerCase()}, ${plan}, ${status}, ${end}, ${(await siteSettings()).motivDefaultSeats},
       ${id(session.customer)}, ${stripeSub}, ${stripeSub ? null : id(session.payment_intent)}, ${session.id})
     on conflict (stripe_checkout_session) do nothing
     returning id`;

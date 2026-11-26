@@ -8,7 +8,7 @@ import { isUuid } from '@/lib/server/api';
 import { getAssessment, reopenForEdit, startGuidedAssessment } from '@/lib/server/assessments';
 import { createInvite, resendInvite, revokeInvite } from '@/lib/server/invites';
 import { addPartnerStaffMember, partnerRole, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
-import { CONSENT_TEXT, CONSENT_VERSION } from '@/content/cis-assessment';
+import { CONSENT_TEXT, CONSENT_VERSION } from '@/content/self-assessment';
 
 const str = (v: FormDataEntryValue | null, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 

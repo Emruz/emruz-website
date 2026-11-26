@@ -52,19 +52,19 @@ export default function TypeFields({
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         {leadSelect}
-        {fw.usesIg && (
+        {fw.usesProfile && (
           <div>
             <label className={label} htmlFor="target_ig">Target profile</label>
             <select id="target_ig" name="target_ig" className={input} defaultValue="2">
-              <option value="1">IG1: target maturity 2</option>
-              <option value="2">IG2: target maturity 3</option>
-              <option value="3">IG3: target maturity 4</option>
+              <option value="1">Essential: target maturity 2</option>
+              <option value="2">Standard: target maturity 3</option>
+              <option value="3">Advanced: target maturity 4</option>
             </select>
           </div>
         )}
         {dates}
       </div>
-      {fw.usesIg && (
+      {fw.usesProfile && (
         <div>
           <label className={label} htmlFor="self_assessment_id">Pre-fill from a self-assessment (optional)</label>
           <select id="self_assessment_id" name="self_assessment_id" className={input} defaultValue="">
@@ -74,7 +74,7 @@ export default function TypeFields({
           <p className="text-xs text-gray-500 mt-1">Pre-filled ratings are flagged until an assessor confirms each one.</p>
         </div>
       )}
-      {!fw.usesIg && <p className="text-xs text-gray-500">Targets start at 3 (Defined) for every practice; adjust them while rating.</p>}
+      {!fw.usesProfile && <p className="text-xs text-gray-500">Targets start at 3 (Defined) for every practice; adjust them while rating.</p>}
     </>
   );
 }

@@ -40,3 +40,23 @@ export const kitOffers: KitOffer[] = [
     prices: { once: 149, upgrade: 59, month: 19, year: 189, lifetime: 549 },
   },
 ];
+
+/** The Release Kit leads /kits; the others are sold as add-ons, with the all-kits bundle after (#71). */
+export const LEAD_PACK = 'release';
+export const BUNDLE_PACK = 'all';
+
+/**
+ * Published results from customers outside Emruz (#71). The results section on /kits stays
+ * hidden while this is empty. Add a result only once the customer has published it or
+ * approved it in writing, with a link to where it is published. No placeholder claims.
+ */
+export interface KitResult {
+  customer: string;
+  pack: string;
+  /** What changed for them, in their words or approved by them. */
+  outcome: string;
+  /** Where the customer published or approved it (https). */
+  source: string;
+}
+
+export const kitResults: KitResult[] = [];

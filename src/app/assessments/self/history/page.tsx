@@ -3,7 +3,7 @@ import { DetailHeader, Container } from '@/components';
 import { requireAccount } from '@/lib/server/session';
 import { staffRole } from '@/lib/server/workbench';
 import { getRegistration, listAssessments } from '@/lib/server/assessments';
-import { maturity } from '@/content/cis-assessment';
+import { maturity, tierInfo, tierOf } from '@/content/self-assessment';
 import { displayCode } from '@/content/packages';
 import { deleteAssessment, withdraw } from '../actions';
 
@@ -47,7 +47,7 @@ export default async function HistoryPage() {
                       {when(r.completed_at!)}
                     </Link>
                     <p className="text-sm text-gray-600">
-                      {r.score}% {maturity(r.score ?? 0).label} at IG{r.target_ig}
+                      {r.score}% {maturity(r.score ?? 0).label} · {tierInfo[tierOf(r.target_ig, r.profile)].name}
                       {r.recommended_package && ` · suggested ${displayCode(r.recommended_package)}`}
                     </p>
                   </div>

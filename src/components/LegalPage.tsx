@@ -12,6 +12,7 @@ const related = [
   { label: 'Terms of service', href: '/terms' },
   { label: 'Motiv privacy policy', href: '/motiv/privacy' },
   { label: 'Motiv license agreement (EULA)', href: '/motiv/eula' },
+  { label: 'Kits security and data statement', href: '/kits/security' },
 ];
 
 interface Props {

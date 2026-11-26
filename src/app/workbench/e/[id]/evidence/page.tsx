@@ -2,7 +2,9 @@ import { Link2, FileText } from 'lucide-react';
 import { getEngagement, getEvidence, getRequests, requireEngagementAccess } from '@/lib/server/workbench';
 import { frameworkFor } from '@/content/frameworks';
 import EvidenceUpload from '@/components/assessment/EvidenceUpload';
-import { addEvidenceLink, createRequest, deleteEvidence, setRequestStatus } from '../../../actions';
+import { addEvidenceLink, createRequest, deleteEvidence, linkEvidenceErl, raiseErlRequests, setRequestStatus } from '../../../actions';
+import { SCF_ATTRIBUTION, scfEvidenceById } from '@/content/scf';
+import { groupByErlArea } from '@/content/obligations';
 import { btn, card, input, label, fmtDate } from '../../../ui';
 
 export default async function EvidencePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ sub?: string; error?: string }> }) {
@@ -13,6 +15,30 @@ export default async function EvidencePage({ params, searchParams }: { params: P
   const fw = frameworkFor(e?.assessment_type);
   const subs = fw.items.map((s) => ({ id: s.id, text: s.text }));
   const sub = subs.some((s) => s.id === sp.sub) ? sp.sub : undefined;
+  const erlRequests = requests.filter((r) => r.erl_id);
+  const { adhoc, groups } = groupByErlArea(requests);
+  const requestRow = (r: (typeof requests)[number]) => (
+            <li key={r.id} className="p-4 flex flex-wrap justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-gray-900">{r.text}</p>
+                <p className="text-xs text-gray-500">
+                  {r.erl_id && <span className="font-mono">{r.erl_id} (SCF) · </span>}
+                  {r.subcategory && <span className="font-mono">{r.subcategory} · </span>}
+                  Requested {fmtDate(r.created_at)} · {r.evidence_count} received
+                </p>
+              </div>
+              <form action={setRequestStatus} className="flex items-center gap-2">
+                <input type="hidden" name="id" value={id} />
+                <input type="hidden" name="request_id" value={r.id} />
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${r.status === 'open' ? 'bg-amber-50 text-amber-800 border-amber-200' : r.status === 'received' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                  {r.status === 'open' ? 'Open' : r.status === 'received' ? 'Received' : 'Closed'}
+                </span>
+                {r.status !== 'closed' && <button name="status" value="closed" className="text-xs text-gray-600 hover:text-gray-900">Close</button>}
+                {r.status === 'closed' && <button name="status" value="open" className="text-xs text-gray-600 hover:text-gray-900">Reopen</button>}
+              </form>
+            </li>
+  );
+  const erlOptions = [...new Set(erlRequests.map((r) => r.erl_id!))].sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
 
   const subSelect = (name: string) => (
     <select name={name} defaultValue={sub ?? ''} className={input}>
@@ -48,32 +74,59 @@ export default async function EvidencePage({ params, searchParams }: { params: P
         </form>
       </div>
 
+      {fw.type === 'security' && (
+        <form action={raiseErlRequests} className={`${card} p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4`}>
+          <input type="hidden" name="id" value={id} />
+          <div>
+            <h2 className="font-bold text-gray-900">Evidence Request List</h2>
+            <p className="text-sm text-gray-600">
+              Raise requests from the SCF Evidence Request List for the CSF Categories rated so far and the obligations chosen on the Obligations tab.
+              One item of evidence counts for every requirement it supports. {erlRequests.length} raised so far.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex gap-2 text-sm whitespace-nowrap"><input type="checkbox" name="notify" /> Email client contacts</label>
+            <button className={btn}>Raise requests</button>
+          </div>
+        </form>
+      )}
+
       <div className={card}>
         <h2 className="font-bold text-gray-900 p-4 border-b border-gray-100">Requests</h2>
         <ul className="divide-y divide-gray-100">
           {requests.length === 0 && <li className="p-4 text-sm text-gray-500">No requests yet.</li>}
-          {requests.map((r) => (
-            <li key={r.id} className="p-4 flex flex-wrap justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-gray-900">{r.text}</p>
-                <p className="text-xs text-gray-500">
-                  {r.subcategory && <span className="font-mono">{r.subcategory} · </span>}
-                  Requested {fmtDate(r.created_at)} · {r.evidence_count} received
-                </p>
-              </div>
-              <form action={setRequestStatus} className="flex items-center gap-2">
-                <input type="hidden" name="id" value={id} />
-                <input type="hidden" name="request_id" value={r.id} />
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${r.status === 'open' ? 'bg-amber-50 text-amber-800 border-amber-200' : r.status === 'received' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                  {r.status === 'open' ? 'Open' : r.status === 'received' ? 'Received' : 'Closed'}
-                </span>
-                {r.status !== 'closed' && <button name="status" value="closed" className="text-xs text-gray-600 hover:text-gray-900">Close</button>}
-                {r.status === 'closed' && <button name="status" value="open" className="text-xs text-gray-600 hover:text-gray-900">Reopen</button>}
-              </form>
-            </li>
-          ))}
+          {adhoc.map((r) => requestRow(r))}
+          {groups.map((g) => (
+            <li key={g.area} className="p-4">
+              <details>
+                <summary className="flex justify-between gap-3 cursor-pointer">
+                  <span className="font-semibold text-gray-900">{g.area}</span>
+                  <span className="text-xs text-gray-600 whitespace-nowrap">{g.waiting ? `${g.waiting} of ${g.requests.length} open` : `${g.requests.length} received`}</span>
+                </summary>
+                <ul className="mt-2 divide-y divide-gray-100">{g.requests.map((r) => requestRow(r))}</ul>
+              </details>
+            </li>          ))}
         </ul>
       </div>
+
+      {erlOptions.length > 0 && evidence.length > 0 && (
+        <form action={linkEvidenceErl} className={`${card} p-4 flex flex-wrap items-end gap-3`}>
+          <input type="hidden" name="id" value={id} />
+          <div className="min-w-0 flex-1">
+            <label className={label} htmlFor="link-ev">Evidence</label>
+            <select id="link-ev" name="evidence_id" className={input}>
+              {evidence.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
+            </select>
+          </div>
+          <div className="min-w-0 flex-1">
+            <label className={label} htmlFor="link-erl">Also answers</label>
+            <select id="link-erl" name="erl_id" className={input}>
+              {erlOptions.map((x) => <option key={x} value={x}>{x} {scfEvidenceById.get(x)?.artifact.slice(0, 60)}</option>)}
+            </select>
+          </div>
+          <button className={btn}>Link</button>
+        </form>
+      )}
 
       <div className={`${card} overflow-x-auto`}>
         <h2 className="font-bold text-gray-900 p-4 border-b border-gray-100">Evidence library ({evidence.length})</h2>
@@ -98,7 +151,17 @@ export default async function EvidencePage({ params, searchParams }: { params: P
                   {e.from_client && <span className="text-[11px] font-semibold text-indigo-700">From client</span>}
                 </td>
                 <td className="p-3 font-mono text-xs text-gray-700">
-                  {e.subcategories.length ? e.subcategories.map((s) => <a key={s} href={`/workbench/e/${id}/assess?fn=${s.slice(0, 2)}#${s}`} className="mr-2 hover:underline">{s}</a>) : <span className="text-amber-700 font-sans">Not linked</span>}
+                  {e.subcategories.length || e.erl_ids.length ? e.subcategories.map((s) => <a key={s} href={`/workbench/e/${id}/assess?fn=${s.slice(0, 2)}#${s}`} className="mr-2 hover:underline">{s}</a>) : <span className="text-amber-700 font-sans">Not linked</span>}
+                  {e.erl_ids.map((x) => (
+                    <form key={x} action={linkEvidenceErl} className="inline-flex items-center mr-2" title={scfEvidenceById.get(x)?.artifact}>
+                      <input type="hidden" name="id" value={id} />
+                      <input type="hidden" name="evidence_id" value={e.id} />
+                      <input type="hidden" name="erl_id" value={x} />
+                      <input type="hidden" name="remove" value="1" />
+                      <span>{x}</span>
+                      <button className="ml-0.5 text-gray-400 hover:text-red-700" aria-label={`Unlink ${x}`}>×</button>
+                    </form>
+                  ))}
                 </td>
                 <td className="p-3 text-xs text-gray-600 whitespace-nowrap">{fmtDate(e.created_at)}<br />{e.uploaded_by_email}</td>
                 <td className="p-3 text-right">
@@ -113,6 +176,7 @@ export default async function EvidencePage({ params, searchParams }: { params: P
           </tbody>
         </table>
       </div>
+      {fw.type === 'security' && <p className="text-xs text-gray-500">{SCF_ATTRIBUTION}</p>}
     </div>
   );
 }

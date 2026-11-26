@@ -42,7 +42,7 @@ export const assessmentTypes: AssessmentTypeInfo[] = [
     reportLabel: 'Security Assessment · NIST CSF 2.0',
     ratedItems: 'NIST CSF 2.0 subcategories',
     limitations:
-      'It is not an audit or certification, and it does not guarantee that the organization is secure. Mappings to CIS, CMMC, ISO 27001 and SOC 2 are indicative.',
+      'It is not an audit or certification, and it does not guarantee that the organization is secure. Mappings to CMMC, ISO 27001 and SOC 2 are indicative.',
     intake: {
       title: 'Security environment',
       fields: [

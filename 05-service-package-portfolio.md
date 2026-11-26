@@ -6,7 +6,7 @@ Services are positioned as **outcome-focused engagements**, not transactional ti
 - Solves a specific problem for a specific buyer persona
 - Leads with **outcomes** (what improves, what changes)
 - Uses **assessment-first model** (diagnostic before commitment)
-- Maps to **NIST/CIS frameworks** for credibility
+- Maps to **NIST CSF and other industry frameworks** for credibility
 - Supports **long-tail engagement** (assessment → program → ongoing)
 
 ---
@@ -74,7 +74,7 @@ Services are positioned as **outcome-focused engagements**, not transactional ti
 - Teams lacking compliance/audit expertise
 
 **Core Outcomes:**
-✓ Governance framework aligned to NIST CSF, CIS, ISO 27001, or industry standard  
+✓ Governance framework aligned to NIST CSF, ISO 27001, or industry standard  
 ✓ Risk assessment and remediation roadmap  
 ✓ Compliance program with policies, procedures, training  
 ✓ Audit-ready documentation and evidence system  
@@ -113,7 +113,7 @@ Services are positioned as **outcome-focused engagements**, not transactional ti
 **Proof Points:**
 - Compliance certifications (CAP, GCIH, etc.)
 - Audit success stories (passed audits, reduced findings)
-- Framework expertise (NIST CSF, CIS, ISO, COBIT)
+- Framework expertise (NIST CSF, ISO, COBIT)
 - Policy development and governance examples
 
 ---
@@ -201,7 +201,7 @@ Services are positioned as **outcome-focused engagements**, not transactional ti
 **Deliverables:**
 - Cloud strategy and roadmap document
 - Cloud architecture design (applications, data, networking, security)
-- Cloud security controls and compliance framework (mapped to NIST, CIS)
+- Cloud security controls and compliance framework (mapped to NIST CSF and other industry frameworks)
 - Migration plan (phased, risk-based, timeline)
 - Cost estimation and optimization roadmap
 - Team training and skill development plan
@@ -394,7 +394,7 @@ All assessments roll up under `/assessments` hub:
 
 ✓ Lead with **outcome**, not feature  
 ✓ Use **"Program"** or **"Advisory"** language, not "Services" or "Tier"  
-✓ Reference **frameworks** explicitly (NIST CSF, CIS, etc.)  
+✓ Reference **frameworks** explicitly (NIST CSF, ISO 27001, etc.)  
 ✓ Quantify **results** where possible (audit scores, MTTR, cost savings)  
 ✓ Always offer **assessment-first** entry point  
 ✓ Be transparent about **engagement model** (phases, timeline, commitment)  

@@ -1,6 +1,7 @@
 import { clientIp, sameOrigin } from '@/lib/server/api';
 import { db, rateLimit } from '@/lib/server/db';
 import { sendEmail } from '@/lib/server/email';
+import { siteSettings } from '@/lib/server/settings';
 import { EMAIL_RE } from '@/lib/server/newsletter';
 
 const field = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
   try {
     await sendEmail(
-      process.env.CONTACT_TO || 'info@emruz.com',
+      (await siteSettings()).contactTo,
       `Website message${topic ? `: ${topic}` : ''} from ${name}`,
       `Name: ${name}\nEmail: ${email}\nCompany: ${company || '-'}\nTopic: ${topic || '-'}\n\n${message}\n`,
       { replyTo: email },

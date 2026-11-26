@@ -7,6 +7,8 @@ import { isUuid } from '@/lib/server/api';
 import { requireAccount } from '@/lib/server/session';
 import { getEngagement, getRequests, isClientContact, staffRole } from '@/lib/server/workbench';
 import EvidenceUpload from '@/components/assessment/EvidenceUpload';
+import RequestGroup from '@/components/assessment/RequestGroup';
+import { groupByErlArea } from '@/content/obligations';
 import { clientAddLink } from '../../actions';
 
 export const metadata = { title: 'Engagement', robots: { index: false } };
@@ -29,6 +31,7 @@ export default async function PortalEngagement({ params, searchParams }: { param
       select id, title, kind, created_at, request_id from evidence where engagement_id = ${id} and from_client order by created_at desc`,
   ]);
   const open = requests.filter((r) => r.status === 'open');
+  const { adhoc, groups } = groupByErlArea(requests);
 
   return (
     <>
@@ -42,12 +45,12 @@ export default async function PortalEngagement({ params, searchParams }: { param
           {!client && <p className="mb-4 text-sm bg-amber-50 border border-amber-200 rounded p-3">Staff preview of the client portal. Uploads here are disabled.</p>}
           {sp.error === 'url' && <p role="alert" className="mb-4 text-red-700 font-semibold">Links must start with https://</p>}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 min-w-0">
               <div className="bg-white border border-gray-200 rounded-xl">
                 <h2 className="font-bold text-gray-900 p-4 border-b border-gray-100">Evidence requests {open.length > 0 && <span className="text-amber-800">({open.length} waiting)</span>}</h2>
                 <ul className="divide-y divide-gray-100">
                   {requests.length === 0 && <li className="p-4 text-sm text-gray-500">Nothing requested yet.</li>}
-                  {requests.map((r) => (
+                  {adhoc.map((r) => (
                     <li key={r.id} className="p-4 space-y-3">
                       <div className="flex justify-between gap-3">
                         <p className="text-gray-900">{r.text}</p>
@@ -67,6 +70,26 @@ export default async function PortalEngagement({ params, searchParams }: { param
                           </form>
                         </div>
                       )}
+                    </li>
+                  ))}
+                  {groups.map((g) => (
+                    <li key={g.area} className="p-4">
+                      <details open={groups.length === 1}>
+                        <summary className="flex justify-between gap-3 cursor-pointer">
+                          <span className="font-semibold text-gray-900">{g.area}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded border h-fit whitespace-nowrap ${g.waiting ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                            {g.waiting ? `${g.waiting} of ${g.requests.length} waiting` : 'All received'}
+                          </span>
+                        </summary>
+                        <div className="mt-3">
+                          <RequestGroup
+                            engagementId={id}
+                            readOnly={!client}
+                            linkAction={clientAddLink}
+                            requests={g.requests.map((r) => ({ id: r.id, label: r.erl_id!, text: r.text, status: r.status }))}
+                          />
+                        </div>
+                      </details>
                     </li>
                   ))}
                 </ul>

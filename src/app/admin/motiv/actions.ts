@@ -3,7 +3,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { accountForEmail } from '@/lib/server/accounts';
 import { isUuid } from '@/lib/server/api';
-import { motiv, PLANS, type Plan } from '@/lib/server/config';
+import { PLANS, type Plan } from '@/lib/server/config';
 import { db, logEvent } from '@/lib/server/db';
 import { sendMotivProEmail } from '@/lib/server/motiv-emails';
 import { newSubscriptionId } from '@/lib/server/lease';
@@ -12,6 +12,7 @@ import { canArchive, canDelete, isRevokeCategory, revocationProblem } from '@/li
 import { revokeLicence, type RevocableRow } from '@/lib/server/stripe';
 import { unregisteredLicences } from '@/lib/server/queries';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
+import { siteSettings } from '@/lib/server/settings';
 
 /** An admin action needs a live admin session and a recent sign-in. Otherwise the admin signs in again. */
 async function admin() {
@@ -121,7 +122,7 @@ export async function setSeats(form: FormData) {
   const id = form.get('id');
   if (!isUuid(id)) fail('/admin/motiv', 'Licence not found.');
   const to = returnPath(form, licencePath(id));
-  const seats = Math.max(1, Math.min(50, Number(form.get('seats')) || motiv.defaultSeats));
+  const seats = Math.max(1, Math.min(50, Number(form.get('seats')) || (await siteSettings()).motivDefaultSeats));
   await db()`update subscriptions set seats = ${seats} where id = ${id}`;
   await logEvent('seats_changed', { seats }, { subscriptionId: id, actor });
   back(to, `Seats set to ${seats}.`);
@@ -199,7 +200,7 @@ export async function grant(form: FormData) {
   const end = plan === 'lifetime' ? null : new Date(Date.now() + months * 30 * 24 * 3600 * 1000);
   const [row] = await db()<{ id: string }[]>`
     insert into subscriptions (subscription_id, account_id, customer_email, plan, status, period_end, seats, complimentary)
-    values (${subscriptionId}, ${accountId}, ${email}, ${plan}, 'active', ${end}, ${motiv.defaultSeats}, true)
+    values (${subscriptionId}, ${accountId}, ${email}, ${plan}, 'active', ${end}, ${(await siteSettings()).motivDefaultSeats}, true)
     returning id`;
   await logEvent('granted', { plan, months: plan === 'lifetime' ? null : months }, { subscriptionId: row.id, accountId, actor });
   if (form.get('notify') === 'on') {

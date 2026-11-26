@@ -1,6 +1,6 @@
 import 'server-only';
 import { db } from './db';
-import { entitlementProblem, type SubscriptionRow } from './licensing';
+import { entitlementProblem, leaseTerms, type SubscriptionRow } from './licensing';
 
 export interface DeviceRow {
   device_id: string;
@@ -44,10 +44,11 @@ export async function subscriptionsFor(where: { accountId?: string; search?: str
     select subscription_id, device_id, device_name, os, app_version, last_checkin from devices
     where subscription_id in ${sql(subs.map((s) => s.id))} and deactivated_at is null
     order by last_checkin desc nulls last`;
+  const terms = await leaseTerms();
   return subs.map((s) => ({
     ...s,
     devices: devices.filter((d) => d.subscription_id === s.id),
-    usable: entitlementProblem(s) === null,
+    usable: entitlementProblem(s, terms) === null,
     period_ended: !!s.period_end && s.period_end.getTime() <= Date.now(),
   }));
 }

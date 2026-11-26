@@ -52,6 +52,8 @@ export interface OAuthStore {
   insertRefresh(tokenHash: string, grantId: string, expiresAt: number): Promise<void>;
   /** Marks the token used in one step and reports what it was. */
   useRefresh(tokenHash: string, now: number): Promise<RefreshUse>;
+  /** The grant a refresh token belongs to, without using it up (for revocation). */
+  refreshGrant(tokenHash: string): Promise<string | null>;
   audit(kind: string, f: { accountId?: string | null; clientId?: string | null; grantId?: string | null; ip?: string | null; detail?: Record<string, unknown> }): Promise<void>;
 }
 
@@ -375,8 +377,8 @@ export async function revoke(store: OAuthStore, keys: Keys, cfg: ServerConfig, p
   if (p.token.split('.').length === 3) {
     gid = (await verifyAccessToken(keys, cfg, p.token, now))?.gid ?? null;
   } else {
-    const use = await store.useRefresh(sha256hex(p.token), now);
-    if (use.status === 'ok' || use.status === 'used') gid = use.grantId;
+    // Read only: a revoke from the wrong client must not spend the real client's token
+    gid = await store.refreshGrant(sha256hex(p.token));
   }
   if (gid) {
     const g = await store.getGrant(gid);

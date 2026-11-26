@@ -12,7 +12,7 @@ For mid-market and enterprise organizations needing security, cloud, and AI stra
 ## Core Differentiators
 
 1. **Framework-First Methodology**
-   - Every engagement grounded in NIST CSF, CIS Controls, or equivalent
+   - Every engagement grounded in NIST CSF, ISO 27001, or equivalent industry frameworks
    - Not bespoke frameworks; not proprietary thinking
    - Auditor-ready, board-ready approach
 
@@ -49,7 +49,7 @@ For mid-market and enterprise organizations needing security, cloud, and AI stra
 
 ### Do's
 - Use "roadmap", "posture", "governance", "compliance framework"
-- Reference frameworks explicitly (NIST, CIS, CSF)
+- Reference frameworks explicitly (NIST CSF, ISO 27001, SOC 2)
 - Lead with problem, then solution
 - Quantify outcomes (metrics, timelines, scope)
 - Say "we'll assess first" or "we'll diagnose"
@@ -72,7 +72,7 @@ For mid-market and enterprise organizations needing security, cloud, and AI stra
 ## What Emruz IS
 
 ✓ A consultancy combining strategy and execution  
-✓ Framework-grounded (NIST, CIS, CSF)  
+✓ Framework-grounded (NIST CSF, ISO 27001, SOC 2)  
 ✓ Assessment-first (diagnostic before action)  
 ✓ Delivery-capable (not just advisors)  
 ✓ Outcome-focused (measurable results)  
@@ -92,7 +92,7 @@ For mid-market and enterprise organizations needing security, cloud, and AI stra
 ## Proof Points & Credibility Pillars
 
 ### Framework Alignment
-- Every service page references NIST CSF, CIS Controls, or industry-specific framework
+- Every service page references NIST CSF, ISO 27001, or industry-specific framework
 - Logo placement on service pages (visible trust signal)
 - Methodology documents reference frameworks
 

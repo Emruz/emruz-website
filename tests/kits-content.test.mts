@@ -45,6 +45,8 @@ assert.match(problem({ ...manifest, items: [{ ...manifest.items[0], pack: undefi
 assert.match(problem({ ...manifest, items: [{ ...manifest.items[0], pack: 'enterprise' }] })!, /pack/, 'pack must be listed');
 assert.match(problem({ ...manifest, items: [{ ...manifest.items[0], path: '../../etc' }] })!, /path/);
 assert.match(problem({ ...manifest, items: [manifest.items[0], manifest.items[0]] })!, /duplicate/);
+assert.match(problem({ ...manifest, items: [manifest.items[0], { ...manifest.items[0], name: 'free-copy', access: 'free' }] })!, /duplicate path/,
+  'two items cannot share a folder (#68 review inj-1)');
 assert.match(problem({ ...manifest, packs: ['all', 'release'] })!, /reserved/);
 assert.match(problem({ ...manifest, format: 'other/1' })!, /format/);
 

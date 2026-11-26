@@ -2,6 +2,7 @@ import 'server-only';
 import { db } from './db';
 import { adminEmails } from './config';
 import { sendEmail } from './email';
+import { siteSettings } from './settings';
 
 /**
  * Security monitoring (finding E9).
@@ -9,10 +10,10 @@ import { sendEmail } from './email';
  * Every security event is written as one JSON line to the server log with
  * "log":"security" (Netlify function logs; forward them with a Netlify log drain
  * to the SIEM) and stored in the events table. When a kind crosses its threshold
- * inside its window, an alert email goes to ALERT_EMAILS (or ADMIN_EMAILS), at most
+ * inside its window, an alert email goes to the alert_emails site setting (or ADMIN_EMAILS), at most
  * once per kind per cooldown.
  */
-export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited' | 'admin_changed' | 'kits_release_invalid' | 'kits_refresh_reuse';
+export type SecurityEventKind = 'webhook_failure' | 'webhook_bad_signature' | 'signin_failure' | 'rate_limited' | 'admin_changed' | 'kits_release_invalid' | 'kits_refresh_reuse' | 'kits_lifetime_over_cap';
 
 const RULES: Record<SecurityEventKind, { threshold: number; windowSeconds: number; cooldownSeconds: number; label: string }> = {
   webhook_failure: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 3600, label: 'Stripe webhook handler failed' },
@@ -22,10 +23,11 @@ const RULES: Record<SecurityEventKind, { threshold: number; windowSeconds: numbe
   admin_changed: { threshold: 1, windowSeconds: 60, cooldownSeconds: 0, label: 'Admin rights granted or removed' },
   kits_release_invalid: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 21600, label: 'Emruz kits release rejected; serving the last good release' },
   kits_refresh_reuse: { threshold: 3, windowSeconds: 3600, cooldownSeconds: 3600, label: 'MCP refresh token reuse (grants revoked)' },
+  kits_lifetime_over_cap: { threshold: 1, windowSeconds: 3600, cooldownSeconds: 3600, label: 'Founding lifetime offer sold past its cap' },
 };
 
-function alertRecipients(): string[] {
-  const list = (process.env.ALERT_EMAILS || '').split(',').map((e) => e.trim()).filter(Boolean);
+async function alertRecipients(): Promise<string[]> {
+  const list = (await siteSettings()).alertEmails;
   return list.length ? list : adminEmails();
 }
 
@@ -49,7 +51,7 @@ export async function securityEvent(kind: SecurityEventKind, detail: Record<stri
     const count = await bump(`alert-count:${kind}`, rule.windowSeconds);
     if (count < rule.threshold) return;
     if ((await bump(`alert-sent:${kind}`, rule.cooldownSeconds)) > 1) return;
-    const to = alertRecipients();
+    const to = await alertRecipients();
     const text = `${rule.label}: ${count} in the last ${Math.round(rule.windowSeconds / 60)} minutes.\n\nLatest: ${JSON.stringify(detail)}\n\nSee the security_${kind} rows in the events table and the "log":"security" lines in the function logs. Further alerts for this kind are paused for ${Math.round(rule.cooldownSeconds / 60)} minutes.`;
     await Promise.all(to.map((addr) => sendEmail(addr, `[Emruz security] ${rule.label}`, text)));
   } catch (e) {

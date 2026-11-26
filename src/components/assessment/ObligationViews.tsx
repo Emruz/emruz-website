@@ -1,4 +1,5 @@
-import { ChevronDown, Download } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import PoamDownload from './PoamDownload';
 import {
   poamCsv,
   reqStatusLabel,
@@ -107,7 +108,10 @@ export default function ObligationViews({
   views,
   evidenceTitles,
   csvName = 'poam.csv',
+  expanded = false,
 }: {
+  /** Open every view (reports, so they print in full). */
+  expanded?: boolean;
   views: ObligationView[];
   /** Evidence titles by ID; when given, each requirement lists its evidence. */
   evidenceTitles?: Record<string, string>;
@@ -143,7 +147,7 @@ export default function ObligationViews({
 
       <div className="space-y-3">
         {views.map((v) => (
-          <details key={v.key} id={`ob-${v.key}`} className="group rounded-lg border border-gray-200 scroll-mt-24" open={views.length === 1}>
+          <details key={v.key} id={`ob-${v.key}`} className="group rounded-lg border border-gray-200 scroll-mt-24" open={expanded || views.length === 1}>
             <summary className="flex items-center justify-between gap-3 cursor-pointer list-none p-4">
               <span className="font-semibold text-gray-900">
                 {v.name}
@@ -166,13 +170,7 @@ export default function ObligationViews({
                     </p>
                   )}
                   {v.sprs.poam.length > 0 && (
-                    <a
-                      href={`data:text/csv;charset=utf-8,${encodeURIComponent(poamCsv(v))}`}
-                      download={csvName}
-                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 hover:underline print:hidden"
-                    >
-                      <Download className="w-4 h-4" aria-hidden /> POA&amp;M starter list ({v.sprs.poam.length} items, CSV)
-                    </a>
+                    <PoamDownload csv={poamCsv(v)} filename={csvName} label={`POA&M starter list (${v.sprs.poam.length} items, CSV)`} />
                   )}
                 </div>
               )}

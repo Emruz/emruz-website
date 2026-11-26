@@ -179,6 +179,11 @@ assert.equal(ob.staffHours({ categories: 0, evidenceRequests: 0, obligations: 0 
   assert.deepEqual(sampleReport(), sampleReport(), 'stable between builds');
 }
 
+// ---------- Client code does not bundle the SCF content ----------
+for (const f of ['src/content/self-assessment.ts', 'src/app/assessments/self/client.tsx', 'src/content/obligation-keys.ts']) {
+  assert.doesNotMatch(read(f), /content\/obligations'|\.\/obligations'|scf/, `${f} imports only obligation-keys`);
+}
+
 // ---------- Migration 029 is additive ----------
 {
   const sql = read('netlify/database/migrations/029_obligation_views.sql').toLowerCase().replace(/--.*$/gm, '');

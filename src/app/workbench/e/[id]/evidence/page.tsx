@@ -57,7 +57,7 @@ export default async function EvidencePage({ params, searchParams }: { params: P
           <div>
             <h2 className="font-bold text-gray-900">Evidence Request List</h2>
             <p className="text-sm text-gray-600">
-              Raise requests from the SCF Evidence Request List for the CSF Categories rated so far and the obligations chosen on the overview.
+              Raise requests from the SCF Evidence Request List for the CSF Categories rated so far and the obligations chosen on the Obligations tab.
               One item of evidence counts for every requirement it supports. {erlRequests.length} raised so far.
             </p>
           </div>

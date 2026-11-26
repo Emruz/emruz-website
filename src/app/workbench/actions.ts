@@ -537,7 +537,8 @@ export async function raiseErlRequests(form: FormData) {
     const item = scfEvidenceById.get(id)!;
     await db()`
       insert into evidence_requests (engagement_id, erl_id, text, created_by)
-      values (${e.id}, ${id}, ${`${item.artifact}: ${item.description}`}, ${account.id})`;
+      values (${e.id}, ${id}, ${`${item.artifact}: ${item.description}`}, ${account.id})
+      on conflict (engagement_id, erl_id) where erl_id is not null do nothing`;
   }
   await logActivity(e.id, account.email, 'erl_requests_created', { count: todo.length });
   if (todo.length && form.get('notify') === 'on') {

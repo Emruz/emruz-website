@@ -126,7 +126,7 @@ export default async function ObligationsPage({
                         {r.evidence.length ? r.evidence.map((x) => <p key={x}>{titles[x]}</p>) : <span className="text-red-700">None</span>}
                       </td>
                       <td className="p-3">
-                        <form action={setObligationRating} className="flex flex-wrap gap-1.5 items-start">
+                        <form key={`${r.id}-${r.overridden ? r.status : 'auto'}-${r.note ?? ''}`} action={setObligationRating} className="flex flex-wrap gap-1.5 items-start">
                           <input type="hidden" name="id" value={id} />
                           <input type="hidden" name="obligation" value={ob} />
                           <input type="hidden" name="requirement" value={r.id} />

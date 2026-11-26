@@ -7,7 +7,7 @@ alter table engagements add column if not exists obligations text[] not null def
 
 -- SCF Evidence Request List item (e.g. E-IAC-05) a request was raised from.
 alter table evidence_requests add column if not exists erl_id text;
-create index if not exists evidence_requests_erl_idx on evidence_requests (engagement_id, erl_id);
+create unique index if not exists evidence_requests_erl_idx on evidence_requests (engagement_id, erl_id) where erl_id is not null;
 
 -- Evidence linked to ERL items, so one upload covers every requirement that item supports.
 create table if not exists evidence_erl_links (

@@ -20,7 +20,7 @@ import {
   type Tier,
 } from '@/content/self-assessment';
 import { frameworks } from '@/content/crosswalk';
-import { OBLIGATION_KEYS, obligationInfo } from '@/content/obligations';
+import { OBLIGATION_KEYS, obligationInfo } from '@/content/obligation-keys';
 import { finish, saveProgress } from './actions';
 
 /** One step per CSF Function */

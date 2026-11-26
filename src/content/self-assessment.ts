@@ -10,7 +10,7 @@
  */
 import { addOns, packages, type AddOn, type CapabilityCode, type ServicePackage } from './packages';
 import { csfFunctions, type FunctionId } from './csf';
-import { cleanObligations, type ObligationKey } from './obligations';
+import { cleanObligations, type ObligationKey } from './obligation-keys';
 
 /** Keys of the frameworks in the readiness crosswalk (kept here to avoid an import cycle). */
 export type FrameworkKey = 'cmmc' | 'iso' | 'csf' | 'soc2';

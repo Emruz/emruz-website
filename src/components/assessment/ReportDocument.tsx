@@ -259,7 +259,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
       {obligations.length > 0 && (
         <section className="mb-10 break-before-page">
           <h2 className="text-xl font-bold text-gray-900 mb-3">6. Obligations</h2>
-          <ObligationViews views={obligations} evidenceTitles={evTitles} csvName={`poam-${c.client.replace(/[^\w-]+/g, '-').toLowerCase()}.csv`} />
+          <ObligationViews expanded views={obligations} evidenceTitles={c.evidenceIndex.length ? evTitles : undefined} csvName={`poam-${c.client.replace(/[^\w-]+/g, '-').toLowerCase()}.csv`} />
         </section>
       )}
 

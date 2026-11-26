@@ -49,7 +49,7 @@ export default function RequestGroup({
         ))}
       </ul>
       {open.length > 0 && !readOnly && (
-        <div className="grid md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-3">
+        <div className="grid md:grid-cols-2 gap-4 bg-gray-50 rounded-lg p-3 min-w-0 [&>*]:min-w-0">
           <p className="text-xs text-gray-600 md:col-span-2">
             Tick what your file or link answers{open.length > 1 ? ' (one document can answer several)' : ''}, then upload it or paste a link.
           </p>

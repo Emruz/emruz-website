@@ -45,7 +45,7 @@ export default async function PortalEngagement({ params, searchParams }: { param
           {!client && <p className="mb-4 text-sm bg-amber-50 border border-amber-200 rounded p-3">Staff preview of the client portal. Uploads here are disabled.</p>}
           {sp.error === 'url' && <p role="alert" className="mb-4 text-red-700 font-semibold">Links must start with https://</p>}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6 min-w-0">
               <div className="bg-white border border-gray-200 rounded-xl">
                 <h2 className="font-bold text-gray-900 p-4 border-b border-gray-100">Evidence requests {open.length > 0 && <span className="text-amber-800">({open.length} waiting)</span>}</h2>
                 <ul className="divide-y divide-gray-100">

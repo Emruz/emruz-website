@@ -72,7 +72,7 @@ export default function EvidenceUpload({
           </select>
         </div>
       )}
-      <input name="file" type="file" required className="text-sm" onChange={() => setState('idle')} />
+      <input name="file" type="file" required className="text-sm max-w-full min-w-0" onChange={() => setState('idle')} />
       <button disabled={state === 'busy'} className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-50">
         <Upload className="w-4 h-4" /> {state === 'busy' ? 'Uploading…' : 'Upload'}
       </button>

@@ -1,10 +1,13 @@
 /**
  * Daily: permanently delete self-assessments and engagements that were marked
  * for deletion more than 30 days ago, including engagement evidence files.
+ * Privacy (#77): old activity logs and old privacy requests. Account deletion is never
+ * automatic: an admin approves each request in /admin/privacy.
  * Standalone (no Next.js imports) because Netlify bundles functions separately.
  */
 import postgres from 'postgres';
 import { getStore } from '@netlify/blobs';
+import { LOG_RETENTION_MONTHS, REQUEST_RETENTION_DAYS, UNCONFIRMED_DAYS } from '../../src/lib/privacy/core';
 
 const RETENTION_DAYS = 30;
 
@@ -27,7 +30,13 @@ const purgeDeleted = async () => {
     // Registered clients never used (no grant) after 30 days
     await sql`delete from oauth_clients c where c.created_at < now() - interval '30 days' and not exists (select 1 from oauth_grants g where g.client_id = c.id)`;
     const m = await sql`delete from mcp_audit where at < now() - interval '365 days'`;
-    console.log(`purge-deleted: ${e.count} engagements (${keys.length} files), ${a.count} self-assessments, ${m.count} kit audit rows`);
+    // Activity logs after 13 months. Licence history and site admin audit stay with the records they describe.
+    const logs = await sql`delete from events where at < now() - make_interval(months => ${LOG_RETENTION_MONTHS})
+      and subscription_id is null and kind not in ('support_dates_set', 'setting_changed')`;
+    await sql`delete from privacy_requests where status = 'unconfirmed' and created_at < now() - make_interval(days => ${UNCONFIRMED_DAYS})`;
+    await sql`delete from privacy_requests where status in ('completed', 'rejected')
+      and completed_at < now() - make_interval(days => ${REQUEST_RETENTION_DAYS})`;
+    console.log(`purge-deleted: ${e.count} engagements (${keys.length} files), ${a.count} self-assessments, ${m.count} kit audit rows, ${logs.count} old log rows`);
     return new Response('ok');
   } finally {
     await sql.end();

@@ -23,7 +23,7 @@ const emailMessages: Record<string, [string, boolean]> = {
   failed: ['We could not send the email. Please try again shortly.', false],
 };
 
-export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ saved?: string; email?: string; edit?: string }> }) {
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ saved?: string; email?: string; edit?: string; data?: string }> }) {
   const sp = await searchParams;
   const a = await requireAccount('/account');
   const profile = await getProfile(a.id);
@@ -55,6 +55,26 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               message={message}
               locked={!!a.impersonatedBy}
             />
+            {!a.impersonatedBy && (
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <h2 className="text-lg font-semibold text-gray-900">Your data</h2>
+                {sp.data === 'limit' && (
+                  <p role="alert" className="mt-2 text-sm text-red-700">Too many downloads. Try again in an hour.</p>
+                )}
+                <p className="mt-1 text-sm text-gray-600">
+                  Download a copy of what Emruz holds about you, or ask us to delete your account. Both ask you to sign in
+                  again if it&apos;s been more than an hour.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a href="/account/export" className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50">
+                    Download my data
+                  </a>
+                  <Link href="/account/delete" className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">
+                    Request account deletion
+                  </Link>
+                </div>
+              </div>
+            )}
             <p className="text-sm text-gray-600">
               Sign-in methods and subscriptions are on{' '}
               <Link href="/motiv/account" className="text-blue-700 font-semibold hover:underline">your account page</Link>.

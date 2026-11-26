@@ -42,6 +42,8 @@ export default function Footer() {
     ],
     legal: [
       { label: 'Privacy', href: '/privacy' },
+      { label: 'Cookie settings', href: '/cookies' },
+      { label: 'Privacy requests', href: '/privacy/request' },
       { label: 'Terms', href: '/terms' },
       { label: 'Motiv EULA', href: '/motiv/eula' },
     ],

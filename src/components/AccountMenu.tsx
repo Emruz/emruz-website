@@ -97,6 +97,7 @@ export function adminLinks(me: Me | null): AdminLink[] {
     { label: 'Emruz kits', href: '/admin/kits', description: 'Kit grants and connected apps' },
     { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
     { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
+    { label: 'Privacy', href: '/admin/privacy', description: 'Data requests and deletions' },
     { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },
   ];
 }

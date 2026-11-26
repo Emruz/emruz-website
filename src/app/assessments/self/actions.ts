@@ -20,9 +20,9 @@ import {
   CONSENT_VERSION,
   cleanAnswers,
   cleanProfile,
-  controls,
+  functions,
   isComplete,
-} from '@/content/cis-assessment';
+} from '@/content/self-assessment';
 
 const field = (v: FormDataEntryValue | null, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
@@ -78,7 +78,7 @@ export async function saveProgress(id: string, data: { step: unknown; profile: u
   const { account, a } = await owned(id);
   if (a.status !== 'in_progress') return { ok: false };
   if (!(await rateLimit(`assess-save:${account.id}`, 300, 300))) return { ok: false };
-  const step = Math.min(Math.max(0, Number(data.step) || 0), controls.length + 1);
+  const step = Math.min(Math.max(0, Number(data.step) || 0), functions.length + 1);
   await db()`
     update assessments set step = ${step}, profile = ${db().json(cleanProfile(data.profile) as never)},
       answers = ${db().json(cleanAnswers(data.answers) as never)}, updated_at = now()

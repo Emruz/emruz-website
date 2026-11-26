@@ -4,7 +4,7 @@ import { DetailHeader, Container } from '@/components';
 import { requirePartner } from '@/lib/server/partners';
 import { partnerInvites } from '@/lib/server/invites';
 import { editPartnerAssessment, resendPartnerInvite, revokePartnerInvite } from './actions';
-import { maturity } from '@/content/cis-assessment';
+import { maturity } from '@/content/self-assessment';
 import { selfAssessments } from '@/app/workbench/self/data';
 import { PartnerNav } from './ui';
 import { btn, card, fmtDate } from '@/app/workbench/ui';

@@ -5,17 +5,21 @@ import { siteSettings } from './settings';
 import { SITE_URL } from './config';
 import { accountForEmail } from './accounts';
 import {
-  controls,
-  controlScore,
+  categories,
+  categoryScore,
+  functions,
+  functionScore,
   overallScore,
   maturity,
   recommend,
-  targetIG,
-  igInfo,
+  targetTier,
+  tierInfo,
+  tierOf,
+  SELF_FRAMEWORK,
   type Answers,
   type Profile,
-  type IG,
-} from '@/content/cis-assessment';
+  type Tier,
+} from '@/content/self-assessment';
 import { addOnLabel, displayCode, capabilities } from '@/content/packages';
 import { frameworks, frameworkResult } from '@/content/crosswalk';
 
@@ -37,8 +41,10 @@ export interface AssessmentRow {
   step: number;
   profile: Profile;
   answers: Answers;
-  target_ig: IG | null;
+  /** Target profile (1 Essential, 2 Standard, 3 Advanced); the column name predates the CSF rebuild */
+  target_ig: Tier | null;
   score: number | null;
+  /** Score against the Essential profile */
   ig1_score: number | null;
   recommended_package: string | null;
   report_emailed: boolean;
@@ -84,8 +90,8 @@ export async function currentAssessment(accountId: string): Promise<AssessmentRo
   // This runs while the page renders, so a prefetch can race the real visit;
   // the assessments_one_open index makes sure they share one draft.
   const [created] = await db()<AssessmentRow[]>`
-    insert into assessments (account_id, profile, partner_id)
-    values (${accountId}, ${db().json((last?.profile ?? {}) as never)},
+    insert into assessments (account_id, framework, profile, partner_id)
+    values (${accountId}, ${SELF_FRAMEWORK}, ${db().json((last?.profile ?? {}) as never)},
             (select partner_id from assessment_registrations where account_id = ${accountId}))
     on conflict (account_id) where status = 'in_progress' and deleted_at is null do nothing
     returning *`;
@@ -147,18 +153,18 @@ export async function notifyAssessmentStarted(assessmentId: string) {
 /** Score, store and email the report. */
 export async function completeAssessment(a: AssessmentRow, account: { id: string; email: string }, reg: Registration) {
   const partner = await assessmentPartner(a.partner_id);
-  const ig = targetIG(a.profile);
-  const score = overallScore(a.answers, ig, a.profile);
-  const ig1 = overallScore(a.answers, 1, a.profile);
-  const rec = recommend(a.answers, ig, a.profile);
-  const gaps = rec.gaps.slice(0, 5).map((g) => ({ control: g.control.id, score: g.score }));
+  const tier = targetTier(a.profile);
+  const score = overallScore(a.answers, tier, a.profile);
+  const essential = overallScore(a.answers, 1, a.profile);
+  const rec = recommend(a.answers, tier, a.profile);
+  const gaps = rec.gaps.slice(0, 5).map((g) => ({ category: g.category.id, score: g.score }));
 
   await db()`
-    update assessments set status = 'completed', target_ig = ${ig}, score = ${score}, ig1_score = ${ig1},
+    update assessments set status = 'completed', target_ig = ${tier}, score = ${score}, ig1_score = ${essential},
       recommended_package = ${rec.pkg?.code ?? null}, gaps = ${db().json(gaps as never)},
-      completed_at = now(), updated_at = now(), step = ${controls.length + 1}
+      completed_at = now(), updated_at = now(), step = ${functions.length + 1}
     where id = ${a.id}`;
-  await logEvent('assessment_completed', { assessment: a.id, score, ig }, { accountId: account.id });
+  await logEvent('assessment_completed', { assessment: a.id, score, tier }, { accountId: account.id });
 
   const link = `${SITE_URL}/assessments/self/report/${a.id}`;
   const lines = [
@@ -167,11 +173,17 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
     'Thanks for completing the Emruz security self-assessment. Here is your summary.',
     '',
     `Overall maturity: ${score}% (${maturity(score).label})`,
-    `Measured against: ${igInfo[ig].name}`,
-    `Essential cyber hygiene (IG1): ${ig1}%`,
+    `Target profile: ${tierInfo[tier].name} (NIST CSF 2.0, aligned to ${tierInfo[tier].csfTier})`,
+    ...(tier > 1 ? [`Essential practices: ${essential}%`] : []),
     '',
-    rec.gaps.length ? 'Biggest gaps:' : 'Every control in scope scored 60% or more.',
-    ...rec.gaps.slice(0, 5).map((g) => `- CIS ${g.control.id} ${g.control.title}: ${g.score}%`),
+    'By CSF Function:',
+    ...functions.map((f) => {
+      const s = functionScore(f.id, a.answers, tier, a.profile);
+      return `- ${f.title}: ${s === null ? 'not in scope' : `${s}%`}`;
+    }),
+    '',
+    rec.gaps.length ? 'Biggest gaps:' : 'Every category in scope scored 60% or more.',
+    ...rec.gaps.slice(0, 5).map((g) => `- ${g.category.id} ${g.category.title}: ${g.score}%`),
     '',
     ...(rec.pkg
       ? [
@@ -185,11 +197,11 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
       : []),
     a.profile.frameworks?.length ? 'Framework readiness (indicative, not a compliance finding; * marks your focus):' : 'Framework readiness (indicative, not a compliance finding):',
     ...frameworks.map((f) => {
-      const r = frameworkResult(f.key, a.answers, ig, a.profile);
+      const r = frameworkResult(f.key, a.answers, tier, a.profile);
       return `- ${f.name}: ${r.score}% (${r.counts.gap} gaps)${a.profile.frameworks?.includes(f.key) ? ' *' : ''}`;
     }),
     '',
-    `Full report with the control-by-control crosswalk: ${link}`,
+    `Full report with the category-by-category results and framework crosswalk: ${link}`,
     '',
     'We will be in touch to walk through your results. Reply to this email if you have questions, or if you would rather not hear from us about this assessment.',
     '',
@@ -211,14 +223,14 @@ export async function completeAssessment(a: AssessmentRow, account: { id: string
         account.email,
         reg.phone || '',
         '',
-        `Score ${score}% at ${igInfo[ig].name.split(':')[0]}, IG1 ${ig1}%`,
+        `Score ${score}% at ${tierInfo[tier].name}, Essential ${essential}%`,
         rec.pkg ? `Suggested: ${displayCode(rec.pkg.code)}` : '',
         rec.addOns.length ? `Add-ons: ${rec.addOns.map((x) => x.code).join(', ')}` : '',
         a.profile.frameworks?.length
           ? `Frameworks: ${a.profile.frameworks.map((k) => frameworks.find((f) => f.key === k)!.short).join(', ')}`
           : '',
         partner ? `Partner: ${partner.name}` : '',
-        ...gaps.map((g) => `Gap: CIS ${g.control} (${g.score}%)`),
+        ...gaps.map((g) => `Gap: ${g.category} (${g.score}%)`),
         '',
         `${SITE_URL}/workbench/self/${a.id}`,
       ]
@@ -277,8 +289,8 @@ export async function startGuidedAssessment(opts: {
   // assessments_one_open allows one open assessment per account, so a guided
   // session takes over the customer's open draft instead of adding a row.
   const [a] = await db()<{ id: string }[]>`
-    insert into assessments (account_id, performed_by, assigned_to, partner_id)
-    values (${customerId}, ${opts.by.id}, ${opts.by.id}, ${partnerId})
+    insert into assessments (account_id, framework, performed_by, assigned_to, partner_id)
+    values (${customerId}, ${SELF_FRAMEWORK}, ${opts.by.id}, ${opts.by.id}, ${partnerId})
     on conflict (account_id) where status = 'in_progress' and deleted_at is null
     do update set performed_by = excluded.performed_by, assigned_to = excluded.assigned_to,
       partner_id = coalesce(excluded.partner_id, assessments.partner_id), updated_at = now()
@@ -306,14 +318,15 @@ export async function reopenForEdit(a: { id: string; account_id: string }, opts:
   return {};
 }
 
-/** Per-control scores for a stored assessment (report and admin pages). */
+/** Per-category scores for a stored assessment (report and admin pages). */
 export function scoresFor(a: AssessmentRow) {
-  const ig = (a.target_ig ?? targetIG(a.profile)) as IG;
+  const tier = tierOf(a.target_ig, a.profile);
   return {
-    ig,
-    score: overallScore(a.answers, ig, a.profile),
-    ig1: overallScore(a.answers, 1, a.profile),
-    byControl: controls.map((c) => ({ control: c, score: controlScore(c, a.answers, ig, a.profile) })),
-    rec: recommend(a.answers, ig, a.profile),
+    tier,
+    score: overallScore(a.answers, tier, a.profile),
+    essential: overallScore(a.answers, 1, a.profile),
+    byFunction: functions.map((f) => ({ fn: f, score: functionScore(f.id, a.answers, tier, a.profile) })),
+    byCategory: categories.map((c) => ({ category: c, score: categoryScore(c, a.answers, tier, a.profile) })),
+    rec: recommend(a.answers, tier, a.profile),
   };
 }

@@ -44,7 +44,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const reg = await getRegistration(a.account_id);
   const partner = a.partner_id ? await getPartner(a.partner_id) : null;
   const logo = partner ? partnerLogoUrl(partner) : null;
-  const { ig } = scoresFor(a);
+  const { tier } = scoresFor(a);
 
   return (
     <>
@@ -56,7 +56,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           { label: 'Report' },
         ]}
         title={reg?.company ? `Security Self-Assessment: ${reg.company}` : 'Security Self-Assessment'}
-        summary={`Completed ${when(a.completed_at!)}${reg?.full_name ? ` by ${reg.full_name}` : ''}. CIS Critical Security Controls v8.`}
+        summary={`Completed ${when(a.completed_at!)}${reg?.full_name ? ` by ${reg.full_name}` : ''}. NIST Cybersecurity Framework 2.0.`}
       />
       <section className="py-8 md:py-10 bg-gray-50">
         <Container>
@@ -77,7 +77,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           <ResultsView
             answers={a.answers}
             profile={a.profile}
-            ig={ig}
+            tier={tier}
             actions={
               <>
                 <PrintButton />

@@ -6,7 +6,8 @@ import type { ReportContent } from '@/lib/server/workbench';
 const fmt = (d: string | null) =>
   d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'America/Los_Angeles' }) : null;
 const lvl = (n: number | null) => (n === null ? '–' : String(n));
-const relLabel = { cis: 'CIS', cmmc: 'CMMC', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
+const relLabel = { cmmc: 'CMMC', iso: 'ISO 27001', soc2: 'SOC 2' } as const;
+const profileName: Record<number, string> = { 1: 'Essential', 2: 'Standard', 3: 'Advanced' };
 
 function Paragraphs({ text }: { text: string }) {
   return (
@@ -77,7 +78,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Target</p>
             <p className="text-3xl font-bold text-gray-900">{c.rollup.overall.target ?? '–'}<span className="text-base text-gray-500"> / 5</span></p>
-            <p className="text-sm text-gray-600">{fw.usesIg ? `CIS IG${c.targetIg} profile` : 'Agreed target maturity'}</p>
+            <p className="text-sm text-gray-600">{fw.usesProfile ? `${profileName[c.targetIg] ?? 'Standard'} target profile` : 'Agreed target maturity'}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs text-gray-500">Priority findings</p>
@@ -118,20 +119,20 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           </tbody>
         </table>
         <p className="text-sm text-gray-600">
-          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Scores map to {fw.usesIg ? 'CSF tiers' : 'maturity levels'}:
+          Ratings of {EVIDENCE_REQUIRED_AT} or higher are supported by evidence listed in Appendix A. Scores map to {fw.usesProfile ? 'CSF tiers' : 'maturity levels'}:
           under 1.5 {fw.tiers[0].split(': ')[1]}, under 2.5 {fw.tiers[1].split(': ')[1]}, under 3.5 {fw.tiers[2].split(': ')[1]}, otherwise {fw.tiers[3].split(': ')[1]}.
         </p>
       </section>
 
       <section className="mb-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by {fw.usesIg ? 'function' : 'area'}</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">3. Results by {fw.usesProfile ? 'function' : 'area'}</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b border-gray-200">
-              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Function' : 'Area'}</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesProfile ? 'Function' : 'Area'}</th>
               <th className="py-2 pr-3 font-medium">Current</th>
               <th className="py-2 pr-3 font-medium">Target</th>
-              <th className="py-2 pr-3 font-medium">{fw.usesIg ? 'Tier' : 'Level'}</th>
+              <th className="py-2 pr-3 font-medium">{fw.usesProfile ? 'Tier' : 'Level'}</th>
               <th className="py-2 font-medium w-1/3" aria-label="Chart" />
             </tr>
           </thead>

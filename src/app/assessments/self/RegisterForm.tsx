@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
-import { CONSENT_TEXT } from '@/content/cis-assessment';
+import { CONSENT_TEXT } from '@/content/self-assessment';
 import { register, type RegisterState } from './actions';
 
 const input =

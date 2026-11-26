@@ -5,23 +5,25 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { Container } from '@/components';
 import {
-  controls,
+  categories,
+  functions,
   scale,
   NOT_SURE,
   profileQuestions,
-  igInfo,
-  targetIG,
+  tierInfo,
+  targetTier,
   inScope,
   notApplicable,
   profileDone,
   type Answers,
   type Profile,
-  type IG,
-} from '@/content/cis-assessment';
+  type Tier,
+} from '@/content/self-assessment';
 import { frameworks } from '@/content/crosswalk';
 import { finish, saveProgress } from './actions';
 
-const LAST = controls.length;
+/** One step per CSF Function */
+const LAST = functions.length;
 
 
 type SaveFn = (id: string, data: { step: unknown; profile: unknown; answers: unknown }) => Promise<{ ok: boolean }>;
@@ -61,7 +63,7 @@ export default function SelfAssessment({ id, initial, hasHistory, save = savePro
     return () => clearTimeout(t);
   }, [id, step, profile, answers, save]);
 
-  const ig: IG = targetIG(profile);
+  const ig: Tier = targetTier(profile);
   const go = (n: number) => {
     setStep(n);
     top.current?.scrollIntoView({ block: 'start' });
@@ -74,11 +76,13 @@ export default function SelfAssessment({ id, initial, hasHistory, save = savePro
       if (r && !r.ok) setError(r.error ?? 'Could not save. Please try again.');
     });
 
-  const answeredCount = controls.flatMap((c) => inScope(c, ig, profile)).filter((q) => q.id in answers).length;
-  const totalInScope = controls.flatMap((c) => inScope(c, ig, profile)).length;
+  const answeredCount = categories.flatMap((c) => inScope(c, ig, profile)).filter((q) => q.id in answers).length;
+  const totalInScope = categories.flatMap((c) => inScope(c, ig, profile)).length;
 
-  // Steps (1-based) for controls with at least one question that applies
-  const steps = controls.map((c, i) => (inScope(c, ig, profile).length ? i + 1 : 0)).filter(Boolean);
+  // Steps (1-based) for Functions with at least one question that applies
+  const steps = functions
+    .map((f, i) => (f.categories.some((c) => inScope(c, ig, profile).length) ? i + 1 : 0))
+    .filter(Boolean);
   const nextStep = steps.find((n) => n > step);
   const prevStep = [...steps].reverse().find((n) => n < step) ?? 0;
 
@@ -94,7 +98,7 @@ export default function SelfAssessment({ id, initial, hasHistory, save = savePro
         )}
 
         {step > 0 && (
-          <ControlStep
+          <FunctionStep
             index={step - 1}
             ig={ig}
             answers={answers}
@@ -124,7 +128,7 @@ function Intro({
 }: {
   profile: Profile;
   setProfile: (p: Profile) => void;
-  ig: IG;
+  ig: Tier;
   onStart: () => void;
   resumed: boolean;
   hasHistory: boolean;
@@ -191,7 +195,8 @@ function Intro({
         {profileDone(profile) && (
           <div className="mt-6 rounded-lg bg-blue-50 border border-blue-100 p-4">
             <p className="text-sm text-blue-900">
-              <span className="font-semibold">Your target: {igInfo[ig].name}.</span> {igInfo[ig].description}
+              <span className="font-semibold">Your target profile: {tierInfo[ig].name}.</span> {tierInfo[ig].description}{' '}
+              <span className="text-blue-800">Aligned to {tierInfo[ig].csfTier}.</span>
             </p>
           </div>
         )}
@@ -217,9 +222,9 @@ function Intro({
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h3 className="font-bold text-gray-900 mb-3">How it works</h3>
           <ol className="space-y-3 text-sm text-gray-700">
-            <li><span className="font-semibold">1.</span> Answer up to three questions for each of the 18 CIS Controls.</li>
+            <li><span className="font-semibold">1.</span> Answer one or two questions for each of the 22 Categories in the NIST Cybersecurity Framework 2.0, grouped by Govern, Identify, Protect, Detect, Respond and Recover.</li>
             <li><span className="font-semibold">2.</span> Rate each one from &ldquo;Not in place&rdquo; to &ldquo;Fully&rdquo;. Pick &ldquo;Not sure&rdquo; if you don&rsquo;t know.</li>
-            <li><span className="font-semibold">3.</span> Get your score, your biggest gaps, what closes them and how you map to CIS, CMMC, ISO 27001, NIST CSF and SOC 2.</li>
+            <li><span className="font-semibold">3.</span> Get your score, your biggest gaps, what closes them and how you map to NIST CSF, CMMC, ISO 27001 and SOC 2.</li>
           </ol>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -254,14 +259,14 @@ function Progress({
   total: number;
   onJump: (n: number) => void;
   answers: Answers;
-  ig: IG;
+  ig: Tier;
 }) {
   const pct = total ? Math.round((answered / total) * 100) : 0;
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
         <span>
-          Control {step} of {controls.length}
+          Step {step} of {functions.length}: {functions[step - 1]?.title}
         </span>
         <span>
           {pct}% answered
@@ -273,9 +278,9 @@ function Progress({
       <div className="h-2 bg-gray-200 rounded-full overflow-hidden" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
         <div className="h-full bg-blue-600 transition-all" style={{ width: `${pct}%` }} />
       </div>
-      <nav aria-label="Controls" className="mt-3 flex flex-wrap gap-1.5">
-        {controls.map((c, i) => {
-          const qs = inScope(c, ig, profile);
+      <nav aria-label="CSF Functions" className="mt-3 flex flex-wrap gap-1.5">
+        {functions.map((c, i) => {
+          const qs = c.categories.flatMap((cat) => inScope(cat, ig, profile));
           const done = qs.length > 0 && qs.every((q) => q.id in answers);
           const current = step === i + 1;
           return (
@@ -286,7 +291,7 @@ function Progress({
               onClick={() => onJump(i + 1)}
               title={qs.length === 0 ? `${c.title}: doesn't apply` : c.title}
               aria-current={current ? 'step' : undefined}
-              className={`w-8 h-8 rounded-md text-xs font-semibold border ${
+              className={`min-w-10 h-8 px-2 rounded-md text-xs font-semibold border ${
                 current
                   ? 'bg-blue-600 text-white border-blue-600'
                   : done
@@ -305,9 +310,9 @@ function Progress({
   );
 }
 
-/* ---------- One control ---------- */
+/* ---------- One CSF Function ---------- */
 
-function ControlStep({
+function FunctionStep({
   index,
   ig,
   answers,
@@ -322,62 +327,75 @@ function ControlStep({
   last: boolean;
   busy: boolean;
   index: number;
-  ig: IG;
+  ig: Tier;
   answers: Answers;
   setAnswer: (id: string, v: number) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
-  const c = controls[index];
-  const qs = inScope(c, ig, profile);
+  const f = functions[index];
+  const cats = f.categories;
+  const qs = cats.flatMap((c) => inScope(c, ig, profile));
   const complete = qs.every((q) => q.id in answers);
+  let n = 0;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 md:p-8">
-      <p className="text-xs font-semibold uppercase tracking-widest text-blue-700 mb-1">CIS Control {c.id}</p>
-      <h2 className="text-2xl font-bold text-gray-900">{c.title}</h2>
-      <p className="text-gray-600 mt-1 mb-6">{c.summary}</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-blue-700 mb-1">NIST CSF 2.0 Function {f.id}</p>
+      <h2 className="text-2xl font-bold text-gray-900">{f.title}</h2>
+      <p className="text-gray-600 mt-1 mb-6">{f.text}</p>
 
       {qs.length === 0 ? (
         <p className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-gray-700">
-          {notApplicable(c, ig, profile)
-            ? 'This control doesn’t apply based on your answers about your organization. You can skip it.'
-            : `This control isn’t expected at ${igInfo[ig].name.split(':')[0]}. You can skip it.`}
+          {cats.some((c) => notApplicable(c, ig, profile))
+            ? 'This function doesn’t apply based on your answers about your organization. You can skip it.'
+            : `This function isn’t expected for the ${tierInfo[ig].name} profile. You can skip it.`}
         </p>
       ) : (
-        <div className="space-y-6">
-          {qs.map((q, qi) => (
-            <div key={q.id} className="border-t border-gray-100 pt-5 first:border-0 first:pt-0">
-            <fieldset>
-              <legend className="font-medium text-gray-900 mb-3">
-                <span className="text-gray-400 mr-2">{qi + 1}.</span>
-                {q.text}
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {[...scale, { value: NOT_SURE, label: 'Not sure' }].map((o) => {
-                  const on = answers[q.id] === o.value;
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setAnswer(q.id, o.value)}
-                      className={`px-3.5 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                        on
-                          ? o.value === NOT_SURE
-                            ? 'bg-gray-700 border-gray-700 text-white'
-                            : 'bg-blue-600 border-blue-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
-                      } ${o.value === NOT_SURE ? 'sm:ml-2' : ''}`}
-                    >
-                      {o.label}
-                    </button>
-                  );
-                })}
+        <div className="space-y-8">
+          {cats.map((c) => {
+            const cq = inScope(c, ig, profile);
+            if (!cq.length) return null;
+            return (
+              <div key={c.id} className="border-t border-gray-100 pt-6 first:border-0 first:pt-0">
+                <p className="text-xs font-mono text-gray-500">{c.id}</p>
+                <h3 className="text-lg font-bold text-gray-900">{c.title}</h3>
+                <p className="text-sm text-gray-600 mt-0.5 mb-4">{c.summary}</p>
+                <div className="space-y-5">
+                  {cq.map((q) => (
+                    <fieldset key={q.id}>
+                      <legend className="font-medium text-gray-900 mb-3">
+                        <span className="text-gray-400 mr-2">{++n}.</span>
+                        {q.text}
+                      </legend>
+                      <div className="flex flex-wrap gap-2">
+                        {[...scale, { value: NOT_SURE, label: 'Not sure' }].map((o) => {
+                          const on = answers[q.id] === o.value;
+                          return (
+                            <button
+                              key={o.value}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => setAnswer(q.id, o.value)}
+                              className={`px-3.5 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                                on
+                                  ? o.value === NOT_SURE
+                                    ? 'bg-gray-700 border-gray-700 text-white'
+                                    : 'bg-blue-600 border-blue-600 text-white'
+                                  : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400'
+                              } ${o.value === NOT_SURE ? 'sm:ml-2' : ''}`}
+                            >
+                              {o.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </fieldset>
+                  ))}
+                </div>
               </div>
-            </fieldset>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

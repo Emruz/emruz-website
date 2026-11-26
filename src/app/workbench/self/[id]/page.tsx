@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { DetailHeader, Container } from '@/components';
 import { isUuid } from '@/lib/server/api';
 import { purgeDate, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
-import { controls, inScope, profileSummary, targetIG } from '@/content/cis-assessment';
+import { categories, inScope, profileSummary, tierOf } from '@/content/self-assessment';
 import { frameworks } from '@/content/crosswalk';
 import ResultsView from '@/app/assessments/self/ResultsView';
 import PrintButton from '@/app/assessments/self/PrintButton';
@@ -25,8 +25,8 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
   const sp = await searchParams;
   const [staff, partners] = all ? await Promise.all([staffList(), partnerOptions()]) : [[], []];
   const people = [{ account_id: account.id, label: account.name || account.email }, ...staff.filter((s) => s.account_id !== account.id).map((s) => ({ account_id: s.account_id, label: s.name || s.email }))];
-  const ig = r.target_ig ?? targetIG(r.profile);
-  const qs = controls.flatMap((c) => inScope(c, ig, r.profile));
+  const ig = tierOf(r.target_ig, r.profile);
+  const qs = categories.flatMap((c) => inScope(c, ig, r.profile));
   const answered = qs.filter((q) => q.id in r.answers).length;
 
   return (
@@ -130,7 +130,7 @@ export default async function SelfAssessmentDetail({ params, searchParams }: { p
           </div>
 
           {r.status === 'completed' ? (
-            <ResultsView answers={r.answers} profile={r.profile} ig={ig} staffView />
+            <ResultsView answers={r.answers} profile={r.profile} tier={ig} staffView />
           ) : (
             <div className={`${card} p-6`}>
               <p className="font-semibold text-gray-900">Not finished yet</p>

@@ -46,7 +46,7 @@
 ### Brand
 - Consultancy-first positioning (not MSP, not vendor)
 - Premium, modern, minimal aesthetic (not corporate sterile, not trendy)
-- Framework-grounded (NIST CSF, CIS Controls, CSF visible on every service page)
+- Framework-grounded (NIST CSF, ISO 27001, SOC 2 visible on every service page)
 - Technical depth without elitism
 - WhiteDog Cyber partnership **invisible in primary messaging** (can be named in About or Trust sections if strategic)
 
@@ -63,7 +63,7 @@
 - [ ] Consultancy positioning clear on every page (not MSP, not vendor)
 - [ ] Proof points specific and verifiable (framework alignment, team credentials, outcomes)
 - [ ] Copy consistent with brand voice (professional, clear, technical, no buzzwords)
-- [ ] Framework logos (NIST, CIS, CSF) visible on every service page
+- [ ] Framework logos (NIST CSF, ISO 27001, SOC 2) visible on every service page
 - [ ] CTAs assessment-first (primary focus is "Schedule an Assessment")
 
 ### Performance & Quality
@@ -92,7 +92,7 @@
 - **Why:** Protects positioning as consultancy (not vendor), avoids confusing buyer about who they're hiring
 
 ### Proof Points Strategy
-- Framework alignment (NIST, CIS, CSF) is primary proof (methodology credibility)
+- Framework alignment (NIST CSF, ISO 27001, SOC 2) is primary proof (methodology credibility)
 - Certifications and team credentials (CISSP, CCSK, AWS, Azure, GCP)
 - Outcomes and scale ("deployed across 200+ organizations", specific metrics if available)
 - Methodology clarity (how we approach the work)

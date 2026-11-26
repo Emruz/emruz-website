@@ -2,11 +2,12 @@ import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import {
-  controls,
+  functions,
   NOT_SURE,
   profileSummary,
-  igInfo,
-  controlScore,
+  tierInfo,
+  categoryScore,
+  functionScore,
   notApplicable,
   overallScore,
   maturity,
@@ -15,8 +16,8 @@ import {
   GAP_THRESHOLD,
   type Answers,
   type Profile,
-  type IG,
-} from '@/content/cis-assessment';
+  type Tier,
+} from '@/content/self-assessment';
 import { addOnHref, addOnLabel, capabilities, displayCode, packageHref, POWERED_BY } from '@/content/packages';
 import Crosswalk from './Crosswalk';
 
@@ -24,7 +25,7 @@ import Crosswalk from './Crosswalk';
 export default function ResultsView({
   answers,
   profile,
-  ig,
+  tier,
   actions,
   staffView = false,
 }: {
@@ -34,10 +35,11 @@ export default function ResultsView({
   actions?: React.ReactNode;
   answers: Answers;
   profile: Profile;
-  ig: IG;
+  tier: Tier;
 }) {
+  const ig = tier;
   const score = overallScore(answers, ig, profile);
-  const ig1 = overallScore(answers, 1, profile);
+  const essential = overallScore(answers, 1, profile);
   const m = maturity(score);
   const rec = recommend(answers, ig, profile);
   const projected = withPackage(answers, rec.pkg);
@@ -45,12 +47,13 @@ export default function ResultsView({
   const extras = rec.addOns;
   const projectedAll = withPackage(answers, rec.pkg, ...extras);
   const afterAll = overallScore(projectedAll, ig, profile);
+  const cols = 2 + (rec.pkg ? 1 : 0) + (extras.length ? 1 : 0);
   const unsure = Object.values(answers).filter((v) => v === NOT_SURE).length;
 
   const summary = [
-    `CIS v8 self-assessment: ${score}% (${m.label}) at ${igInfo[ig].name.split(':')[0]}`,
-    `IG1 hygiene: ${ig1}%`,
-    rec.gaps.length ? `Top gaps: ${rec.gaps.slice(0, 5).map((g) => `CIS ${g.control.id} (${g.score}%)`).join(', ')}` : 'No major gaps',
+    `NIST CSF 2.0 self-assessment: ${score}% (${m.label}), ${tierInfo[ig].name} profile`,
+    ig > 1 ? `Essential practices: ${essential}%` : '',
+    rec.gaps.length ? `Top gaps: ${rec.gaps.slice(0, 5).map((g) => `${g.category.id} (${g.score}%)`).join(', ')}` : 'No major gaps',
     rec.pkg ? `Suggested: ${displayCode(rec.pkg.code)}` : '',
   ]
     .filter(Boolean)
@@ -68,14 +71,15 @@ export default function ResultsView({
             <p className={`font-semibold ${m.color}`}>{m.label}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Measured against</p>
-            <p className="font-semibold text-gray-900">{igInfo[ig].name}</p>
-            <p className="text-sm text-gray-600">{igInfo[ig].description}</p>
+            <p className="text-sm text-gray-500">Target profile</p>
+            <p className="font-semibold text-gray-900">{tierInfo[ig].name}</p>
+            <p className="text-sm text-gray-600">{tierInfo[ig].description}</p>
+            <p className="text-xs text-gray-500 mt-1">NIST CSF 2.0, aligned to {tierInfo[ig].csfTier}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-500">Essential cyber hygiene (IG1)</p>
-            <p className="text-2xl font-bold text-gray-900">{ig1}%</p>
-            <p className="text-sm text-gray-600">{ig1 >= 90 ? 'Strong foundation.' : 'Start here. These basics stop most common attacks.'}</p>
+            <p className="text-sm text-gray-500">Essential practices</p>
+            <p className="text-2xl font-bold text-gray-900">{essential}%</p>
+            <p className="text-sm text-gray-600">{essential >= 90 ? 'Strong foundation.' : 'Start here. These basics stop most common attacks.'}</p>
           </div>
           {unsure > 0 && (
             <p className="md:col-span-3 text-sm text-gray-600 border-t border-gray-100 pt-4">
@@ -89,14 +93,14 @@ export default function ResultsView({
           <h2 className="text-xl font-bold text-gray-900 mb-3">Biggest gaps</h2>
           {rec.gaps.length === 0 ? (
             <p className="text-gray-700 flex gap-2">
-              <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" /> Every control in scope scores {GAP_THRESHOLD}% or more.
+              <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" /> Every category in scope scores {GAP_THRESHOLD}% or more.
             </p>
           ) : (
             <ol className="space-y-2 text-sm">
               {rec.gaps.slice(0, 5).map((g) => (
-                <li key={g.control.id} className="flex justify-between gap-3">
+                <li key={g.category.id} className="flex justify-between gap-3">
                   <span className="text-gray-800">
-                    CIS {g.control.id}: {g.control.title}
+                    <span className="font-mono text-xs text-gray-500 mr-1">{g.category.id}</span> {g.category.title}
                   </span>
                   <span className={`font-semibold ${maturity(g.score).color}`}>{g.score}%</span>
                 </li>
@@ -107,9 +111,9 @@ export default function ResultsView({
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* By control */}
+        {/* By CSF Function and Category */}
         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-6 md:p-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">By control</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">By CSF Function and Category</h2>
           <table className="w-full text-sm border-separate border-spacing-0">
             {(rec.pkg || extras.length > 0) && (
               <thead>
@@ -137,23 +141,35 @@ export default function ResultsView({
               </thead>
             )}
             <tbody>
-              {controls.map((c, i) => {
-                const s = controlScore(c, answers, ig, profile);
+              {functions.flatMap((f, fi) => {
+                const fs = functionScore(f.id, answers, ig, profile);
+                const header = (
+                  <tr key={f.id}>
+                    <td className={`pr-4 pb-1 font-bold text-gray-900 ${fi > 0 ? 'pt-4' : ''}`}>{f.title}</td>
+                    <td className={`pr-4 pb-1 text-right font-bold whitespace-nowrap ${fs === null ? 'text-gray-400' : maturity(fs).color} ${fi > 0 ? 'pt-4' : ''}`}>
+                      {fs === null ? '' : `${fs}%`}
+                    </td>
+                    {cols > 2 && rec.pkg && <td className="bg-slate-900/80" />}
+                    {cols > 2 && extras.length > 0 && <td className="bg-indigo-800/80" />}
+                  </tr>
+                );
+                return [header, ...f.categories.map((c, ci) => {
+                const s = categoryScore(c, answers, ig, profile);
                 const na = notApplicable(c, ig, profile);
                 const cm = s === null ? null : maturity(s);
-                const after = rec.pkg ? controlScore(c, projected, ig, profile) : null;
+                const after = rec.pkg ? categoryScore(c, projected, ig, profile) : null;
                 const lifted = s !== null && after !== null && after > s;
-                const afterAll = extras.length ? controlScore(c, projectedAll, ig, profile) : null;
+                const afterAll = extras.length ? categoryScore(c, projectedAll, ig, profile) : null;
                 const liftedAll = afterAll !== null && afterAll > (after ?? s ?? 0);
-                const last = i === controls.length - 1;
+                const last = fi === functions.length - 1 && ci === f.categories.length - 1;
                 return (
                   <tr key={c.id}>
                     <td className="py-1.5 pr-4 align-top">
                       <span className="text-gray-800">
-                        <span className="text-gray-400 w-6 inline-block">{c.id}</span>
+                        <span className="text-gray-400 font-mono text-xs w-14 inline-block">{c.id}</span>
                         {c.title}
                       </span>
-                      <div className="ml-6 mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="ml-14 mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         {s !== null && <div className={`h-full ${cm!.bar}`} style={{ width: `${Math.max(s, 2)}%` }} />}
                       </div>
                     </td>
@@ -180,6 +196,7 @@ export default function ResultsView({
                     )}
                   </tr>
                 );
+              })];
               })}
             </tbody>
           </table>
@@ -188,7 +205,7 @@ export default function ResultsView({
               Shaded columns show your score with the suggested services in place. Overall {score}%
               {rec.pkg && <> → {after}% with {displayCode(rec.pkg.code)}</>}
               {extras.length > 0 && <> → {afterAll}% adding {extras.map((a) => addOnLabel(a)).join(', ')}</>}. Process work such as
-              supplier management and secure development is not included.
+              governance, supplier management and secure development is not included.
             </p>
           )}
         </div>
@@ -250,7 +267,7 @@ export default function ResultsView({
 
       <Crosswalk
         answers={answers}
-        ig={ig}
+        tier={ig}
         profile={profile}
         withPkg={rec.pkg ? { label: displayCode(rec.pkg.code), answers: projected } : null}
         withAll={extras.length ? { codes: extras.map((a) => addOnLabel(a)), plus: !!rec.pkg, answers: projectedAll } : null}

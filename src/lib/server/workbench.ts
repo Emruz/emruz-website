@@ -349,7 +349,7 @@ export interface ReportFinding {
   unverified: boolean;
   overrideReason: string | null;
   evidence: { id: string; title: string; kind: 'file' | 'link' }[];
-  related: Partial<Record<'cis' | 'cmmc' | 'iso' | 'soc2', string[]>>;
+  related: Partial<Record<'cmmc' | 'iso' | 'soc2', string[]>>;
 }
 
 export interface ReportContent {

@@ -49,7 +49,7 @@ export default async function EngagementLayout({ children, params }: { children:
           <div className="flex items-center gap-2 mb-3">
             <StatusBadge status={e.status} />
             <span className="text-xs font-semibold text-gray-700">{assessmentType(e.assessment_type).name}</span>
-            {fw.usesIg && <span className="text-xs text-gray-500">IG{e.target_ig} target</span>}
+            {fw.usesProfile && <span className="text-xs text-gray-500">{({ 1: 'Essential', 2: 'Standard', 3: 'Advanced' } as Record<number, string>)[e.target_ig] ?? 'Standard'} target</span>}
           </div>
           <Tabs id={id} counts={{ flags: blocking, requests: requests.filter((r) => r.status === 'open').length }} />
           {children}

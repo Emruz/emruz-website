@@ -16,8 +16,9 @@
  */
 import { frameworkFor, type Framework } from './frameworks';
 import { allIntakeFields, intakeSectionsFor, type IntakeField } from './engagement-types';
-import { controls, inScope, NOT_SURE, type Answers, type IG, type Profile } from './cis-assessment';
-import { crosswalk, type FrameworkKey } from './crosswalk';
+import { categories, inScope, NOT_SURE, type Answers, type Profile, type Tier } from './self-assessment';
+import { relatedIds, type FrameworkKey } from './crosswalk';
+import { csfSubcategories } from './csf';
 
 export const maturityLevels = [
   { value: 0, label: 'Not performed', help: 'Nothing in place.' },
@@ -30,7 +31,8 @@ export const maturityLevels = [
 
 export const EVIDENCE_REQUIRED_AT = 3;
 
-export const defaultTarget = (ig: IG) => ({ 1: 2, 2: 3, 3: 4 })[ig];
+/** Default target maturity for a self-assessment target profile (Essential, Standard, Advanced). */
+export const defaultTarget = (tier: Tier) => ({ 1: 2, 2: 3, 3: 4 })[tier];
 
 export function tierFor(score: number | null) {
   if (score === null) return { tier: 0, label: 'Not rated' };
@@ -131,21 +133,19 @@ export function rollup(ratings: Record<string, Rating>, fw: Framework = framewor
 
 /* ---------- Crosswalk from CSF back to the other frameworks ---------- */
 
-/** Self-assessment questions that map to each CSF subcategory. */
+/** Self-assessment questions that rate each CSF subcategory. */
 const questionsForCsf = (() => {
   const m = new Map<string, string[]>();
-  for (const [qid, map] of Object.entries(crosswalk)) {
-    for (const id of map.csf ?? []) m.set(id, [...(m.get(id) ?? []), qid]);
-  }
+  for (const c of categories) for (const q of c.questions) for (const id of q.csf) m.set(id, [...(m.get(id) ?? []), q.id]);
   return m;
 })();
 
-/** Related IDs in CIS, CMMC, ISO and SOC 2, through the shared questions. */
+/** Related IDs in CMMC, ISO and SOC 2, through the shared questions. */
 export function relatedFor(csfId: string): Partial<Record<Exclude<FrameworkKey, 'csf'>, string[]>> {
   const out: Partial<Record<Exclude<FrameworkKey, 'csf'>, Set<string>>> = {};
   for (const qid of questionsForCsf.get(csfId) ?? []) {
-    for (const k of ['cis', 'cmmc', 'iso', 'soc2'] as const) {
-      for (const id of crosswalk[qid]?.[k] ?? []) (out[k] ??= new Set()).add(id);
+    for (const k of ['cmmc', 'iso', 'soc2'] as const) {
+      for (const id of relatedIds(qid, k)) (out[k] ??= new Set()).add(id);
     }
   }
   const sorted: Partial<Record<Exclude<FrameworkKey, 'csf'>, string[]>> = {};
@@ -156,16 +156,23 @@ export function relatedFor(csfId: string): Partial<Record<Exclude<FrameworkKey, 
 }
 
 /**
- * Starting ratings from a completed self-assessment: the average answer
- * (0 to 4) of the questions mapped to each subcategory, marked pre-filled so
- * the assessor must confirm each one. Capped at 4; Optimized is never pre-filled.
+ * Starting ratings for the full CSF 2.0 engagement from a completed
+ * self-assessment, marked pre-filled so the assessor must confirm each one.
+ * The self-assessment is built on CSF Categories, so every subcategory gets a
+ * rating: the mean answer (0 to 4) of the questions that rate it, or else of
+ * its Category's questions. Not sure and out-of-scope answers are skipped.
+ * Capped at 4; Optimized is never pre-filled.
  */
-export function prefillFromSelf(answers: Answers, profile: Profile, ig: IG): Record<string, number> {
-  const asked = new Set(controls.flatMap((c) => inScope(c, ig, profile)).map((q) => q.id));
+export function prefillFromSelf(answers: Answers, profile: Profile, tier: Tier): Record<string, number> {
+  const asked = new Set(categories.flatMap((c) => inScope(c, tier, profile)).map((q) => q.id));
+  const usable = (qids: string[]) =>
+    qids.filter((q) => asked.has(q) && answers[q] !== undefined && answers[q] !== NOT_SURE).map((q) => answers[q]);
+  const byCategory = new Map(categories.map((c) => [c.id, usable(c.questions.map((q) => q.id))]));
   const out: Record<string, number> = {};
-  for (const [csfId, qids] of questionsForCsf) {
-    const vals = qids.filter((q) => asked.has(q) && answers[q] !== undefined && answers[q] !== NOT_SURE).map((q) => answers[q]);
-    if (vals.length) out[csfId] = Math.min(4, Math.round(mean(vals)!));
+  for (const s of csfSubcategories) {
+    const direct = usable(questionsForCsf.get(s.id) ?? []);
+    const vals = direct.length ? direct : (byCategory.get(s.category) ?? []);
+    if (vals.length) out[s.id] = Math.min(4, Math.round(mean(vals)!));
   }
   return out;
 }

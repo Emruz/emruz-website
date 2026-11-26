@@ -16,9 +16,9 @@ export interface Framework {
   name: string;
   /** Word used for items in the UI and report. */
   itemLabel: string;
-  /** Targets come from CIS implementation groups and ratings can be pre-filled from a self-assessment. */
-  usesIg: boolean;
-  /** Has crosswalks to CIS, CMMC, ISO 27001 and SOC 2. */
+  /** Targets come from a target profile (Essential, Standard, Advanced) and ratings can be pre-filled from a self-assessment. */
+  usesProfile: boolean;
+  /** Has crosswalks to CMMC, ISO 27001 and SOC 2. */
   crosswalk: boolean;
   functions: FwFunction[];
   categories: FwCategory[];
@@ -47,7 +47,7 @@ function build(type: AssessmentType, name: string, spec: Spec): Framework {
     type,
     name,
     itemLabel: 'practice',
-    usesIg: false,
+    usesProfile: false,
     crosswalk: false,
     functions,
     categories,
@@ -60,7 +60,7 @@ const security: Framework = {
   type: 'security',
   name: 'NIST CSF 2.0',
   itemLabel: 'subcategory',
-  usesIg: true,
+  usesProfile: true,
   crosswalk: true,
   functions: csfFunctions,
   categories: csfCategories,

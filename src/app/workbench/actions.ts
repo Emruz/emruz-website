@@ -42,11 +42,11 @@ import {
 } from '@/content/workbench';
 import { frameworkFor } from '@/content/frameworks';
 import { assessmentType, isAssessmentType, type AssessmentType } from '@/content/engagement-types';
-import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, controls as cisControls, isComplete } from '@/content/cis-assessment';
+import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, functions, isComplete } from '@/content/self-assessment';
 import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
 import { addPartnerStaffMember, parseDomains, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
 import { detectType } from '@/lib/server/filetype';
-import type { Answers, IG, Profile } from '@/content/cis-assessment';
+import type { Answers, Profile, Tier } from '@/content/self-assessment';
 
 const str = (v: FormDataEntryValue | null, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 const date = (v: FormDataEntryValue | null) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
@@ -133,7 +133,7 @@ async function newEngagement(o: {
   type: AssessmentType;
   title: string;
   lead: string;
-  ig: IG;
+  ig: Tier;
   start: string | null;
   due: string | null;
   selfId: string | null;
@@ -142,12 +142,12 @@ async function newEngagement(o: {
   const fw = frameworkFor(o.type);
   const [e] = await db()<{ id: string }[]>`
     insert into engagements (client_id, kind, assessment_type, title, lead_account_id, target_ig, start_date, due_date, created_by, self_assessment_id)
-    values (${o.clientId}, 'assessment', ${o.type}, ${o.title}, ${o.lead}, ${o.ig}, ${o.start}, ${o.due}, ${o.actor.id}, ${fw.usesIg ? o.selfId : null})
+    values (${o.clientId}, 'assessment', ${o.type}, ${o.title}, ${o.lead}, ${o.ig}, ${o.start}, ${o.due}, ${o.actor.id}, ${fw.usesProfile ? o.selfId : null})
     returning id`;
-  const target = fw.usesIg ? defaultTarget(o.ig) : 3;
+  const target = fw.usesProfile ? defaultTarget(o.ig) : 3;
   let prefill: Record<string, number> = {};
-  if (o.selfId && fw.usesIg) {
-    const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: IG | null }[]>`
+  if (o.selfId && fw.usesProfile) {
+    const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: Tier | null }[]>`
       select answers, profile, target_ig from assessments where id = ${o.selfId} and status = 'completed'`;
     if (s) prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
   }
@@ -208,7 +208,7 @@ export async function createEngagement(form: FormData) {
       on conflict (client_id, account_id) do nothing`;
     await logEvent('client_contact_added', { clientId, contact: contact.id }, { accountId: account.id, actor: account.email });
   }
-  const ig = (Number(form.get('target_ig')) || 2) as IG;
+  const ig = (Number(form.get('target_ig')) || 2) as Tier;
   const lead = form.get('lead');
   const selfId = form.get('self_assessment_id');
   const typeIn = form.get('assessment_type');
@@ -240,7 +240,7 @@ export async function createEngagement(form: FormData) {
 async function selfOn(id: unknown) {
   const ctx = await staff();
   if (!isUuid(id)) throw new Error('Not found');
-  const [a] = await db()<{ id: string; account_id: string; assigned_to: string | null; status: string; target_ig: IG | null; followed_up_at: Date | null; deleted_at: Date | null }[]>`
+  const [a] = await db()<{ id: string; account_id: string; assigned_to: string | null; status: string; target_ig: Tier | null; followed_up_at: Date | null; deleted_at: Date | null }[]>`
     select id, account_id, assigned_to, status, target_ig, followed_up_at, deleted_at from assessments where id = ${id}`;
   if (!a || (!seesAll(ctx.role) && a.assigned_to !== ctx.account.id)) throw new Error('Not found');
   return { ...ctx, a };
@@ -737,7 +737,7 @@ async function guidedOn(id: string) {
 
 export async function guidedSave(id: string, data: { step: unknown; profile: unknown; answers: unknown }) {
   const { a } = await guidedOn(id);
-  const step = Math.min(Math.max(0, Number(data.step) || 0), cisControls.length + 1);
+  const step = Math.min(Math.max(0, Number(data.step) || 0), functions.length + 1);
   await db()`
     update assessments set step = ${step}, profile = ${db().json(cleanProfile(data.profile) as never)},
       answers = ${db().json(cleanAnswers(data.answers) as never)}, updated_at = now()

@@ -3,7 +3,7 @@ import SignInOptions from '@/components/account/SignInOptions';
 import { currentAccount } from '@/lib/server/session';
 import { activeRegistration, currentAssessment, getRegistration, listAssessments, openAssessment } from '@/lib/server/assessments';
 import Link from 'next/link';
-import { maturity } from '@/content/cis-assessment';
+import { maturity } from '@/content/self-assessment';
 import { startNew } from './actions';
 import SelfAssessment from './client';
 import RegisterForm from './RegisterForm';
@@ -14,11 +14,11 @@ import { staffRole } from '@/lib/server/workbench';
 export const metadata = {
   title: 'Security Self-Assessment',
   description:
-    'A self-paced security assessment based on the CIS Critical Security Controls v8. Register to see your maturity score, your biggest gaps and what closes them.',
+    'A self-paced security assessment based on the NIST Cybersecurity Framework 2.0. Register to see your maturity score, your biggest gaps and what closes them.',
 };
 
 const benefits = [
-  'A maturity score against the 18 CIS Critical Security Controls v8',
+  'A maturity score across the six NIST CSF 2.0 Functions, set to a target profile that fits your organization',
   'Your five biggest gaps, ranked',
   'The managed service and advisory help that close them',
   'A report by email, and a follow-up call with our team if you want one',
@@ -70,8 +70,8 @@ export default async function SelfAssessmentPage({ searchParams }: { searchParam
       title="Security Self-Assessment"
       summary={
         registered
-          ? 'Based on the CIS Critical Security Controls v8. About 15 minutes. Your answers save as you go.'
-          : 'Based on the CIS Critical Security Controls v8. About 15 minutes. Free for registered users.'
+          ? 'Based on the NIST Cybersecurity Framework 2.0. About 15 minutes. Your answers save as you go.'
+          : 'Based on the NIST Cybersecurity Framework 2.0. About 15 minutes. Free for registered users.'
       }
     />
   );

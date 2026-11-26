@@ -90,7 +90,7 @@ export default function VCISo() {
               <ul className="space-y-3">
                 {[
                   'Security strategy and roadmap aligned to business goals',
-                  'Governance framework (NIST, CIS-based)',
+                  'Governance framework (NIST CSF or other industry frameworks)',
                   'Board-level risk narrative and reporting',
                   'Compliance posture assessment',
                 ].map((item, i) => (
@@ -190,7 +190,7 @@ export default function VCISo() {
             {[
               'Security roadmap document (12-month outlook)',
               'Board-ready risk and compliance dashboard',
-              'Governance framework (NIST CSF or CIS-based)',
+              'Governance framework (NIST CSF or other industry frameworks)',
               'Security policies (tailored to organization)',
               'Incident response playbook',
               'Quarterly board reporting and metrics',

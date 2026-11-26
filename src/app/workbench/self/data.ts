@@ -1,13 +1,13 @@
 import 'server-only';
 import { db } from '@/lib/server/db';
-import type { Answers, IG, Profile } from '@/content/cis-assessment';
+import type { Answers, Profile, Tier } from '@/content/self-assessment';
 
 export interface SelfRow {
   id: string;
   account_id: string;
   status: 'in_progress' | 'completed';
   score: number | null;
-  target_ig: IG | null;
+  target_ig: Tier | null;
   recommended_package: string | null;
   profile: Profile;
   answers: Answers;

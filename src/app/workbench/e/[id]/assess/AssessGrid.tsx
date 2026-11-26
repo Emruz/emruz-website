@@ -35,7 +35,7 @@ const filters: { key: string; label: string; test: (f: Flag[], r: Rating) => boo
   { key: 'gaps', label: 'Gaps', test: (_f, r) => !!priorityFor(r.current_level, r.target_level) && !r.na },
 ];
 
-const relatedLabel = { cis: 'CIS', cmmc: 'CMMC', iso: 'ISO', soc2: 'SOC 2' } as const;
+const relatedLabel = { cmmc: 'CMMC', iso: 'ISO', soc2: 'SOC 2' } as const;
 
 export default function AssessGrid({ id, type, initial, evidence: initialEvidence, initialFilter, initialFn }: {
   id: string;

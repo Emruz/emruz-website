@@ -2,7 +2,7 @@ import Link from 'next/link';
 import LiveSearch from '@/components/LiveSearch';
 import { DetailHeader, Container } from '@/components';
 import { purgeDate, purgeDeleted, requireStaff, seesAll, staffList } from '@/lib/server/workbench';
-import { controls, inScope, maturity, recommend, targetIG } from '@/content/cis-assessment';
+import { categories, inScope, maturity, recommend, targetTier, tierInfo, tierOf } from '@/content/self-assessment';
 import { addOnLabel, displayCode } from '@/content/packages';
 import { frameworks } from '@/content/crosswalk';
 import { WorkbenchNav, btn, card, fmtDate } from '../ui';
@@ -23,7 +23,7 @@ const filters = [
 ] as const;
 
 function progress(r: SelfRow) {
-  const qs = controls.flatMap((c) => inScope(c, targetIG(r.profile), r.profile));
+  const qs = categories.flatMap((c) => inScope(c, targetTier(r.profile), r.profile));
   return Math.round((qs.filter((q) => q.id in r.answers).length / qs.length) * 100);
 }
 
@@ -84,7 +84,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                   <tr data-search-skip><td colSpan={6} className="p-6 text-gray-500">{all ? 'No self-assessments here.' : 'Nothing assigned to you yet.'}</td></tr>
                 )}
                 {shown.map((r) => {
-                  const ig = r.target_ig ?? targetIG(r.profile);
+                  const ig = tierOf(r.target_ig, r.profile);
                   const rec = r.status === 'completed' ? recommend(r.answers, ig, r.profile) : null;
                   return (
                     <tr key={r.id} className="border-b border-gray-100 last:border-0 align-top hover:bg-gray-50">
@@ -106,7 +106,7 @@ export default async function SelfAssessments({ searchParams }: { searchParams: 
                       <td className="p-3 whitespace-nowrap">
                         {r.status === 'completed' ? (
                           <>
-                            <p><span className={`text-lg font-bold ${maturity(r.score ?? 0).color}`}>{r.score}%</span> <span className="text-gray-500">IG{ig}</span></p>
+                            <p><span className={`text-lg font-bold ${maturity(r.score ?? 0).color}`}>{r.score}%</span> <span className="text-gray-500">{tierInfo[ig].name}</span></p>
                             <p className="text-xs text-gray-500">{fmtDate(r.completed_at)}</p>
                           </>
                         ) : (

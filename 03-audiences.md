@@ -20,7 +20,7 @@
 - Budget cuts with mandate for "do more with less"
 
 ### What Proof They Need
-- Framework alignment (NIST CSF, CIS Controls; auditor-ready)
+- Framework alignment (NIST CSF and other industry frameworks; auditor-ready)
 - Case outcomes (not just testimonials; quantified results: "compliance score improved from X to Y")
 - Team depth (certifications, years of experience, past implementations)
 - Methodology clarity (how do you approach this work? what's your process?)
@@ -142,7 +142,7 @@
 - Vendor questionnaires and assessments are constant drain
 
 ### What Proof They Need
-- Compliance framework expertise (which standard? how do we map to NIST/CIS?)
+- Compliance framework expertise (which standard? how do we map to NIST CSF and ISO?)
 - Audit success stories (passed audits, reduced findings)
 - Governance methodology (how do you build sustainable programs?)
 - Tooling and automation (reduces manual work, improves consistency)
@@ -156,7 +156,7 @@
 
 ### Page Messaging
 - Lead with compliance burden (audit prep is hard, we make it easier)
-- Show framework expertise (NIST, CIS, ISO, etc.)
+- Show framework expertise (NIST, ISO, SOC 2, etc.)
 - Emphasize sustainability (not one-time effort, sustainable program)
 - Highlight team enablement and training
 
@@ -183,7 +183,7 @@
 ### What Proof They Need
 - Methodological depth (technical rigor, not just sales)
 - Architecture examples (real patterns, not templates)
-- Framework grounding (NIST, CIS, CSF applied technically)
+- Framework grounding (NIST CSF, ISO 27001, SOC 2 applied technically)
 - Team certifications and deep expertise
 - Tool philosophy and integration approach
 - Performance and scalability evidence
@@ -243,7 +243,7 @@
 ## Key Insights
 
 1. **Assessment-First Works for All:** Low-pressure, diagnostic entry is valuable across all personas
-2. **Framework Credibility is Universal:** NIST, CIS, CSF appeal to CIOs, Security Leads, and Tech Evaluators equally
+2. **Framework Credibility is Universal:** NIST CSF, ISO 27001, SOC 2 appeal to CIOs, Security Leads, and Tech Evaluators equally
 3. **Team Credentials Matter:** All personas care about who's doing the work (certifications, experience)
 4. **Outcomes Over Activity:** Every persona prefers specific results over vague promises
 5. **Simplicity Appeals Across:** "We'll figure it out together" beats "we're experts" for all personas

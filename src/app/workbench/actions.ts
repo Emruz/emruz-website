@@ -58,6 +58,7 @@ import {
   type ObligationKey,
 } from '@/content/obligations';
 import { SCF_VERSION, scfEvidenceById } from '@/content/scf';
+import { obligationsOf } from '@/content/obligation-keys';
 import { assessmentType, isAssessmentType, type AssessmentType } from '@/content/engagement-types';
 import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, functions, isComplete } from '@/content/self-assessment';
 import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
@@ -166,7 +167,11 @@ async function newEngagement(o: {
   if (o.selfId && fw.usesProfile) {
     const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: Tier | null }[]>`
       select answers, profile, target_ig from assessments where id = ${o.selfId} and status = 'completed'`;
-    if (s) prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
+    if (s) {
+      prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
+      // Carry the obligations the client chose in the self-assessment.
+      await db()`update engagements set obligations = ${obligationsOf(s.profile)} where id = ${e.id}`;
+    }
   }
   const rows = fw.items.map((s) => ({
     engagement_id: e.id,
@@ -436,6 +441,12 @@ export async function linkEvidenceErl(form: FormData) {
   if (!ev) return;
   if (form.get('remove') === '1') {
     await db()`delete from evidence_erl_links where evidence_id = ${evId} and erl_id = ${erl}`;
+    // Reopen the request when nothing answers it any more.
+    await db()`
+      update evidence_requests r set status = 'open', closed_at = null
+      where r.engagement_id = ${e.id} and r.erl_id = ${erl} and r.status = 'received'
+        and not exists (select 1 from evidence_erl_links x join evidence v on v.id = x.evidence_id where x.erl_id = ${erl} and v.engagement_id = ${e.id})
+        and not exists (select 1 from evidence v where v.request_id = r.id)`;
   } else {
     await db()`insert into evidence_erl_links (evidence_id, erl_id) values (${evId}, ${erl}) on conflict do nothing`;
     await db()`update evidence_requests set status = 'received' where engagement_id = ${e.id} and erl_id = ${erl} and status = 'open'`;
@@ -533,19 +544,22 @@ export async function raiseErlRequests(form: FormData) {
   const cats = rated.length ? [...new Set(rated)] : frameworkFor(e.assessment_type).categories.map((c) => c.id);
   const have = new Set(existing.map((r) => r.erl_id).filter(Boolean));
   const todo = erlForScope(cats, cleanObligations(e.obligations)).filter((id) => !have.has(id));
-  for (const id of todo) {
-    const item = scfEvidenceById.get(id)!;
-    await db()`
-      insert into evidence_requests (engagement_id, erl_id, text, created_by)
-      values (${e.id}, ${id}, ${`${item.artifact}: ${item.description}`}, ${account.id})
-      on conflict (engagement_id, erl_id) where erl_id is not null do nothing`;
-  }
-  await logActivity(e.id, account.email, 'erl_requests_created', { count: todo.length });
-  if (todo.length && form.get('notify') === 'on') {
+  // One statement; the count is what was inserted, so a double submit adds and emails nothing.
+  const texts = todo.map((id) => `${scfEvidenceById.get(id)!.artifact}: ${scfEvidenceById.get(id)!.description}`);
+  const added = todo.length
+    ? await db()<{ id: string }[]>`
+        insert into evidence_requests (engagement_id, erl_id, text, created_by)
+        select ${e.id}, x.erl_id, x.text, ${account.id} from unnest(${todo}::text[], ${texts}::text[]) as x(erl_id, text)
+        on conflict (engagement_id, erl_id) where erl_id is not null do nothing
+        returning id`
+    : [];
+  const count = added.length;
+  await logActivity(e.id, account.email, 'erl_requests_created', { count });
+  if (count && form.get('notify') === 'on') {
     const sent = await emailClientContacts(
       e.client_id,
       `Evidence requested: ${e.title}`,
-      (n) => `Hi ${n},\n\nFor your ${e.title}, we've listed ${todo.length} items of evidence we need. One document can answer several requests.\n\nPlease upload them or share links in the client portal:\n${portalUrl(e.id)}\n\nThank you,\n${account.name || 'Emruz'}`,
+      (n) => `Hi ${n},\n\nFor your ${e.title}, we've listed ${count} items of evidence we need. One document can answer several requests.\n\nPlease upload them or share links in the client portal:\n${portalUrl(e.id)}\n\nThank you,\n${account.name || 'Emruz'}`,
     );
     if (sent.length) await logActivity(e.id, account.email, 'request_emailed', { to: sent });
   }

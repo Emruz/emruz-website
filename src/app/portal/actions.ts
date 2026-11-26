@@ -7,7 +7,7 @@ import { currentAccount } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
-import { getEngagement, isClientContact, linkEvidenceToRequestErl, logActivity } from '@/lib/server/workbench';
+import { getEngagement, isClientContact, logActivity } from '@/lib/server/workbench';
 
 /** A client shares a link (SharePoint, Drive...) for an evidence request. */
 export async function clientAddLink(form: FormData) {
@@ -27,9 +27,16 @@ export async function clientAddLink(form: FormData) {
     insert into evidence (engagement_id, kind, title, url, from_client, request_id, uploaded_by)
     values (${id}, 'link', ${title}, ${url}, true, ${isUuid(requestId) ? requestId : null}, ${account.id})
     returning id`;
-  for (const rid of requestIds) {
-    await linkEvidenceToRequestErl(ev.id, rid, id);
-    await db()`update evidence_requests set status = 'received' where id = ${rid} and engagement_id = ${id} and status = 'open'`;
+  if (requestIds.length) {
+    // Every request this evidence answers: link its ERL item and mark it received, in one transaction.
+    await db().begin(async (tx) => {
+      await tx`
+        insert into evidence_erl_links (evidence_id, erl_id)
+        select ${ev.id}, r.erl_id from evidence_requests r
+        where r.engagement_id = ${id} and r.id = any(${requestIds}::uuid[]) and r.erl_id is not null
+        on conflict do nothing`;
+      await tx`update evidence_requests set status = 'received' where engagement_id = ${id} and id = any(${requestIds}::uuid[]) and status = 'open'`;
+    });
   }
   await logActivity(id, account.email, 'client_link_added', { title });
   if (e.lead_email) {

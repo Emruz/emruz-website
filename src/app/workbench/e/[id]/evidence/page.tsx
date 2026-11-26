@@ -109,6 +109,25 @@ export default async function EvidencePage({ params, searchParams }: { params: P
         </ul>
       </div>
 
+      {erlOptions.length > 0 && evidence.length > 0 && (
+        <form action={linkEvidenceErl} className={`${card} p-4 flex flex-wrap items-end gap-3`}>
+          <input type="hidden" name="id" value={id} />
+          <div className="min-w-0 flex-1">
+            <label className={label} htmlFor="link-ev">Evidence</label>
+            <select id="link-ev" name="evidence_id" className={input}>
+              {evidence.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
+            </select>
+          </div>
+          <div className="min-w-0 flex-1">
+            <label className={label} htmlFor="link-erl">Also answers</label>
+            <select id="link-erl" name="erl_id" className={input}>
+              {erlOptions.map((x) => <option key={x} value={x}>{x} {scfEvidenceById.get(x)?.artifact.slice(0, 60)}</option>)}
+            </select>
+          </div>
+          <button className={btn}>Link</button>
+        </form>
+      )}
+
       <div className={`${card} overflow-x-auto`}>
         <h2 className="font-bold text-gray-900 p-4 border-b border-gray-100">Evidence library ({evidence.length})</h2>
         <table className="w-full text-sm">
@@ -143,16 +162,6 @@ export default async function EvidencePage({ params, searchParams }: { params: P
                       <button className="ml-0.5 text-gray-400 hover:text-red-700" aria-label={`Unlink ${x}`}>×</button>
                     </form>
                   ))}
-                  {erlOptions.length > 0 && (
-                    <form action={linkEvidenceErl} className="mt-1 flex gap-1 font-sans">
-                      <input type="hidden" name="id" value={id} />
-                      <input type="hidden" name="evidence_id" value={e.id} />
-                      <select name="erl_id" aria-label="Also answers" className="text-xs border border-gray-300 rounded px-1 py-0.5 max-w-[180px]">
-                        {erlOptions.filter((x) => !e.erl_ids.includes(x)).map((x) => <option key={x} value={x}>{x} {scfEvidenceById.get(x)?.artifact.slice(0, 50)}</option>)}
-                      </select>
-                      <button className="text-xs text-blue-700 font-semibold whitespace-nowrap">Also answers</button>
-                    </form>
-                  )}
                 </td>
                 <td className="p-3 text-xs text-gray-600 whitespace-nowrap">{fmtDate(e.created_at)}<br />{e.uploaded_by_email}</td>
                 <td className="p-3 text-right">

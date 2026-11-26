@@ -146,3 +146,17 @@ const example = readFileSync('.env.example', 'utf8');
 for (const v of MOVED) assert.doesNotMatch(example, new RegExp(`^#?\\s*${v}=`, 'm'), `${v} is gone from .env.example`);
 
 console.log('site settings tests passed');
+
+// Until saved, the Netlify variable a setting replaced carries over (review logic-A1); a saved value wins; a bad variable is ignored.
+{
+  const env = { SKILLS_REF: 'v2026.11.2', KITS_LIFETIME_UNTIL: '2026-12-01', STRIPE_AUTOMATIC_TAX: 'false', MOTIV_LEASE_DAYS: '999', KITS_SALES_OPEN: 'true' };
+  const r = resolveSettings({}, env);
+  assert.equal(r.skillsRef, 'v2026.11.2');
+  assert.equal(r.kitsLifetimeUntil, '2026-12-01');
+  assert.equal(r.stripeAutomaticTax, false);
+  assert.equal(r.kitsSalesOpen, true);
+  assert.equal(r.motivLeaseDays, 14, 'out-of-range variable falls back to the default');
+  assert.equal(resolveSettings({ kits_sales_open: 'false' }, env).kitsSalesOpen, false, 'saved value wins');
+  assert.equal(resolveSettings({}, {}).skillsRef, null);
+}
+console.log('site settings env fallback passed');

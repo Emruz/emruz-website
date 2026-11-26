@@ -20,7 +20,7 @@ Business settings live in the database (`site_settings`, migration 027) and are 
 
 The kits launch date (#71) is stored here too, as `kits_launch_date`, and is set on `/admin/kits`.
 
-The variables above are no longer read. If one is still set in Netlify, `/admin/settings` names it so it can be removed.
+Until a setting is saved on `/admin/settings`, the site reads the Netlify variable it replaced (if set and valid), so nothing changes on deploy. Once saved, the database value wins. `/admin/settings` names any variable still set in Netlify so it can be removed after its value is saved.
 
 If the database can't be read, the site uses the last values it read, or the defaults.
 

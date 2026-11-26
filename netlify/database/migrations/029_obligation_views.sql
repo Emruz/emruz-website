@@ -9,12 +9,16 @@ alter table engagements add column if not exists obligations text[] not null def
 alter table evidence_requests add column if not exists erl_id text;
 create unique index if not exists evidence_requests_erl_idx on evidence_requests (engagement_id, erl_id) where erl_id is not null;
 
+-- Evidence counts per request (hundreds of ERL requests per engagement).
+create index if not exists evidence_request_idx on evidence (request_id) where request_id is not null;
+
 -- Evidence linked to ERL items, so one upload covers every requirement that item supports.
 create table if not exists evidence_erl_links (
   evidence_id  uuid not null references evidence(id) on delete cascade,
   erl_id       text not null,
   primary key (evidence_id, erl_id)
 );
+create index if not exists evidence_erl_links_erl_idx on evidence_erl_links (erl_id);
 
 -- Credentials shown in the assessor block of reports (e.g. CISSP, CISA).
 alter table staff add column if not exists credentials text;

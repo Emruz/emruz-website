@@ -3,7 +3,7 @@ import { currentAccount } from '@/lib/server/session';
 import { isUuid, sameOrigin } from '@/lib/server/api';
 import { sendEmail } from '@/lib/server/email';
 import { SITE_URL } from '@/lib/server/config';
-import { canAccessEngagement, getEngagement, isClientContact, linkEvidenceToRequestErl, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
+import { canAccessEngagement, getEngagement, isClientContact, logActivity, putEvidenceFile, staffRole } from '@/lib/server/workbench';
 import { frameworkFor } from '@/content/frameworks';
 import { MAX_UPLOAD_BYTES } from '@/content/workbench';
 import { detectType } from '@/lib/server/filetype';
@@ -64,9 +64,16 @@ export async function POST(req: Request) {
   }
   await db()`update evidence set blob_key = ${key} where id = ${ev.id}`;
   if (staff && frameworkFor(e.assessment_type).items.some((s) => s.id === sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
-  for (const rid of requestIds) {
-    await linkEvidenceToRequestErl(ev.id, rid, e.id);
-    await db()`update evidence_requests set status = 'received' where id = ${rid} and engagement_id = ${e.id} and status = 'open'`;
+  if (requestIds.length) {
+    // Every request this evidence answers: link its ERL item and mark it received, in one transaction.
+    await db().begin(async (tx) => {
+      await tx`
+        insert into evidence_erl_links (evidence_id, erl_id)
+        select ${ev.id}, r.erl_id from evidence_requests r
+        where r.engagement_id = ${e.id} and r.id = any(${requestIds}::uuid[]) and r.erl_id is not null
+        on conflict do nothing`;
+      await tx`update evidence_requests set status = 'received' where engagement_id = ${e.id} and id = any(${requestIds}::uuid[]) and status = 'open'`;
+    });
   }
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'file', from_client: client });
 

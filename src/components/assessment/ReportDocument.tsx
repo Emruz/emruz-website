@@ -209,7 +209,7 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
               ) : (
                 draft && <p className="mt-1 text-red-700 italic">Recommendation missing.</p>
               )}
-              {Object.keys(f.related).length > 0 && (
+              {(Object.keys(relLabel) as (keyof typeof relLabel)[]).some((k) => f.related[k]?.length) && (
                 <p className="mt-1 text-xs text-gray-500">
                   Related:{' '}
                   {(Object.keys(relLabel) as (keyof typeof relLabel)[])

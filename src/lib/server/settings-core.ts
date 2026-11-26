@@ -130,12 +130,27 @@ export interface SiteSettings {
   kitsLaunchDate: string | null;
 }
 
-/** Typed settings from stored rows. A stored value that no longer passes its check falls back to the default. */
-export function resolveSettings(stored: Record<string, string | undefined>): SiteSettings {
+/**
+ * Typed settings from stored rows. With no stored row, the Netlify variable the
+ * setting replaced is used if it is still set and passes the check (so values
+ * carry over until saved on /admin/settings), then the default. A stored value
+ * that no longer passes its check falls back to the default.
+ */
+export function resolveSettings(
+  stored: Record<string, string | undefined>,
+  env: Record<string, string | undefined> = process.env,
+): SiteSettings {
   const get = (key: string): string | null => {
     const def = settingDef(key)!;
     const raw = stored[key];
-    if (raw === undefined) return def.fallback;
+    if (raw === undefined) {
+      const fromEnv = env[def.env]?.trim();
+      if (fromEnv) {
+        const c = checkSetting(def, fromEnv);
+        if (c.ok && c.value !== null) return c.value;
+      }
+      return def.fallback;
+    }
     const c = checkSetting(def, raw);
     return c.ok && c.value !== null ? c.value : def.fallback;
   };

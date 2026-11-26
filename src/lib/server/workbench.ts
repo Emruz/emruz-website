@@ -186,7 +186,10 @@ export interface RequestRow {
 export async function getRequests(engagementId: string): Promise<RequestRow[]> {
   return db()<RequestRow[]>`
     select r.id, r.subcategory, r.erl_id, r.text, r.status, r.created_at, r.closed_at,
-           (select count(*)::int from evidence e where e.request_id = r.id) as evidence_count
+           (select count(*)::int from evidence e
+             where e.engagement_id = r.engagement_id
+               and (e.request_id = r.id or (r.erl_id is not null and exists (
+                 select 1 from evidence_erl_links x where x.evidence_id = e.id and x.erl_id = r.erl_id)))) as evidence_count
     from evidence_requests r where r.engagement_id = ${engagementId}
     order by (r.status = 'open') desc, r.created_at desc`;
 }
@@ -235,9 +238,11 @@ export interface ReportRow {
   sent_to: string[] | null;
 }
 
-export async function getReports(engagementId: string): Promise<ReportRow[]> {
-  return db()<ReportRow[]>`
-    select r.*, cb.email as created_by_email, rb.email as reviewed_by_email
+/** Report versions for lists. content is left out (it can be large); open one with getReport. */
+export async function getReports(engagementId: string): Promise<Omit<ReportRow, 'content'>[]> {
+  return db()<Omit<ReportRow, 'content'>[]>`
+    select r.id, r.engagement_id, r.version, r.status, r.created_at, r.submitted_at, r.reviewed_at, r.review_note, r.sent_at, r.sent_to,
+           cb.email as created_by_email, rb.email as reviewed_by_email
     from reports r
     left join accounts cb on cb.id = r.created_by
     left join accounts rb on rb.id = r.reviewed_by

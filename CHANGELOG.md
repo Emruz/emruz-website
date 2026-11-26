@@ -7,6 +7,7 @@ Releases are numbered vYYYYMM.#: the year and month, then the release number in 
 ## v202611.9
 
 - Kits review follow-ups (#70): account merges run in one transaction and a purchase that confirms after its account was merged goes to the account that kept it; kit subscriptions act on their current state in Stripe, follow a plan switch to another kit, and stay ended after a refund; the per-account MCP limit applies before the global one; two kits release items can't share a folder; revoking from the wrong client no longer spends the real client's refresh token; staff revoke keeps its reason; staff are alerted if the lifetime offer sells past its cap.
+- Kits launch conditions (#71): `/kits` leads with the Release Kit, with the Founder and Marketing Kits as add-ons and the all-kits bundle after them. New `/kits/security` security and data statement for the kits MCP server, linked from `/kits`, the app consent page and the privacy policy. The buy form asks what made the buyer buy now and stores it with the purchase; kit subscriptions store whether they are monthly or annual (migration 024). `/admin/kits` shows paying accounts outside Emruz (leaving out emruz.com, admins and email addresses staff add on the page, migration 025) by kit and plan, free-to-paid conversion, purchase triggers, founding lifetime sold, and the 90-day review against the kill lines from a launch date set on the page (migration 026). A results section on `/kits` appears once there are published customer results.
 
 ## v202611.8
 

@@ -11,11 +11,11 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy policy"
       summary="What we collect on emruz.com, why, who helps us run it, and the choices you have."
-      updated="15 November 2026"
+      updated="25 November 2026"
       path="/privacy"
     >
       <p>
-        This policy covers emruz.com, including the contact form, the Insights newsletter, your Emruz account, Motiv purchases and the
+        This policy covers emruz.com, including the contact form, the Insights newsletter, your Emruz account, Motiv and kit purchases and the
         licensing service Motiv uses to keep Pro on. It is published by {LEGAL_PARTY} (&quot;Emruz&quot;,
         &quot;we&quot;, &quot;us&quot;). The Motiv desktop app has its own{' '}
         <Link href="/motiv/privacy">Motiv privacy policy</Link>, which explains what happens on your computer.
@@ -78,6 +78,14 @@ export default function PrivacyPage() {
         Stripe we receive and keep your email address, name, billing country and postal code (to calculate tax),
         the plan you bought, its status and renewal date, and Stripe&apos;s references to your customer record and
         payments.
+      </p>
+
+      <h3>When you buy or use Emruz kits</h3>
+      <p>
+        Kit purchases are paid through Stripe in the same way. We also keep which kits you have, and the answer you choose when
+        asked what made you buy now. When you connect Claude or another app to the kits, we keep the apps you approve and an audit
+        log of sign-ins and skills read. The <Link href="/kits/security">kits security and data statement</Link> lists what is
+        stored and for how long.
       </p>
 
       <h3>When Motiv checks in</h3>

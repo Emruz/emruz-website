@@ -8,8 +8,9 @@ import { kits, SITE_URL } from '../config';
 import { stripe } from '../stripe';
 import { packTitle } from './content';
 import { isRef } from './content-core';
+import { isPurchaseTrigger } from './launch-core';
 import { oauthStore } from './store';
-import { heldAtRelease, isKitPlan, isSubscriptionPlan, kindFor, lifetimeOpen, lookupKey, subscriptionEnded, type KitPlan } from './sales-core';
+import { heldAtRelease, isKitPlan, isSubscriptionPlan, kindFor, lifetimeOpen, lookupKey, subscriptionEnded, subscriptionType, type KitPlan } from './sales-core';
 
 /** Emruz kit pack sales (#68): Stripe prices, checkout results, subscription ends and refunds. */
 
@@ -99,16 +100,19 @@ export async function onKitCheckoutCompleted(session: Stripe.Checkout.Session) {
   const [still] = await db()<{ id: string }[]>`select id from accounts where id = ${startedBy}`;
   if (!still && !email) throw new Error(`Kit checkout ${session.id}: account gone and no email`);
   const accountId = still ? startedBy : await accountForEmail(email!);
+  // Checkouts started before #71 have no trigger
+  const trigger = isPurchaseTrigger(m.trigger) ? m.trigger : null;
 
   const rows = await db()<{ id: string }[]>`
     insert into kit_entitlements (account_id, pack, through_ref, source, kind, granted_by,
-      stripe_checkout_session, stripe_payment_intent_id, stripe_subscription_id, stripe_customer_id)
+      stripe_checkout_session, stripe_payment_intent_id, stripe_subscription_id, stripe_customer_id, purchase_trigger, subscription_type)
     values (${accountId}, ${pack}, ${throughRef ?? null}, 'purchase', ${kindFor(plan)}, 'stripe',
-      ${session.id}, ${subscription ? null : sid(session.payment_intent)}, ${subId}, ${sid(session.customer)})
+      ${session.id}, ${subscription ? null : sid(session.payment_intent)}, ${subId}, ${sid(session.customer)}, ${trigger},
+      ${subscription ? subscriptionType(plan) : null})
     on conflict (stripe_checkout_session) where stripe_checkout_session is not null do nothing
     returning id`;
   if (!rows.length) return; // already handled
-  await audit('kit_purchased', accountId, { pack, plan, ref: throughRef ?? null, checkout: session.id, ...(still ? {} : { startedBy }) });
+  await audit('kit_purchased', accountId, { pack, plan, ref: throughRef ?? null, trigger, checkout: session.id, ...(still ? {} : { startedBy }) });
   if (plan === 'lifetime') {
     // The cap is checked when checkout starts; tell staff if concurrent checkouts went past it
     const offer = await lifetimeOffer();
@@ -125,7 +129,13 @@ export async function onKitSubscriptionChanged(event: Stripe.Subscription) {
   const sub = await stripe().subscriptions.retrieve(event.id);
   // A plan switch to another kit's price moves the entitlement to that kit (#68 review sens-2)
   const key = sub.items.data[0]?.price?.lookup_key ?? '';
-  const switched = /^kits_([a-z0-9][a-z0-9-]{0,39})_(month|year)$/.exec(key)?.[1];
+  const price = /^kits_([a-z0-9][a-z0-9-]{0,39})_(month|year)$/.exec(key);
+  const switched = price?.[1];
+  // A switch between monthly and annual is kept too (#71)
+  if (price) {
+    const type = subscriptionType(price[2] as KitPlan);
+    await db()`update kit_entitlements set subscription_type = ${type} where stripe_subscription_id = ${sub.id} and subscription_type is distinct from ${type}`;
+  }
   if (switched) {
     const moved = await db()<{ account_id: string; pack: string }[]>`
       update kit_entitlements set pack = ${switched}

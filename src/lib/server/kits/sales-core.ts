@@ -18,6 +18,9 @@ export type KitKind = 'once' | 'upgrade' | 'subscription' | 'lifetime';
 export const isKitPlan = (v: unknown): v is KitPlan => typeof v === 'string' && (KIT_PLANS as readonly string[]).includes(v);
 export const isSubscriptionPlan = (p: KitPlan) => p === 'month' || p === 'year';
 export const kindFor = (p: KitPlan): KitKind => (isSubscriptionPlan(p) ? 'subscription' : p);
+/** Stored in kit_entitlements.subscription_type (#71), in the words used for it everywhere else. */
+export type SubscriptionType = 'monthly' | 'annual';
+export const subscriptionType = (p: KitPlan): SubscriptionType | null => (p === 'month' ? 'monthly' : p === 'year' ? 'annual' : null);
 /** One-time purchases held at the release bought; lifetime and subscriptions follow new releases. */
 export const heldAtRelease = (p: KitPlan) => p === 'once' || p === 'upgrade';
 /** The founding lifetime offer is on the all-kits bundle only. */

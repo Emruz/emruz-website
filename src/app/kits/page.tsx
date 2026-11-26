@@ -1,18 +1,19 @@
 import Link from 'next/link';
 import { Check, Plug, RefreshCw, ShieldCheck } from 'lucide-react';
 import { DetailHeader, Container } from '@/components';
-import { kitOffers, type KitOffer } from '@/content/kits';
+import { BUNDLE_PACK, kitOffers, kitResults, LEAD_PACK, type KitOffer } from '@/content/kits';
 import { kits, SITE_URL } from '@/lib/server/config';
 import { currentBundle } from '@/lib/server/kits/content';
+import { PURCHASE_TRIGGERS } from '@/lib/server/kits/launch-core';
 import { lifetimeOffer } from '@/lib/server/kits/sales';
 import { canBuy, holding, LIFETIME_PACK, type Holding, type KitPlan } from '@/lib/server/kits/sales-core';
 import { entitlementsFor } from '@/lib/server/kits/store';
 import { currentAccount } from '@/lib/server/session';
 
 export const metadata = {
-  title: 'Emruz kits: Claude skills for shipping, founding and marketing',
+  title: 'Emruz Release Kit: Claude skills that check every release before it ships',
   description:
-    'Packs of Claude skills for testing and securing releases, validating and pricing a B2B business, and building on-brand customer decks. Connect once over MCP.',
+    'Claude skills that test, secure and check every release before it ships, with Founder and Marketing Kits as add-ons. Connect once over MCP.',
 };
 
 const notices: Record<string, string> = {
@@ -23,6 +24,7 @@ const notices: Record<string, string> = {
   unavailable: 'That option is not available right now. Please try again later.',
   lifetime_closed: 'The founding lifetime offer has closed.',
   impersonating: 'Switch back to your own account to buy.',
+  trigger: 'Tell us what made you buy now, then choose a price again.',
 };
 
 async function loadState() {
@@ -66,20 +68,42 @@ function LifetimeRow({ price, left, cap, until, open }: { price: number; left: n
   );
 }
 
+const PLAN_LABEL: Record<KitPlan, string> = { once: 'one time', upgrade: 'upgrade', month: 'monthly', year: 'annual', lifetime: 'lifetime' };
+
 function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan; label: string; primary?: boolean }) {
+  // Inside the price list form (BuyForm), which carries the trigger question
+  return (
+    <button
+      name="offer"
+      value={`${pack}:${plan}`}
+      aria-label={`${label}: ${kitOffers.find((o) => o.pack === pack)?.name ?? pack}, ${PLAN_LABEL[plan]}`}
+      className={
+        primary
+          ? 'w-full bg-[#4F46E5] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#4338CA] transition-colors'
+          : 'w-full border border-[#4F46E5] text-[#4F46E5] px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-colors'
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+/** Price list: one form when sales are open, so "what made you buy now" is asked once for every buy button (#71). */
+function BuyForm({ open, ask, children }: { open: boolean; ask: boolean; children: React.ReactNode }) {
+  if (!open) return <div>{children}</div>;
+  // Nothing left to buy: no question
+  if (!ask) return <form action="/api/kits/checkout" method="post">{children}</form>;
   return (
     <form action="/api/kits/checkout" method="post">
-      <input type="hidden" name="pack" value={pack} />
-      <input type="hidden" name="plan" value={plan} />
-      <button
-        className={
-          primary
-            ? 'w-full bg-[#4F46E5] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#4338CA] transition-colors'
-            : 'w-full border border-[#4F46E5] text-[#4F46E5] px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-colors'
-        }
-      >
-        {label}
-      </button>
+      <label className="mb-6 block max-w-xl text-sm">
+        <span className="font-semibold text-gray-900">What made you buy now?</span>
+        <span className="block text-gray-600">One answer helps us build what buyers need next. It is stored with your purchase.</span>
+        <select name="trigger" required defaultValue="" className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900">
+          <option value="" disabled>Choose one</option>
+          {PURCHASE_TRIGGERS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+        </select>
+      </label>
+      {children}
     </form>
   );
 }
@@ -96,35 +120,39 @@ function PriceRow({ price, period, children }: { price: number; period: string; 
 }
 
 function OfferCard({
-  offer, count, have, open, lifetime,
+  offer, count, have, open, lifetime, lead,
 }: {
   offer: KitOffer;
   count?: { total: number; free: number };
   have: Holding | null;
   open: boolean;
   lifetime: { left: number; cap: number; until: string } | null;
+  lead?: boolean;
 }) {
   const p = offer.prices;
   const owned = have?.state === 'latest';
   const upgradable = have?.state === 'held' && have.upgradable;
   return (
-    <div className={`flex flex-col rounded-xl border p-6 ${offer.pack === 'all' ? 'border-2 border-[#4F46E5]' : 'border-gray-200'}`}>
-      <h3 className="text-xl font-bold text-gray-900">{offer.name}</h3>
-      {count && (
-        <p className="text-sm text-gray-500">
-          {count.total} skills{count.free ? `, ${count.free} of them free` : ''}
-        </p>
-      )}
-      <p className="mt-3 text-gray-700">{offer.summary}</p>
-      <ul className="mt-4 space-y-1.5 text-sm text-gray-700">
-        {offer.covers.map((c) => (
-          <li key={c} className="flex gap-2">
-            <Check className="w-4 h-4 text-[#4F46E5] flex-shrink-0 mt-0.5" />
-            {c}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-auto pt-6 space-y-4">
+    <div className={`flex flex-col rounded-xl border bg-white p-6 ${lead ? 'border-2 border-[#4F46E5] md:grid md:grid-cols-2 md:gap-10 md:p-8' : 'border-gray-200'}`}>
+      <div>
+        {lead && <p className="text-sm font-semibold uppercase tracking-wide text-[#4F46E5]">Start here</p>}
+        <h3 className={`${lead ? 'text-2xl' : 'text-xl'} font-bold text-gray-900`}>{offer.name}</h3>
+        {count && (
+          <p className="text-sm text-gray-500">
+            {count.total} skills{count.free ? `, ${count.free} of them free` : ''}
+          </p>
+        )}
+        <p className="mt-3 text-gray-700">{offer.summary}</p>
+        <ul className="mt-4 space-y-1.5 text-sm text-gray-700">
+          {offer.covers.map((c) => (
+            <li key={c} className="flex gap-2">
+              <Check className="w-4 h-4 text-[#4F46E5] flex-shrink-0 mt-0.5" />
+              {c}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className={`mt-auto pt-6 space-y-4 ${lead ? 'md:mt-0 md:pt-0 md:self-center' : ''}`}>
         {lifetime && offer.prices.lifetime && <LifetimeRow price={offer.prices.lifetime} left={lifetime.left} cap={lifetime.cap} until={lifetime.until} open={open} />}
         {owned ? (
           <p role="status" className="rounded-lg bg-green-50 text-green-800 text-sm font-semibold px-4 py-3">
@@ -163,17 +191,35 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
   const { notice } = await searchParams;
   const { account, latest, counts, ents, life, lifetimeForMe } = await loadState();
   const open = kits.salesOpen;
+  const card = (o: KitOffer, isLead = false) => (
+    <OfferCard
+      key={o.pack}
+      offer={o}
+      lead={isLead}
+      count={counts.get(o.pack)}
+      have={account && latest ? holding(o.pack, ents, latest) : null}
+      open={open}
+      lifetime={o.pack === LIFETIME_PACK && lifetimeForMe && life.until ? { left: life.cap - life.sold, cap: life.cap, until: life.until } : null}
+    />
+  );
+  // Release Kit first, the other kits as add-ons, the all-kits bundle last (#71)
+  const lead = kitOffers.find((o) => o.pack === LEAD_PACK);
+  const bundle = kitOffers.find((o) => o.pack === BUNDLE_PACK);
+  const addOns = kitOffers.filter((o) => o !== lead && o !== bundle);
+  const canBuyAny = !account || !latest || lifetimeForMe || kitOffers.some((o) => holding(o.pack, ents, latest).state !== 'latest');
   return (
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Kits' }]}
-        title="Emruz kits"
-        summary="Packs of Claude skills that test and secure your releases, validate and price your business, and build on-brand decks."
+        title="Emruz Release Kit"
+        summary="Claude skills that test, secure and check every release before it ships. Add the Founder and Marketing Kits when you need them."
         primaryCta={{ label: open ? 'See prices' : 'Get notified at launch', href: open ? '#pricing' : '/contact?topic=kits' }}
         secondaryCta={account ? { label: 'Your kits', href: '/motiv/account#kits' } : { label: 'Sign in', href: '/signin?next=%2Fkits' }}
         sections={[
           { label: 'How it works', href: '#how' },
           { label: 'Prices', href: '#pricing' },
+          ...(kitResults.length ? [{ label: 'Results', href: '#results' }] : []),
+          { label: 'Security', href: '/kits/security' },
           { label: 'Questions', href: '#faq' },
         ]}
       />
@@ -218,26 +264,53 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
           {notice && Object.hasOwn(notices, notice) && (
             <p role="status" className="mb-6 rounded-lg bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-3">{notices[notice]}</p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
-            {kitOffers.map((o) => (
-              <OfferCard
-                key={o.pack}
-                offer={o}
-                count={counts.get(o.pack)}
-                have={account && latest ? holding(o.pack, ents, latest) : null}
-                open={open}
-                lifetime={o.pack === LIFETIME_PACK && lifetimeForMe && life.until ? { left: life.cap - life.sold, cap: life.cap, until: life.until } : null}
-              />
-            ))}
-          </div>
+          <BuyForm open={open} ask={canBuyAny}>
+            {lead && card(lead, true)}
+            {addOns.length > 0 && (
+              <>
+                <h3 className="mt-10 text-xl font-bold text-gray-900">Add-ons</h3>
+                <p className="mt-1 mb-4 text-gray-600">Add to the Release Kit when you need them, or get every kit in the bundle.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{addOns.map((o) => card(o))}</div>
+              </>
+            )}
+            {bundle && (
+              <>
+                <h3 className="mt-10 mb-4 text-xl font-bold text-gray-900">Every kit</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{card(bundle)}</div>
+              </>
+            )}
+          </BuyForm>
           {open && (
             <p className="mt-4 text-sm text-gray-500">
               {account ? '' : 'You will be asked to sign in first, so the kit is linked to the account you connect with. '}
               By buying you agree to the <Link href="/terms" className="underline">terms of service</Link>.
             </p>
           )}
+          <p className="mt-4 text-sm text-gray-600">
+            Buying for a company? Read how the kits server signs you in and handles data in the{' '}
+            <Link href="/kits/security" className="font-semibold text-[#4F46E5] underline">security and data statement</Link>.
+          </p>
         </Container>
       </section>
+
+      {kitResults.length > 0 && (
+        <section id="results" className="scroll-mt-20 py-12 md:py-16">
+          <Container>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Results</h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {kitResults.map((r) => (
+                <li key={`${r.customer}-${r.pack}`} className="rounded-xl border border-gray-200 p-6">
+                  <p className="text-gray-800">{r.outcome}</p>
+                  <p className="mt-3 text-sm text-gray-600">
+                    {r.customer} · {kitOffers.find((o) => o.pack === r.pack)?.name ?? r.pack} ·{' '}
+                    <a href={r.source} className="underline" rel="noopener noreferrer" target="_blank">Source</a>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      )}
 
       <section id="faq" className="scroll-mt-20 py-12 md:py-16">
         <Container>
@@ -267,6 +340,13 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
               <dd className="mt-1 text-gray-600">
                 Full refund within 14 days of a first purchase. <Link href="/contact?topic=kits" className="underline">Contact us</Link> to ask
                 for one; access ends when it is refunded.
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-gray-900">Can my security team review it?</dt>
+              <dd className="mt-1 text-gray-600">
+                Yes. The <Link href="/kits/security" className="underline">security and data statement</Link> covers sign-in, what apps can
+                do, token lifetimes, what is stored, the audit log, rate limits and hosting.
               </dd>
             </div>
             <div>

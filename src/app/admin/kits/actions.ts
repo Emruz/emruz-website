@@ -5,6 +5,7 @@ import { accountForEmail } from '@/lib/server/accounts';
 import { isUuid } from '@/lib/server/api';
 import { db } from '@/lib/server/db';
 import { isRef } from '@/lib/server/kits/content-core';
+import { isDay } from '@/lib/server/kits/launch-core';
 import { oauthStore } from '@/lib/server/kits/store';
 import { stripe } from '@/lib/server/stripe';
 import { currentAccount, isAdmin, requireRecentSignIn } from '@/lib/server/session';
@@ -19,6 +20,8 @@ async function admin() {
   return `admin:${a.email}`;
 }
 
+const isEmail = (e: string) => e.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
 function back(msg: string, error = false): never {
   redirect(`/admin/kits?${error ? 'err=1&' : ''}msg=${encodeURIComponent(msg)}`);
 }
@@ -29,7 +32,7 @@ export async function grantKit(form: FormData) {
   const pack = String(form.get('pack') || '');
   const version = String(form.get('version') || 'latest');
   const note = String(form.get('note') || '').trim().slice(0, 300) || null;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) back('Enter an email address.', true);
+  if (!isEmail(email)) back('Enter an email address.', true);
   if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(pack)) back('Choose a kit.', true);
   if (version !== 'latest' && !isRef(version)) back('Choose a version.', true);
   const accountId = await accountForEmail(email);
@@ -68,4 +71,46 @@ export async function revokeKit(form: FormData) {
   if (!row) back('Already revoked.', true);
   await oauthStore.audit('kit_revoked', { accountId: row.account_id, detail: { pack: row.pack, reason, by: actor } });
   back(`Revoked ${row.pack}.`);
+}
+
+/** Leave an email address out of the kits sales metrics (#71). */
+export async function excludeEmail(form: FormData) {
+  const actor = await admin();
+  const email = String(form.get('email') || '').trim().toLowerCase();
+  const note = String(form.get('note') || '').trim().slice(0, 300) || null;
+  if (!isEmail(email)) back('Enter an email address to leave out.', true);
+  const rows = await db()`
+    insert into kit_excluded_emails (email, note, added_by) values (${email}, ${note}, ${actor})
+    on conflict (email) do nothing returning email`;
+  if (!rows.length) back(`${email} is already left out.`, true);
+  await oauthStore.audit('kit_metrics_excluded', { detail: { email, by: actor } });
+  back(`${email} is now left out of the sales metrics.`);
+}
+
+/** Count an email address in the kits sales metrics again (#71). */
+export async function includeEmail(form: FormData) {
+  const actor = await admin();
+  const email = String(form.get('email') || '').trim().toLowerCase();
+  if (!isEmail(email)) back('Not found.', true);
+  const rows = await db()`delete from kit_excluded_emails where email = ${email} returning email`;
+  if (!rows.length) back('Not found.', true);
+  await oauthStore.audit('kit_metrics_included', { detail: { email, by: actor } });
+  back(`${email} is counted in the sales metrics again.`);
+}
+
+/** Kits launch day: the 90-day review and the kill lines count from it (#71). Empty clears it. */
+export async function setLaunchDate(form: FormData) {
+  const actor = await admin();
+  const day = String(form.get('launch_date') || '').trim();
+  if (!day) {
+    const rows = await db()`delete from kit_settings where key = 'launch_date' returning key`;
+    if (rows.length) await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: null, by: actor } });
+    back('Launch date cleared.');
+  }
+  if (!isDay(day)) back('Enter the launch date as a day, for example 2026-12-01.', true);
+  await db()`
+    insert into kit_settings (key, value, updated_by) values ('launch_date', ${day}, ${actor})
+    on conflict (key) do update set value = excluded.value, updated_by = excluded.updated_by, updated_at = now()`;
+  await oauthStore.audit('kit_setting_changed', { detail: { key: 'launch_date', value: day, by: actor } });
+  back(`Launch date set to ${day}.`);
 }

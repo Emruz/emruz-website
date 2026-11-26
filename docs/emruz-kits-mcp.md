@@ -61,6 +61,16 @@ Create the prices in a sandbox (or live) with the Stripe CLI, one product per pa
 | `KITS_SALES_OPEN` | `true` shows buy buttons on `/kits` |
 | `KITS_LIFETIME_UNTIL` | Optional. Last day of the founding lifetime offer, `YYYY-MM-DD`; default 2027-12-31. A past date ends the offer |
 
+## Launch conditions (#71)
+
+From the founder board review of the kits:
+
+- `/kits` leads with the Release Kit; the Founder and Marketing Kits are shown as add-ons, then the all-kits bundle.
+- `/kits/security` is the security and data statement for the MCP server, linked from `/kits`, the consent page and the privacy policy. Token lifetimes, the scope and rate limits on it are read from the code.
+- The buy form asks what made the buyer buy now (`launch`, `customer_request`, `pricing_fundraise`, `incident`, `other`). It goes to Stripe as checkout metadata `trigger` and is stored in `kit_entitlements.purchase_trigger` (migration 024). Checkouts started before #71 have none.
+- `/admin/kits` shows sales outside Emruz (emruz.com addresses, `ADMIN_EMAILS` and the emails under Left out are not counted; staff add and remove those on the page, stored in `kit_excluded_emails`, migration 025): paying accounts by kit and plan, free to paid (accounts that ever connected an MCP app vs those that pay), purchase triggers, founding lifetime sold, and the review against the kill lines: under 20 paying at 90 days after the launch date (set on `/admin/kits`, stored in `kit_settings`, migration 026), reprice or narrow; under 25 after two release cycles, stop new kit development. A release cycle is a calendar month after the launch month with a kits release (tags are `vYYYY.MM.N`).
+- The results section on `/kits` stays hidden until `kitResults` in `src/content/kits.ts` has a published customer result, each with a link to where the customer published or approved it.
+
 ## Rate limits
 
 Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per IP. Token 60/hour per client and 120/hour per IP. MCP without a valid token 60/hour per IP (these never count toward the total); signed in 600/hour per account and 300/hour per client, checked before the 5,000/hour total. Over a limit: 429 with Retry-After. Edge rate limiting is a follow-up.
@@ -71,6 +81,12 @@ Registration 10/hour per IP and 200/hour total. Authorize 30 per 10 minutes per 
 - Claude Code: `claude mcp add --transport http emruz-kits https://emruz.com/api/mcp`, then `/mcp` to sign in.
 
 ## Data
+
+Migration 026 adds `kit_settings`, kits settings changed on `/admin/kits` (`launch_date`).
+
+Migration 025 adds `kit_excluded_emails`, the addresses left out of the sales metrics.
+
+Migration 024 adds `purchase_trigger` and `subscription_type` (`monthly` or `annual`, subscriptions only; kept up to date when Stripe switches the plan) to `kit_entitlements`.
 
 Migration 022 adds `kind` and the Stripe checkout, payment intent, subscription and customer IDs to `kit_entitlements`.
 

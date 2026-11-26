@@ -40,6 +40,10 @@ export default function Consent({ params, appName, returnHost, email }: { params
         <li>It cannot change anything or see your profile, billing or other data.</li>
         <li>You can disconnect it any time on your account page.</li>
       </ul>
+      <p className="text-sm text-gray-600">
+        How sign-in, tokens and your data are handled:{' '}
+        <a href="/kits/security" target="_blank" rel="noopener" className="font-semibold text-blue-700 underline">kits security and data statement</a>.
+      </p>
       <p className="text-sm text-gray-600 break-words">
         After you approve, you go back to <span className="font-semibold text-gray-900">{returnHost}</span>. The app name comes from the app itself; only approve if you just started connecting it.
       </p>

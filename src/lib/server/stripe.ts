@@ -8,7 +8,7 @@ import { sendMotivProEmail } from './motiv-emails';
 import { newSubscriptionId } from './lease';
 import { REVOKE_LABELS, type RevokeCategory } from './revocation';
 import { siteSettings } from './settings';
-import type { SiteSettings } from './settings-core';
+import { motivLookupKey, priceProblem } from './motiv-prices';
 
 let client: Stripe | null = null;
 export function stripe(): Stripe {
@@ -20,9 +20,31 @@ export function stripe(): Stripe {
   return client;
 }
 
-/** Stripe price for a Motiv plan, set on /admin/settings (#74). */
-export function priceId(plan: Plan, settings: SiteSettings): string | null {
-  return settings.stripePrices[plan];
+/** The Motiv price for a plan, found by lookup key motiv_<plan> in this Stripe account (#87). */
+const PRICE_TTL_MS = 10 * 60_000;
+const priceCache = new Map<Plan, { price: Stripe.Price | null; at: number }>();
+
+async function motivPrice(plan: Plan): Promise<Stripe.Price | null> {
+  const hit = priceCache.get(plan);
+  if (hit && Date.now() - hit.at < PRICE_TTL_MS) return hit.price;
+  const list = await stripe().prices.list({ lookup_keys: [motivLookupKey(plan)], active: true, limit: 1 });
+  const price = list.data[0] ?? null;
+  priceCache.set(plan, { price, at: Date.now() });
+  return price;
+}
+
+/** Why a plan can't be sold right now, or null when its price is tagged and fits the plan. */
+export async function motivPriceProblem(plan: Plan): Promise<string | null> {
+  const p = await motivPrice(plan);
+  if (!p) return `no active price with lookup key ${motivLookupKey(plan)}`;
+  const problem = priceProblem(plan, p);
+  return problem ? `${motivLookupKey(plan)}: ${problem}` : null;
+}
+
+/** Stripe price ID for a Motiv plan; null turns that checkout off. */
+export async function priceId(plan: Plan): Promise<string | null> {
+  const p = await motivPrice(plan);
+  return p && !priceProblem(plan, p) ? p.id : null;
 }
 
 const toDate = (unix: number | null | undefined) => (unix ? new Date(unix * 1000) : null);

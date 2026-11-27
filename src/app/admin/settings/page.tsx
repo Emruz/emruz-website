@@ -41,8 +41,6 @@ function Field({ def, value, tags }: { def: SettingDef; value: string | null; ta
       return <input {...common} type="email" maxLength={254} placeholder={def.fallback ?? ''} />;
     case 'emails':
       return <input {...common} type="text" maxLength={1000} placeholder="a@emruz.com, b@emruz.com" />;
-    case 'price':
-      return <input {...common} type="text" maxLength={70} pattern="price_[A-Za-z0-9]{6,60}" placeholder="price_…" spellCheck={false} autoComplete="off" />;
   }
 }
 

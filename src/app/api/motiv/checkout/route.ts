@@ -10,8 +10,10 @@ export async function POST(req: Request) {
   if (!sameOrigin(req)) return new NextResponse('Forbidden', { status: 403 });
   const plan = String((await req.formData()).get('plan')) as Plan;
   const settings = await siteSettings();
-  const price = PLANS.includes(plan) ? priceId(plan, settings) : null;
-  if (!settings.motivSalesOpen || !price) return NextResponse.redirect(new URL('/motiv#plans', SITE_URL), 303);
+  if (!settings.motivSalesOpen || !PLANS.includes(plan)) return NextResponse.redirect(new URL('/motiv#plans', SITE_URL), 303);
+  // Found by Stripe lookup key motiv_<plan> (#87)
+  const price = await priceId(plan).catch((e) => (console.error('motiv price lookup failed', e), null));
+  if (!price) return NextResponse.redirect(new URL('/motiv#plans', SITE_URL), 303);
 
   const account = await currentAccount();
   const lifetime = plan === 'lifetime';

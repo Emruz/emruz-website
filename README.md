@@ -46,7 +46,7 @@ After opening the pull request, ship polls it every 15 seconds and prints the ch
 
 ## Site settings
 
-Sales switches, Stripe price IDs, lease length, seats, the kits release hold and contact and alert addresses are changed on `/admin/settings`, not in Netlify. See `docs/site-settings.md`.
+Sales switches, lease length, seats, the kits release hold and contact and alert addresses are changed on `/admin/settings`, not in Netlify. See `docs/site-settings.md`. Motiv and kits prices are found in Stripe by lookup key, so there are no price settings (`docs/motiv-backend-setup.md`, `docs/emruz-kits-mcp.md`).
 
 ## SCF content
 

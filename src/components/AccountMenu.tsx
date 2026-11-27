@@ -98,6 +98,7 @@ export function adminLinks(me: Me | null): AdminLink[] {
     { label: 'Insights', href: '/admin/insights', description: 'Write and publish articles' },
     { label: 'Messages', href: '/admin/messages', description: 'Contact form submissions' },
     { label: 'Privacy', href: '/admin/privacy', description: 'Data requests and deletions' },
+    { label: 'Site settings', href: '/admin/settings', description: 'Sales switches, leases and email addresses' },
     { label: 'Switch user', href: '/admin/users', description: 'View the site as another user' },
   ];
 }

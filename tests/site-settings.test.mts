@@ -260,3 +260,11 @@ console.log('site settings env fallback passed');
   assert.equal(fake.reads, before + 1, 'a good read is cached');
 }
 console.log('site settings cache passed');
+
+// Admin menu links to Site settings, for admins only (#88)
+{
+  const menu = readFileSync('src/components/AccountMenu.tsx', 'utf8');
+  const admin = menu.slice(menu.indexOf('export function adminLinks'), menu.indexOf('export function SessionButtons'));
+  assert.match(admin, /if \(!me\?\.account \|\| !me\.isAdmin\) return \[\];/, 'non-admins get no admin links');
+  assert.match(admin, /label: 'Privacy'[^\n]*\n\s*\{ label: 'Site settings', href: '\/admin\/settings'/, 'Site settings follows Privacy');
+}

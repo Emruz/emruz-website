@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
-import { Container, DetailHeader } from '@/components';
+import { Container, DetailHeader, SaveBar } from '@/components';
 import { releaseTags } from '@/lib/server/kits/content';
 import { fmtDate } from '@/lib/server/queries';
 import { isAdmin, needsStepUp, requireAccount } from '@/lib/server/session';
 import { settingChanges, storedSettings } from '@/lib/server/settings';
 import { displayValue, effectiveSetting, SETTINGS, type SettingDef } from '@/lib/server/settings-core';
-import { btn, input, Notice, ReauthBanner } from '../motiv/ui';
+import { input, Notice, ReauthBanner } from '../motiv/ui';
 import { saveSettings } from './actions';
 
 export const metadata = { title: 'Site settings', robots: { index: false } };
@@ -83,6 +83,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
           )}
 
           <form action={saveSettings} className="max-w-3xl space-y-10">
+            <SaveBar />
             {GROUPS.map((g) => (
               <fieldset key={g} className="rounded-lg border border-gray-200 p-5 md:p-6">
                 <legend className="px-2 text-lg font-bold text-gray-900">{g}</legend>
@@ -115,7 +116,6 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
                 </div>
               </fieldset>
             ))}
-            <button className={btn}>Save changes</button>
           </form>
 
           <h2 className="mt-12 mb-3 text-xl font-bold text-gray-900">Recent changes</h2>

@@ -280,3 +280,15 @@ console.log('site settings cache passed');
   assert.match(admin, /if \(!me\?\.account \|\| !me\.isAdmin\) return \[\];/, 'non-admins get no admin links');
   assert.match(admin, /label: 'Privacy'[^\n]*\n\s*\{ label: 'Site settings', href: '\/admin\/settings'/, 'Site settings follows Privacy');
 }
+
+// Save bar (#89): forms with several fields put one blue Save button at the top, sticky under the header
+{
+  const bar = readFileSync('src/components/SaveBar.tsx', 'utf8');
+  assert.match(bar, /sticky top-16/, 'stays in view under the header');
+  assert.match(bar, /bg-blue-600/, 'blue');
+  const page = readFileSync('src/app/admin/settings/page.tsx', 'utf8');
+  const form = page.slice(page.indexOf('<form action={saveSettings}'), page.indexOf('</form>'));
+  assert.ok(form.indexOf('<SaveBar />') >= 0 && form.indexOf('<SaveBar />') < form.indexOf('{GROUPS.map'), 'Save is at the top of the settings form');
+  assert.doesNotMatch(form, />Save changes</, 'no second Save button');
+  assert.match(readFileSync('AGENTS.md', 'utf8'), /SaveBar/, 'the convention is written down');
+}

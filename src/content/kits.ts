@@ -33,10 +33,17 @@ export const kitOffers: KitOffer[] = [
     prices: { once: 49, upgrade: 19, month: 6, year: 59 },
   },
   {
+    pack: 'product',
+    name: 'Product Kit',
+    summary: 'Make big technical decisions on evidence: sourced research, an independent architecture panel and a launch-readiness check.',
+    covers: ['Sourced evidence packs on technical options', 'Architecture panel with recorded dissent and steelmen', 'Decisions recorded as ADRs', 'Launch-readiness scorecard before you ship'],
+    prices: { once: 49, upgrade: 19, month: 6, year: 59 },
+  },
+  {
     pack: 'all',
     name: 'All kits',
     summary: 'Every Emruz kit in one purchase.',
-    covers: ['Release, Founder and Marketing Kits', 'Less than buying each kit on its own'],
+    covers: ['Release, Founder, Marketing and Product Kits', 'Less than buying each kit on its own'],
     prices: { once: 149, upgrade: 59, month: 19, year: 189, lifetime: 549 },
   },
 ];

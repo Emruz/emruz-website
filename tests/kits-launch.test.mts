@@ -128,6 +128,8 @@ assert.equal(launchReview(launch, KILL_LINES.cycles, 2, new Date('2027-04-01'))!
 assert.equal(LEAD_PACK, 'release');
 assert.ok(kitOffers.some((o) => o.pack === LEAD_PACK));
 assert.ok(kitOffers.some((o) => o.pack === BUNDLE_PACK), 'the all-kits bundle stays');
+assert.deepEqual(kitOffers.map((o) => o.pack), ['release', 'founder', 'marketing', 'product', 'all'], 'Product Kit is an add-on after Founder and Marketing (#81)');
+assert.ok(kitOffers.find((o) => o.pack === BUNDLE_PACK)!.covers.includes('Release, Founder, Marketing and Product Kits'), 'bundle names all four kits');
 const page = readFileSync('src/app/kits/page.tsx', 'utf8');
 assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle\)/, 'Release Kit, then add-ons, then the bundle');
 assert.match(page, /<select name="trigger" required/, 'buyers must say what made them buy');

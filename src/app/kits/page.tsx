@@ -14,7 +14,7 @@ import { siteSettings } from '@/lib/server/settings';
 export const metadata = {
   title: 'Emruz Release Kit: Claude skills that check every release before it ships',
   description:
-    'Claude skills that test, secure and check every release before it ships, with Founder and Marketing Kits as add-ons. Connect once over MCP.',
+    'Claude skills that test, secure and check every release before it ships, with Founder, Marketing and Product Kits as add-ons. Connect once over MCP.',
 };
 
 const notices: Record<string, string> = {
@@ -213,7 +213,7 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Kits' }]}
         title="Emruz Release Kit"
-        summary="Claude skills that test, secure and check every release before it ships. Add the Founder and Marketing Kits when you need them."
+        summary="Claude skills that test, secure and check every release before it ships. Add the Founder, Marketing and Product Kits when you need them."
         primaryCta={{ label: open ? 'See prices' : 'Get notified at launch', href: open ? '#pricing' : '/contact?topic=kits' }}
         secondaryCta={account ? { label: 'Your kits', href: '/motiv/account#kits' } : { label: 'Sign in', href: '/signin?next=%2Fkits' }}
         sections={[

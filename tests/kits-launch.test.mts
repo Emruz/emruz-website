@@ -135,6 +135,7 @@ for (const o of kitOffers) {
   const svg = readFileSync(`public/kits/${o.pack}.svg`, 'utf8');
   assert.match(svg, /^<svg[\s>]/, `${o.pack} logo is an SVG`);
   assert.doesNotMatch(svg, /<script|<foreignObject|\son[a-z]+=|(?:xlink:)?href=["'](?!#)/i, `${o.pack} logo has no scripts or external references`);
+  assert.doesNotMatch(svg, /c2pa|<metadata/i, `${o.pack} logo carries no embedded metadata or provenance record`);
 }
 const page = readFileSync('src/app/kits/page.tsx', 'utf8');
 assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle, false, true\)/, 'Release Kit, then add-ons, then the bundle at full width');

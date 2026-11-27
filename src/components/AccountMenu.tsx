@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, LogIn } from 'lucide-react';
 import { initials } from '@/lib/initials';
+import { signInHref } from '@/lib/signin-next';
 
 export { initials };
 
@@ -147,7 +148,7 @@ export default function AccountMenu({ me }: { me: Me | null }) {
   if (!me.account) {
     return (
       <Link
-        href={`/signin?next=${encodeURIComponent(pathname === '/' ? '/motiv/account' : pathname)}`}
+        href={signInHref(pathname)}
         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md font-medium text-gray-700 hover:text-blue-700"
       >
         <LogIn className="w-4 h-4" /> Sign in

@@ -185,7 +185,5 @@ export function isPermanentAdmin(a: Pick<Account, 'verifiedEmails'>): boolean {
   return a.verifiedEmails.some((e) => admins.includes(e));
 }
 
-/** Only allow same-site relative return paths. */
-export function safeNext(next: unknown, fallback = '/motiv/account'): string {
-  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\') ? next : fallback;
-}
+/** Only allow same-site relative return paths; the home page when none is given (#78). */
+export { safeNext } from '@/lib/signin-next';

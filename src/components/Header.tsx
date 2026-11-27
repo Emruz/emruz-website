@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { mainNav } from '@/content/navigation';
+import { signInHref } from '@/lib/signin-next';
 import Logo from './Logo';
 import AccountMenu, { Avatar, SessionButtons, accountLinks, adminLinks, useMe } from './AccountMenu';
 
@@ -272,7 +273,7 @@ export default function Header() {
                 </div>
               </>
             ) : (
-              <Link href="/signin" className="block py-1 font-semibold text-gray-900">
+              <Link href={signInHref(pathname)} className="block py-1 font-semibold text-gray-900">
                 Sign in or create an account
               </Link>
             )}

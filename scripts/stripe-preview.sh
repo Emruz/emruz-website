@@ -10,6 +10,6 @@ command -v stripe >/dev/null || { echo "Install the Stripe CLI first: brew insta
 
 url="https://deploy-preview-${pr}--emruz-website.netlify.app/api/stripe/webhook"
 # The same events the production webhook handles (src/app/api/stripe/webhook/route.ts)
-events="checkout.session.completed,invoice.paid,invoice.payment_failed,customer.subscription.updated,customer.subscription.deleted,charge.refunded,charge.dispute.closed"
+events="checkout.session.completed,checkout.session.async_payment_succeeded,invoice.paid,invoice.payment_failed,customer.subscription.updated,customer.subscription.deleted,charge.refunded,charge.dispute.closed"
 echo "Forwarding Stripe test events to $url"
 exec stripe listen --events "$events" --forward-to "$url"

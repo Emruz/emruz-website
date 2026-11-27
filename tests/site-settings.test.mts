@@ -120,8 +120,10 @@ assert.ok(priceProblem('lifetime', { ...once, active: false }), 'archived price'
 // Product and currency (review sens-5)
 assert.match(priceProblem('monthly', { ...rec('month'), currency: 'eur' })!, /USD/, 'US dollars only');
 assert.match(priceProblem('lifetime', { ...once, lookup_key: 'kits_release_once' })!, /kits price/, 'not a kits price');
-assert.equal(priceProblem('monthly', rec('month'), 'prod_motiv'), null, 'same product as the other prices');
-assert.match(priceProblem('monthly', rec('month'), 'prod_other')!, /different Stripe product/);
+// Each plan may be its own Stripe product (#83)
+assert.equal(priceProblem('monthly', { ...rec('month'), product: 'prod_monthly' }), null);
+assert.equal(priceProblem('annual', { ...rec('year'), product: 'prod_annual' }), null);
+assert.equal(priceProblem('lifetime', { ...once, product: 'prod_lifetime' }), null);
 
 // ---------- Display ----------
 assert.equal(displayValue(def('stripe_automatic_tax'), 'true'), 'On');
@@ -198,7 +200,7 @@ console.log('site settings env fallback passed');
   assert.doesNotMatch(page, /no longer read/, 'the notice no longer says the variables are ignored');
   assert.match(page, /v === '' \? 'default \(cleared\)'/, 'the change log names an explicit clear');
   assert.match(actions, /storedForm\(def, c\.value\)/, 'Default is stored as a clear while the variable is set');
-  assert.match(actions, /same Stripe product/, 'Motiv prices are checked for one product');
+  assert.doesNotMatch(actions, /same Stripe product|products\.size/, 'Motiv prices may be separate products (#83)');
 }
 
 // Settings cache: read failures and saves (review sens-2, logicA-3). The database is faked.

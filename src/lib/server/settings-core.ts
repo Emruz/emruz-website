@@ -112,15 +112,14 @@ export interface PriceFacts {
 }
 
 /**
- * What a Stripe price must be for a Motiv plan: active, in US dollars, not a kits price,
- * recurring monthly or yearly or one time, and for the same product as the other Motiv
- * prices in effect (`product`, when one is set).
+ * What a Stripe price must be for a Motiv plan: active, in US dollars, not a kits price, and
+ * recurring monthly or yearly or one time. Each plan may be its own Stripe product (#83):
+ * Motiv purchases are recognised by checkout metadata, not by product.
  */
-export function priceProblem(plan: NonNullable<SettingDef['plan']>, p: PriceFacts, product?: string | null): string | null {
+export function priceProblem(plan: NonNullable<SettingDef['plan']>, p: PriceFacts): string | null {
   if (!p.active) return 'that price is archived in Stripe.';
   if (p.currency !== CURRENCY) return `the price must be in ${CURRENCY.toUpperCase()}, not ${p.currency.toUpperCase()}.`;
   if (p.lookup_key?.startsWith('kits_')) return 'that is an Emruz kits price, not a Motiv price.';
-  if (product && p.product !== product) return 'that price is for a different Stripe product than the other Motiv prices.';
   if (plan === 'lifetime') return p.type === 'one_time' ? null : 'the lifetime price must be one time.';
   const want = plan === 'monthly' ? 'month' : 'year';
   if (p.type !== 'recurring' || p.recurring?.interval !== want || (p.recurring.interval_count ?? 1) !== 1) {

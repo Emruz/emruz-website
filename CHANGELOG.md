@@ -4,6 +4,10 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.12
+
+- Site settings (#83): the Motiv Pro monthly, annual and lifetime prices may be separate Stripe products. The check that all three were for one product blocked every save on `/admin/settings`. Each price is still checked: it exists in this Stripe account, is active, is in USD, is not a kits price, and fits its plan.
+
 ## v202611.11
 
 - Product Kit (#81): `/kits` sells the Product Kit as an add-on after the Founder and Marketing Kits (sourced research, an architecture panel with recorded dissent, ADRs and a launch-readiness scorecard), at $49 one time, $19 upgrade, $6 per month or $59 per year, with Stripe lookup keys `kits_product_<plan>`. The all-kits bundle now covers the Release, Founder, Marketing and Product Kits at the same prices. `/kits` is restyled like the Motiv page: an overview band with the pack logos, each kit's logo on its card, the add-ons in three columns, the bundle at full width, and How it works says how many Release Kit skills are free. Logos come from emruz-kits `assets/packs` and are served from `public/kits`.

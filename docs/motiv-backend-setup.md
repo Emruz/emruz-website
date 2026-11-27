@@ -17,7 +17,7 @@ Check signing still matches the app: `npm run test:lease` (uses the test vectors
 
 ## 3. Stripe
 1. Turn on Stripe Tax and add your tax registrations.
-2. Create one product "Motiv Pro" with three prices: $9/month recurring, $99/year recurring, $299 one-time. Set each price's tax behavior. Enter the price IDs on `/admin/settings` (Stripe group); each is checked against Stripe.
+2. Create the Motiv Pro prices: $9/month recurring, $99/year recurring, $299 one-time, as one product with three prices or as three products. Set each price's tax behavior. Enter the price IDs on `/admin/settings` (Stripe group); each is checked against Stripe.
 3. Add a webhook endpoint `https://emruz.com/api/stripe/webhook` for: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`, `charge.dispute.closed`. Put its signing secret in `STRIPE_WEBHOOK_SECRET`.
 4. Configure the Customer Portal (Settings > Billing > Customer portal): allow cancel, update payment method and invoice history.
 5. Set `STRIPE_SECRET_KEY`. Use test-mode keys first; `stripe listen --forward-to localhost:8888/api/stripe/webhook` works with `netlify dev`.

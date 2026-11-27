@@ -36,14 +36,13 @@ async function stripePrice(def: SettingDef, id: string): Promise<PriceFacts | st
 }
 
 /**
- * Each changed Motiv price must exist in this Stripe account and fit its plan, and every
- * Motiv price in effect after the save must be for the same product.
+ * Each changed Motiv price must exist in this Stripe account and fit its plan. The three
+ * plans may be separate Stripe products (#83).
  */
 async function checkPrices(changes: { def: SettingDef; value: string | null }[], current: Record<string, string>): Promise<string[]> {
   const changed = changes.filter((c) => c.def.kind === 'price');
   if (!changed.some((c) => c.value)) return [];
   const errors: string[] = [];
-  const products = new Set<string>();
   for (const def of SETTINGS.filter((d) => d.kind === 'price')) {
     const change = changed.find((c) => c.def.key === def.key);
     const id = change ? change.value : effectiveSetting(def, current).value;
@@ -53,13 +52,11 @@ async function checkPrices(changes: { def: SettingDef; value: string | null }[],
       errors.push(p);
       continue;
     }
-    products.add(p.product);
     if (change) {
       const problem = priceProblem(def.plan!, p);
       if (problem) errors.push(`${def.label}: ${problem}`);
     }
   }
-  if (products.size > 1) errors.push('Motiv Pro prices: the monthly, annual and lifetime prices must all be for the same Stripe product.');
   return errors;
 }
 

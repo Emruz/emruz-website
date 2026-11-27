@@ -11,7 +11,7 @@ Business settings live in the database (`site_settings`, migration 027) and are 
 | Computers per new licence | `MOTIV_DEFAULT_SEATS` | 2 | 1 to 50 |
 | Lease length (days) | `MOTIV_LEASE_DAYS` | 14 | 1 to 60 |
 | Past-due grace (days) | `MOTIV_PAST_DUE_GRACE_DAYS` | 7 | 0 to 30 |
-| Motiv Pro monthly, annual, lifetime price | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME` | Not set (that checkout is off) | Exists in this Stripe account, active, in USD, not a kits price, recurs monthly, recurs yearly, or is one time, and all three are for the same product |
+| Motiv Pro monthly, annual, lifetime price | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME` | Not set (that checkout is off) | Exists in this Stripe account, active, in USD, not a kits price, recurs monthly, recurs yearly, or is one time. The three may be one product or separate products |
 | Sales tax at checkout | `STRIPE_AUTOMATIC_TAX` | On | On or off (off only in a sandbox) |
 | Contact form to | `CONTACT_TO` | info@emruz.com | One email address |
 | Assessment notices to | `ASSESSMENT_NOTIFY_TO` | sales@emruz.com | One email address |

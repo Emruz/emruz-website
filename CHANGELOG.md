@@ -4,6 +4,10 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.13
+
+- Sign in returns to the current page (#78): the Sign in links in the account menu and the mobile menu bring you back to the page you were on, home included, instead of your account page. Sign-in with no return page given lands on the home page. Email links, Google and Microsoft sign-in and sign in again all return to it.
+
 ## v202611.12
 
 - Site settings (#83): the Motiv Pro monthly, annual and lifetime prices may be separate Stripe products. The check that all three were for one product blocked every save on `/admin/settings`. Each price is still checked: it exists in this Stripe account, is active, is in USD, is not a kits price, and fits its plan.

@@ -7,6 +7,7 @@ export { default as Container } from './Container';
 export { default as Hero } from './Hero';
 export { default as PageHeader } from './PageHeader';
 export { default as DetailHeader } from './DetailHeader';
+export { default as SaveBar } from './SaveBar';
 export { default as SectionIntro } from './SectionIntro';
 export { default as CTABanner } from './CTABanner';
 

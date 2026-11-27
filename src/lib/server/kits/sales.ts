@@ -9,7 +9,7 @@ import { siteSettings } from '../settings';
 import { stripe } from '../stripe';
 import { packTitle } from './content';
 import { isRef } from './content-core';
-import { isPurchaseTrigger } from './launch-core';
+import { triggerFromSession } from './launch-core';
 import { oauthStore } from './store';
 import { heldAtRelease, isKitPlan, isSubscriptionPlan, kindFor, lifetimeOpen, lookupKey, subscriptionEnded, subscriptionType, type KitPlan } from './sales-core';
 
@@ -101,8 +101,8 @@ export async function onKitCheckoutCompleted(session: Stripe.Checkout.Session) {
   const [still] = await db()<{ id: string }[]>`select id from accounts where id = ${startedBy}`;
   if (!still && !email) throw new Error(`Kit checkout ${session.id}: account gone and no email`);
   const accountId = still ? startedBy : await accountForEmail(email!);
-  // Checkouts started before #71 have no trigger
-  const trigger = isPurchaseTrigger(m.trigger) ? m.trigger : null;
+  // From the Stripe checkout field (#86) or, before that, metadata; none before #71
+  const trigger = triggerFromSession(session);
 
   const rows = await db()<{ id: string }[]>`
     insert into kit_entitlements (account_id, pack, through_ref, source, kind, granted_by,

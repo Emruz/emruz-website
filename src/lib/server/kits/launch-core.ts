@@ -2,18 +2,47 @@
 // 90-day review against the kill lines. Pure functions; tests load this file directly.
 import 'server-only';
 
-/** What made a buyer buy now, asked on /kits before checkout. Stored on the entitlement. */
+/** What made a buyer buy now, asked on the Stripe Checkout page (#86). Stored on the entitlement. */
 export const PURCHASE_TRIGGERS = [
   { id: 'launch', label: 'A launch or release coming up' },
   { id: 'customer_request', label: 'A customer asked about security or compliance' },
   { id: 'pricing_fundraise', label: 'Pricing work or a fundraise' },
   { id: 'incident', label: 'An incident or near miss' },
+  { id: 'technical_decision', label: 'A big technical or architecture decision' },
   { id: 'other', label: 'Something else' },
 ] as const;
 export type PurchaseTrigger = (typeof PURCHASE_TRIGGERS)[number]['id'];
 
 export const isPurchaseTrigger = (v: unknown): v is PurchaseTrigger =>
   typeof v === 'string' && PURCHASE_TRIGGERS.some((t) => t.id === v);
+
+/** Stripe Checkout custom field that asks the question (#86). Stripe keys and values are alphanumeric only. */
+export const TRIGGER_FIELD_KEY = 'purchasetrigger';
+export const stripeTriggerValue = (id: PurchaseTrigger) => id.replace(/_/g, '');
+
+/** The required dropdown on the kits checkout page. */
+export function triggerField() {
+  return {
+    key: TRIGGER_FIELD_KEY,
+    label: { type: 'custom' as const, custom: 'What made you buy now?' },
+    type: 'dropdown' as const,
+    optional: false,
+    dropdown: { options: PURCHASE_TRIGGERS.map((t) => ({ label: t.label, value: stripeTriggerValue(t.id) })) },
+  };
+}
+
+interface SessionTriggerSource {
+  custom_fields?: { key: string; dropdown?: { value?: string | null } | null }[] | null;
+  metadata?: Record<string, string> | null;
+}
+
+/** The buyer's answer: the Stripe checkout field, or metadata.trigger for checkouts started before #86. */
+export function triggerFromSession(session: SessionTriggerSource): PurchaseTrigger | null {
+  const value = session.custom_fields?.find((f) => f.key === TRIGGER_FIELD_KEY)?.dropdown?.value;
+  if (value) return PURCHASE_TRIGGERS.find((t) => stripeTriggerValue(t.id) === value)?.id ?? null;
+  const old = session.metadata?.trigger;
+  return isPurchaseTrigger(old) ? old : null;
+}
 
 export const triggerLabel = (id: string | null) =>
   PURCHASE_TRIGGERS.find((t) => t.id === id)?.label ?? 'Not recorded';

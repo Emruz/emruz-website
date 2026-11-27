@@ -4,6 +4,15 @@ What changed in each release of emruz.com, newest first.
 
 Releases are numbered vYYYYMM.#: the year and month, then the release number in that month. The first release of a month is .1. `npm run bump` sets the next number in package.json (stored as YYYYMM.#.0 because npm needs three parts). Before `npm run ship`, add a `## vYYYYMM.#` section here for that number; ship stops if it is missing.
 
+## v202611.12
+
+- Site settings (#83): the Motiv Pro monthly, annual and lifetime prices may be separate Stripe products. The check that all three were for one product blocked every save on `/admin/settings`. Each price is still checked: it exists in this Stripe account, is active, is in USD, is not a kits price, and fits its plan.
+- Kits buy form (#85): "What made you buy now?" adds "A big technical or architecture decision" (`technical_decision`), so Product Kit buyers have a fitting answer. It is counted under purchase triggers on `/admin/kits`. No migration.
+- Kits checkout (#86): "What made you buy now?" moves from `/kits` to a required dropdown on the Stripe Checkout page, so Buy and Subscribe go straight to checkout without jumping back to the question. Purchases started before this keep their answer.
+- Admin menu (#88): links to Site settings (`/admin/settings`), which was only reachable from a button on `/admin/motiv`.
+- Motiv prices (#87): Motiv Pro checkout finds its Stripe prices by lookup key (`motiv_monthly`, `motiv_annual`, `motiv_lifetime`), like the kits, in whichever Stripe account the site uses. The three price settings are gone from `/admin/settings`; `/admin/motiv` health reports a missing key or a price that doesn't fit its plan. Remove `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` and `STRIPE_PRICE_LIFETIME` from Netlify after this ships.
+- Save bar (#89): `/admin/settings` has one blue Save changes button at the top of the form, kept in view under the header while scrolling. New `SaveBar` component for forms with several fields; `AGENTS.md` makes it the convention.
+
 ## v202611.11
 
 - Product Kit (#81): `/kits` sells the Product Kit as an add-on after the Founder and Marketing Kits (sourced research, an architecture panel with recorded dissent, ADRs and a launch-readiness scorecard), at $49 one time, $19 upgrade, $6 per month or $59 per year, with Stripe lookup keys `kits_product_<plan>`. The all-kits bundle now covers the Release, Founder, Marketing and Product Kits at the same prices. `/kits` is restyled like the Motiv page: an overview band with the pack logos, each kit's logo on its card, the add-ons in three columns, the bundle at full width, and How it works says how many Release Kit skills are free. Logos come from emruz-kits `assets/packs` and are served from `public/kits`.

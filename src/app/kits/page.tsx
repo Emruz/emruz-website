@@ -4,7 +4,6 @@ import { DetailHeader, Container } from '@/components';
 import { BUNDLE_PACK, kitOffers, kitResults, LEAD_PACK, type KitOffer } from '@/content/kits';
 import { SITE_URL } from '@/lib/server/config';
 import { currentBundle } from '@/lib/server/kits/content';
-import { PURCHASE_TRIGGERS } from '@/lib/server/kits/launch-core';
 import { lifetimeOffer } from '@/lib/server/kits/sales';
 import { canBuy, holding, LIFETIME_PACK, type Holding, type KitPlan } from '@/lib/server/kits/sales-core';
 import { entitlementsFor } from '@/lib/server/kits/store';
@@ -25,7 +24,6 @@ const notices: Record<string, string> = {
   unavailable: 'That option is not available right now. Please try again later.',
   lifetime_closed: 'The founding lifetime offer has closed.',
   impersonating: 'Switch back to your own account to buy.',
-  trigger: 'Tell us what made you buy now, then choose a price again.',
 };
 
 async function loadState() {
@@ -81,7 +79,7 @@ function PackLogo({ offer, size }: { offer: KitOffer; size: number }) {
 const PLAN_LABEL: Record<KitPlan, string> = { once: 'one time', upgrade: 'upgrade', month: 'monthly', year: 'annual', lifetime: 'lifetime' };
 
 function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan; label: string; primary?: boolean }) {
-  // Inside the price list form (BuyForm), which carries the trigger question
+  // Inside the price list form (BuyForm); Stripe Checkout asks what made them buy now (#86)
   return (
     <button
       name="offer"
@@ -98,24 +96,10 @@ function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan
   );
 }
 
-/** Price list: one form when sales are open, so "what made you buy now" is asked once for every buy button (#71). */
-function BuyForm({ open, ask, children }: { open: boolean; ask: boolean; children: React.ReactNode }) {
+/** Price list: one form when sales are open, so every buy button posts its offer. Stripe Checkout asks what made them buy now (#86). */
+function BuyForm({ open, children }: { open: boolean; children: React.ReactNode }) {
   if (!open) return <div>{children}</div>;
-  // Nothing left to buy: no question
-  if (!ask) return <form action="/api/kits/checkout" method="post">{children}</form>;
-  return (
-    <form action="/api/kits/checkout" method="post">
-      <label className="mb-6 block max-w-xl text-sm">
-        <span className="font-semibold text-gray-900">What made you buy now?</span>
-        <span className="block text-gray-600">One answer helps us build what buyers need next. It is stored with your purchase.</span>
-        <select name="trigger" required defaultValue="" className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900">
-          <option value="" disabled>Choose one</option>
-          {PURCHASE_TRIGGERS.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-        </select>
-      </label>
-      {children}
-    </form>
-  );
+  return <form action="/api/kits/checkout" method="post">{children}</form>;
 }
 
 function PriceRow({ price, period, children }: { price: number; period: string; children?: React.ReactNode }) {
@@ -226,7 +210,6 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
   const bundle = kitOffers.find((o) => o.pack === BUNDLE_PACK);
   const addOns = kitOffers.filter((o) => o !== lead && o !== bundle);
   const leadCount = counts.get(LEAD_PACK);
-  const canBuyAny = !account || !latest || lifetimeForMe || kitOffers.some((o) => holding(o.pack, ents, latest).state !== 'latest');
   return (
     <>
       <DetailHeader
@@ -323,7 +306,7 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
           {notice && Object.hasOwn(notices, notice) && (
             <p role="status" className="mb-6 rounded-lg bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-3">{notices[notice]}</p>
           )}
-          <BuyForm open={open} ask={canBuyAny}>
+          <BuyForm open={open}>
             {lead && card(lead, true)}
             {addOns.length > 0 && (
               <>

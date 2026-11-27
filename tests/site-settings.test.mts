@@ -1,4 +1,4 @@
-// Site settings (#74): the registry, checks per setting, defaults, Stripe price rules,
+// Site settings (#74): the registry, checks per setting, defaults, Motiv Stripe price rules (#87),
 // the migration, and that the moved variables are no longer read from the environment.
 // Run: node --conditions=react-server --experimental-strip-types tests/site-settings.test.mts
 import assert from 'node:assert/strict';
@@ -6,14 +6,17 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { registerHooks } from 'node:module';
 import path from 'node:path';
 import {
-  checkSetting, displayValue, effectiveSetting, isDay, KITS_LAUNCH_DATE, priceProblem, resolveSettings, settingDef, SETTINGS, storedForm,
+  checkSetting, displayValue, effectiveSetting, isDay, KITS_LAUNCH_DATE, resolveSettings, settingDef, SETTINGS, storedForm,
 } from '../src/lib/server/settings-core.ts';
+import { motivLookupKey, priceProblem } from '../src/lib/server/motiv-prices.ts';
 
 const MOVED = [
   'KITS_SALES_OPEN', 'KITS_LIFETIME_UNTIL', 'SKILLS_REF', 'MOTIV_SALES_OPEN', 'MOTIV_DEFAULT_SEATS', 'MOTIV_LEASE_DAYS',
-  'MOTIV_PAST_DUE_GRACE_DAYS', 'STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_ANNUAL', 'STRIPE_PRICE_LIFETIME', 'STRIPE_AUTOMATIC_TAX',
+  'MOTIV_PAST_DUE_GRACE_DAYS', 'STRIPE_AUTOMATIC_TAX',
   'CONTACT_TO', 'ASSESSMENT_NOTIFY_TO', 'ALERT_EMAILS', 'EMAIL_REPLY_TO',
 ];
+/** Replaced by Stripe lookup keys (#87): not a setting and not read from the environment. */
+const RETIRED = ['STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_ANNUAL', 'STRIPE_PRICE_LIFETIME'];
 
 // ---------- Registry ----------
 assert.deepEqual(SETTINGS.map((s) => s.env).sort(), [...MOVED].sort(), 'every moved variable has a setting');
@@ -22,7 +25,6 @@ for (const s of [...SETTINGS.map((d) => d.key), KITS_LAUNCH_DATE]) assert.match(
 for (const s of SETTINGS) {
   if (s.fallback !== null) assert.deepEqual(checkSetting(s, s.fallback), { ok: true, value: s.fallback }, `${s.key} default passes its own check`);
   if (s.kind === 'number') assert.ok(s.min !== undefined && s.max !== undefined, `${s.key} has a range`);
-  if (s.kind === 'price') assert.ok(s.plan, `${s.key} names its plan`);
 }
 assert.equal(settingDef('__proto__'), undefined);
 assert.equal(settingDef('nope'), undefined);
@@ -36,7 +38,8 @@ assert.equal(d.skillsRef, null);
 assert.equal(d.motivDefaultSeats, 2);
 assert.equal(d.motivLeaseDays, 14);
 assert.equal(d.motivPastDueGraceDays, 7);
-assert.deepEqual(d.stripePrices, { monthly: null, annual: null, lifetime: null });
+assert.ok(!('stripePrices' in d), 'Motiv prices are found by Stripe lookup key, not set here (#87)');
+assert.ok(!SETTINGS.some((x) => x.key.startsWith('stripe_price_')), 'no Motiv price settings (#87)');
 assert.equal(d.stripeAutomaticTax, true, 'sales tax on unless turned off');
 assert.equal(d.contactTo, 'info@emruz.com');
 assert.equal(d.assessmentNotifyTo, 'sales@emruz.com');
@@ -47,14 +50,15 @@ assert.equal(d.kitsLaunchDate, null);
 // ---------- Stored values ----------
 const s = resolveSettings({
   kits_sales_open: 'true', motiv_sales_open: 'true', motiv_lease_days: '30', stripe_automatic_tax: 'false',
-  stripe_price_monthly: 'price_1AbCdEf', alert_emails: 'a@emruz.com, b@emruz.com', skills_ref: 'v2026.11.5',
+  stripe_price_monthly: 'price_1AbCdEf', // left in the table from before #87; ignored
+  alert_emails: 'a@emruz.com, b@emruz.com', skills_ref: 'v2026.11.5',
   kits_launch_date: '2026-12-01',
 });
 assert.equal(s.kitsSalesOpen, true);
 assert.equal(s.motivSalesOpen, true);
 assert.equal(s.motivLeaseDays, 30);
 assert.equal(s.stripeAutomaticTax, false);
-assert.equal(s.stripePrices.monthly, 'price_1AbCdEf');
+assert.ok(!('stripePrices' in s), 'a stored Motiv price from before #87 is ignored');
 assert.deepEqual(s.alertEmails, ['a@emruz.com', 'b@emruz.com']);
 assert.equal(s.skillsRef, 'v2026.11.5');
 assert.equal(s.kitsLaunchDate, '2026-12-01');
@@ -98,15 +102,23 @@ const wrong = ok('alert_emails', 'a@emruz.com, not-an-email');
 assert.ok(!wrong.ok && wrong.error.includes('not-an-email'));
 assert.equal(ok('alert_emails', Array.from({ length: 20 }, (_, i) => `${'x'.repeat(50)}${i}@emruz.com`).join(',')).ok, false, 'fits the column');
 assert.equal(ok('alert_emails', Array.from({ length: 21 }, (_, i) => `a${i}@emruz.com`).join(',')).ok, false);
-assert.deepEqual(ok('stripe_price_annual', 'price_1QxYz123abc'), { ok: true, value: 'price_1QxYz123abc' });
-for (const v of ['prod_1QxYz123abc', 'price_', 'price_abc', 'price_1QxYz-123abc', 'sk_test_123456789']) assert.equal(ok('stripe_price_annual', v).ok, false, v);
 assert.deepEqual(ok('skills_ref', 'v2026.11.5'), { ok: true, value: 'v2026.11.5' });
 for (const v of ['main', '2026.11.5', 'v2026.11', '../v2026.11.5']) assert.equal(ok('skills_ref', v).ok, false, v);
 const err = ok('motiv_lease_days', '999');
 assert.ok(!err.ok && err.error.startsWith('Lease length (days):'), 'errors name the setting');
 
-// ---------- Stripe prices ----------
-const base = { currency: 'usd', lookup_key: null, product: 'prod_motiv' };
+// ---------- Stripe prices (found by lookup key, #87) ----------
+assert.equal(motivLookupKey('monthly'), 'motiv_monthly');
+assert.equal(motivLookupKey('annual'), 'motiv_annual');
+assert.equal(motivLookupKey('lifetime'), 'motiv_lifetime');
+{
+  const stripeSrc = readFileSync('src/lib/server/stripe.ts', 'utf8');
+  assert.match(stripeSrc, /prices\.list\(\{ lookup_keys: \[motivLookupKey\(plan\)\], active: true/, 'prices come from Stripe by lookup key');
+  assert.match(stripeSrc, /return p && !priceProblem\(plan, p\) \? p\.id : null/, 'a price that does not fit its plan turns that checkout off');
+  assert.match(readFileSync('src/lib/server/health.ts', 'utf8'), /motivPriceProblem\(p\)/, '/admin/motiv health reports a missing or wrong lookup key');
+  assert.match(readFileSync('src/app/api/motiv/checkout/route.ts', 'utf8'), /await priceId\(plan\)/);
+}
+const base = { currency: 'usd', lookup_key: null };
 const rec = (interval: string, n = 1) => ({ ...base, active: true, type: 'recurring', recurring: { interval, interval_count: n } });
 const once = { ...base, active: true, type: 'one_time', recurring: null };
 assert.equal(priceProblem('monthly', rec('month')), null);
@@ -120,8 +132,10 @@ assert.ok(priceProblem('lifetime', { ...once, active: false }), 'archived price'
 // Product and currency (review sens-5)
 assert.match(priceProblem('monthly', { ...rec('month'), currency: 'eur' })!, /USD/, 'US dollars only');
 assert.match(priceProblem('lifetime', { ...once, lookup_key: 'kits_release_once' })!, /kits price/, 'not a kits price');
-assert.equal(priceProblem('monthly', rec('month'), 'prod_motiv'), null, 'same product as the other prices');
-assert.match(priceProblem('monthly', rec('month'), 'prod_other')!, /different Stripe product/);
+// Each plan may be its own Stripe product (#83)
+assert.equal(priceProblem('monthly', { ...rec('month'), product: 'prod_monthly' }), null);
+assert.equal(priceProblem('annual', { ...rec('year'), product: 'prod_annual' }), null);
+assert.equal(priceProblem('lifetime', { ...once, product: 'prod_lifetime' }), null);
 
 // ---------- Display ----------
 assert.equal(displayValue(def('stripe_automatic_tax'), 'true'), 'On');
@@ -146,11 +160,11 @@ function files(dir: string): string[] {
 const readers: string[] = [];
 for (const f of files('src')) {
   const text = readFileSync(f, 'utf8');
-  for (const v of MOVED) if (new RegExp(`process\\.env\\.${v}\\b|process\\.env\\[['"]${v}['"]\\]`).test(text)) readers.push(`${f}: ${v}`);
+  for (const v of [...MOVED, ...RETIRED]) if (new RegExp(`process\\.env\\.${v}\\b|process\\.env\\[['"]${v}['"]\\]`).test(text)) readers.push(`${f}: ${v}`);
 }
 assert.deepEqual(readers, [], 'moved variables are read from site settings only');
 const example = readFileSync('.env.example', 'utf8');
-for (const v of MOVED) assert.doesNotMatch(example, new RegExp(`^#?\\s*${v}=`, 'm'), `${v} is gone from .env.example`);
+for (const v of [...MOVED, ...RETIRED]) assert.doesNotMatch(example, new RegExp(`^#?\\s*${v}=`, 'm'), `${v} is gone from .env.example`);
 
 console.log('site settings tests passed');
 
@@ -198,7 +212,7 @@ console.log('site settings env fallback passed');
   assert.doesNotMatch(page, /no longer read/, 'the notice no longer says the variables are ignored');
   assert.match(page, /v === '' \? 'default \(cleared\)'/, 'the change log names an explicit clear');
   assert.match(actions, /storedForm\(def, c\.value\)/, 'Default is stored as a clear while the variable is set');
-  assert.match(actions, /same Stripe product/, 'Motiv prices are checked for one product');
+  assert.doesNotMatch(actions, /same Stripe product|products\.size/, 'Motiv prices may be separate products (#83)');
 }
 
 // Settings cache: read failures and saves (review sens-2, logicA-3). The database is faked.
@@ -258,3 +272,23 @@ console.log('site settings env fallback passed');
   assert.equal(fake.reads, before + 1, 'a good read is cached');
 }
 console.log('site settings cache passed');
+
+// Admin menu links to Site settings, for admins only (#88)
+{
+  const menu = readFileSync('src/components/AccountMenu.tsx', 'utf8');
+  const admin = menu.slice(menu.indexOf('export function adminLinks'), menu.indexOf('export function SessionButtons'));
+  assert.match(admin, /if \(!me\?\.account \|\| !me\.isAdmin\) return \[\];/, 'non-admins get no admin links');
+  assert.match(admin, /label: 'Privacy'[^\n]*\n\s*\{ label: 'Site settings', href: '\/admin\/settings'/, 'Site settings follows Privacy');
+}
+
+// Save bar (#89): forms with several fields put one blue Save button at the top, sticky under the header
+{
+  const bar = readFileSync('src/components/SaveBar.tsx', 'utf8');
+  assert.match(bar, /sticky top-16/, 'stays in view under the header');
+  assert.match(bar, /bg-blue-600/, 'blue');
+  const page = readFileSync('src/app/admin/settings/page.tsx', 'utf8');
+  const form = page.slice(page.indexOf('<form action={saveSettings}'), page.indexOf('</form>'));
+  assert.ok(form.indexOf('<SaveBar />') >= 0 && form.indexOf('<SaveBar />') < form.indexOf('{GROUPS.map'), 'Save is at the top of the settings form');
+  assert.doesNotMatch(form, />Save changes</, 'no second Save button');
+  assert.match(readFileSync('AGENTS.md', 'utf8'), /SaveBar/, 'the convention is written down');
+}

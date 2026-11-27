@@ -4,6 +4,8 @@ import { db } from './db';
 import { signingKey, signLease, iso } from './lease';
 import { PROVIDERS, providerConfigured, providerLabel } from './oauth';
 import { siteSettings } from './settings';
+import { PLANS } from './config';
+import { motivPriceProblem } from './stripe';
 
 /** Public keys built into Motiv (frontend/src-tauri/license_public_keys.json). */
 export const MOTIV_APP_PUBLIC_KEYS: Record<string, string> = {
@@ -52,8 +54,14 @@ export async function systemChecks(): Promise<Check[]> {
   const settings = await siteSettings();
   const missing = [
     ...['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'].filter((k) => !has(k)),
-    ...(['monthly', 'annual', 'lifetime'] as const).filter((p) => !settings.stripePrices[p]).map((p) => `${p} price (/admin/settings)`),
   ];
+  // Motiv prices are found by lookup key (#87)
+  if (has('STRIPE_SECRET_KEY')) {
+    for (const p of PLANS) {
+      const problem = await motivPriceProblem(p).catch((e) => `${p} price: ${msg(e)}`);
+      if (problem) missing.push(problem);
+    }
+  }
   checks.push({ name: 'Stripe', ok: missing.length === 0, detail: missing.length ? `Missing: ${missing.join(', ')}` : `Configured${process.env.STRIPE_SECRET_KEY?.startsWith('sk_test') ? ' (test mode)' : ''}` });
   checks.push({ name: 'Sales tax at checkout', ok: true, detail: settings.stripeAutomaticTax ? 'On (Stripe Tax)' : 'Off (turn on in /admin/settings before selling)' });
   checks.push({ name: 'Sales', ok: true, detail: settings.motivSalesOpen ? 'Buy buttons shown' : 'Closed (open on /admin/settings)' });

@@ -5,7 +5,7 @@ Tick items off as they are done. Grouped by when they're needed.
 ## Before selling Motiv (go-live)
 
 - [ ] **Stripe live keys.** Replace the sandbox values in Netlify with live ones: `STRIPE_SECRET_KEY` (sk_live_…).
-- [ ] **Stripe live prices.** Enter the live price IDs of the three copied products on /admin/settings (Stripe group).
+- [x] **Stripe live prices.** Found by lookup keys `motiv_monthly`, `motiv_annual`, `motiv_lifetime`, tagged in live (#87). After #87 ships, remove `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL` and `STRIPE_PRICE_LIFETIME` from Netlify.
 - [ ] **Stripe live webhook.** Create the same destination in live mode (same URL and 7 events, snapshot payload) and set its `STRIPE_WEBHOOK_SECRET`.
 - [ ] **Turn sales tax back on** on /admin/settings (it is off only for sandbox testing).
 - [ ] **Customer portal** configured in live mode (payment methods, invoice history, cancel).

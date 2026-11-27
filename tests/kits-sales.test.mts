@@ -7,7 +7,7 @@ import {
 import { decide } from '../src/lib/server/kits/content-core.ts';
 import { kitOffers } from '../src/content/kits.ts';
 
-const packs = ['release', 'founder', 'marketing'];
+const packs = ['release', 'founder', 'marketing', 'product'];
 const latest = 'v2026.11.5';
 const old = 'v2026.11.3';
 
@@ -20,7 +20,9 @@ assert.ok(!isKitPlan('forever') && !isKitPlan(''));
 assert.equal(kindFor('month'), 'subscription');
 assert.equal(kindFor('year'), 'subscription');
 assert.equal(kindFor('upgrade'), 'upgrade');
-assert.deepEqual(sellablePacks(packs), ['release', 'founder', 'marketing', 'all']);
+assert.deepEqual(sellablePacks(packs), ['release', 'founder', 'marketing', 'product', 'all']);
+assert.equal(lookupKey('product', 'once'), 'kits_product_once');
+assert.equal(lookupKey('product', 'year'), 'kits_product_year');
 
 // ---------- Holdings ----------
 assert.deepEqual(holding('release', [], latest), { state: 'none' });
@@ -56,6 +58,12 @@ assert.deepEqual(canBuy('release', 'month', heldOld, latest, packs), { ok: true 
 const sub = [{ pack: 'release', throughRef: null }];
 for (const plan of ['once', 'upgrade', 'month', 'year'] as const) assert.equal(canBuy('release', plan, sub, latest, packs).ok, false);
 assert.deepEqual(canBuy('founder', 'once', sub, latest, packs), { ok: true }, 'other packs still on sale');
+
+// Product Kit (#81): every plan on sale, and the bundle covers it
+for (const plan of ['once', 'month', 'year'] as const) assert.deepEqual(canBuy('product', plan, none, latest, packs), { ok: true });
+assert.deepEqual(canBuy('product', 'upgrade', [{ pack: 'product', throughRef: old }], latest, packs), { ok: true });
+assert.deepEqual(canBuy('product', 'lifetime', none, latest, packs, true), { ok: false, reason: 'unknown_pack' }, 'lifetime is bundle only');
+assert.deepEqual(holding('product', [{ pack: 'all', throughRef: null }], latest), { state: 'latest' }, 'bundle holders get the Product Kit');
 
 const bundleOld = [{ pack: 'all', throughRef: old }];
 assert.deepEqual(canBuy('all', 'upgrade', bundleOld, latest, packs), { ok: true });
@@ -103,6 +111,7 @@ assert.deepEqual(
     release: { once: 79, upgrade: 29, month: 10, year: 99 },
     founder: { once: 79, upgrade: 29, month: 10, year: 99 },
     marketing: { once: 49, upgrade: 19, month: 6, year: 59 },
+    product: { once: 49, upgrade: 19, month: 6, year: 59 },
     all: { once: 149, upgrade: 59, month: 19, year: 189, lifetime: 549 },
   },
 );

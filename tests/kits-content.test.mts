@@ -35,8 +35,8 @@ const manifest = {
   format: 'emruz-content-manifest/1',
   source: 'emruz-kits',
   repository: 'Emruz/emruz-kits',
-  packs: ['release', 'founder', 'marketing'],
-  items: [item('testing-kit', 'release', 'free'), item('web-app-security', 'release', 'full', 'security'), item('founder-kit', 'founder', 'full', 'founder'), item('marketing-kit', 'marketing', 'full', 'marketing')],
+  packs: ['release', 'founder', 'marketing', 'product'],
+  items: [item('testing-kit', 'release', 'free'), item('web-app-security', 'release', 'full', 'security'), item('founder-kit', 'founder', 'full', 'founder'), item('marketing-kit', 'marketing', 'full', 'marketing'), item('architecture-panel', 'product', 'full', 'architecture')],
 };
 assert.ok(validateManifest(manifest).ok);
 const problem = (m: unknown) => { const v = validateManifest(m); return v.ok ? null : v.problem; };
@@ -133,9 +133,10 @@ assert.equal((await handleMessage({ id: 1, method: 'ping' }, deps))!.error!.code
 const tool = async (name: string, args: Record<string, unknown>) => (await call('tools/call', { name, arguments: args }))!.result;
 // Signed in, no kits: lists everything, reads only free
 const list = await tool('list_skills', {});
-assert.equal(list.structuredContent.skills.length, 4);
+assert.equal(list.structuredContent.skills.length, 5);
 assert.deepEqual(list.structuredContent.skills.filter((s: { available: boolean }) => s.available).map((s: { name: string }) => s.name), ['testing-kit']);
 assert.equal((await tool('list_skills', { pack: 'marketing' })).structuredContent.skills.length, 1);
+assert.equal((await tool('list_skills', { pack: 'product' })).structuredContent.skills.length, 1, 'Product Kit pack (#81)');
 assert.deepEqual((await tool('search_skills', { query: 'founder' })).structuredContent.skills.map((s: { name: string }) => s.name), ['founder-kit']);
 let got = await tool('get_skill', { name: 'testing-kit' });
 assert.match(got.content[0].text, /^# testing-kit/);
@@ -161,5 +162,14 @@ const res = (await call('resources/list'))!.result.resources.map((r: { name: str
 assert.deepEqual(res, ['founder-kit', 'testing-kit']);
 assert.match((await call('resources/read', { uri: 'emruz-kits://skill/founder-kit' }))!.result.contents[0].text, /^# founder-kit/);
 assert.equal((await call('resources/read', { uri: 'emruz-kits://skill/marketing-kit' }))!.error.code, -32002);
+
+// Product Kit (#81): its own entitlement or the bundle serves it
+ents = [];
+assert.equal((await tool('get_skill', { name: 'architecture-panel' })).isError, true, 'paid without an entitlement');
+ents = [{ pack: 'product', throughRef: null }];
+assert.match((await tool('get_skill', { name: 'architecture-panel' })).content[0].text, /^# architecture-panel/);
+assert.equal((await tool('get_skill', { name: 'marketing-kit' })).isError, true, 'product only: no marketing kit');
+ents = [{ pack: 'all', throughRef: null }];
+assert.match((await tool('get_skill', { name: 'architecture-panel' })).content[0].text, /^# architecture-panel/, 'bundle covers product');
 
 console.log('kits content passed');

@@ -34,7 +34,7 @@ To hold the site at one release (for example to back out a bad release), choose 
 
 ## Sales (#68)
 
-`/kits` sells the Release, Founder and Marketing Kits and an all-kits bundle. Checkout needs a signed-in account, because the kit is used through that account's MCP sign-in.
+`/kits` sells the Release, Founder, Marketing and Product Kits and an all-kits bundle (Product Kit added in #81). Checkout needs a signed-in account, because the kit is used through that account's MCP sign-in.
 
 | Plan | Stripe lookup key | Access |
 |---|---|---|
@@ -43,7 +43,7 @@ To hold the site at one release (for example to back out a bad release), choose 
 | Monthly, annual | `kits_<pack>_month`, `kits_<pack>_year` | Every release while the subscription lasts (`through_ref` empty) |
 | Founding lifetime | `kits_all_lifetime` | All kits only; every release, no end. Open for the first 152 buyers, until 31 December 2027 (or the day set on `/admin/settings`) |
 
-`<pack>` is `release`, `founder`, `marketing` or `all`. Prices are found by lookup key, so there are no price environment variables; the amounts shown on `/kits` live in `src/content/kits.ts` and must match Stripe. Each product has tax code `txcd_10103001` (SaaS, business use). Promotion codes are allowed except on upgrades and lifetime.
+`<pack>` is `release`, `founder`, `marketing`, `product` or `all`. Prices are found by lookup key, so there are no price environment variables; the amounts shown on `/kits` live in `src/content/kits.ts` and must match Stripe. Each product has tax code `txcd_10103001` (SaaS, business use). Promotion codes are allowed except on upgrades and lifetime.
 
 The Stripe webhook adds a `kit_entitlements` row (source `purchase`, with its kind and Stripe IDs) on `checkout.session.completed`, or on `checkout.session.async_payment_succeeded` for a delayed payment method. Add that event to the webhook destination (sandbox and live) next to the Motiv events. A subscription that Stripe ends (canceled, unpaid, incomplete_expired) revokes its row; past due keeps access while Stripe retries, and an unpaid subscription that is paid again gets its access back. Revoking a purchased subscription on `/admin/kits` cancels it in Stripe first. Kit entitlements can't be deleted with their account: merging accounts moves them (migration 023 makes the foreign key `on delete restrict`). A refund or lost dispute revokes the row it paid for and cancels its subscription. Subscribers open the Customer Portal from `/motiv/account#kits`.
 
@@ -64,7 +64,7 @@ The release hold, the kits sales switch and the last day of the founding lifetim
 
 From the founder board review of the kits:
 
-- `/kits` leads with the Release Kit; the Founder and Marketing Kits are shown as add-ons, then the all-kits bundle.
+- `/kits` leads with the Release Kit; the Founder, Marketing and Product Kits are shown as add-ons, then the all-kits bundle.
 - `/kits/security` is the security and data statement for the MCP server, linked from `/kits`, the consent page and the privacy policy. Token lifetimes, the scope and rate limits on it are read from the code.
 - The buy form asks what made the buyer buy now (`launch`, `customer_request`, `pricing_fundraise`, `incident`, `other`). It goes to Stripe as checkout metadata `trigger` and is stored in `kit_entitlements.purchase_trigger` (migration 024). Checkouts started before #71 have none.
 - `/admin/kits` shows sales outside Emruz (emruz.com addresses, `ADMIN_EMAILS` and the emails under Left out are not counted; staff add and remove those on the page, stored in `kit_excluded_emails`, migration 025): paying accounts by kit and plan, free to paid (accounts that ever connected an MCP app vs those that pay), purchase triggers, founding lifetime sold, and the review against the kill lines: under 20 paying at 90 days after the launch date (set on `/admin/kits`, stored in `kit_settings`, migration 026), reprice or narrow; under 25 after two release cycles, stop new kit development. A release cycle is a calendar month after the launch month with a kits release (tags are `vYYYY.MM.N`).

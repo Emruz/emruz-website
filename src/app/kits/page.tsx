@@ -14,7 +14,7 @@ import { siteSettings } from '@/lib/server/settings';
 export const metadata = {
   title: 'Emruz Release Kit: Claude skills that check every release before it ships',
   description:
-    'Claude skills that test, secure and check every release before it ships, with Founder and Marketing Kits as add-ons. Connect once over MCP.',
+    'Claude skills that test, secure and check every release before it ships, with Founder, Marketing and Product Kits as add-ons. Connect once over MCP.',
 };
 
 const notices: Record<string, string> = {
@@ -69,6 +69,15 @@ function LifetimeRow({ price, left, cap, until, open }: { price: number; left: n
   );
 }
 
+/** Pack logos, copied from emruz-kits assets/packs into public/kits (#81). */
+const logoFor = (pack: string) => `/kits/${pack}.svg`;
+
+/** Decorative: the kit name always sits next to it. */
+function PackLogo({ offer, size }: { offer: KitOffer; size: number }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={logoFor(offer.pack)} alt="" width={size} height={size} className="flex-shrink-0 rounded-[22%] shadow-sm" />;
+}
+
 const PLAN_LABEL: Record<KitPlan, string> = { once: 'one time', upgrade: 'upgrade', month: 'monthly', year: 'annual', lifetime: 'lifetime' };
 
 function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan; label: string; primary?: boolean }) {
@@ -121,7 +130,7 @@ function PriceRow({ price, period, children }: { price: number; period: string; 
 }
 
 function OfferCard({
-  offer, count, have, open, lifetime, lead,
+  offer, count, have, open, lifetime, lead, wide,
 }: {
   offer: KitOffer;
   count?: { total: number; free: number };
@@ -129,20 +138,28 @@ function OfferCard({
   open: boolean;
   lifetime: { left: number; cap: number; until: string } | null;
   lead?: boolean;
+  /** Full width with prices beside the description, like the lead card (the bundle, #81). */
+  wide?: boolean;
 }) {
+  const split = lead || wide;
   const p = offer.prices;
   const owned = have?.state === 'latest';
   const upgradable = have?.state === 'held' && have.upgradable;
   return (
-    <div className={`flex flex-col rounded-xl border bg-white p-6 ${lead ? 'border-2 border-[#4F46E5] md:grid md:grid-cols-2 md:gap-10 md:p-8' : 'border-gray-200'}`}>
+    <div className={`flex flex-col rounded-xl border bg-white p-6 ${lead ? 'border-2 border-[#4F46E5]' : 'border-gray-200'} ${split ? 'md:grid md:grid-cols-2 md:gap-10 md:p-8' : ''}`}>
       <div>
-        {lead && <p className="text-sm font-semibold uppercase tracking-wide text-[#4F46E5]">Start here</p>}
-        <h3 className={`${lead ? 'text-2xl' : 'text-xl'} font-bold text-gray-900`}>{offer.name}</h3>
-        {count && (
-          <p className="text-sm text-gray-500">
-            {count.total} skills{count.free ? `, ${count.free} of them free` : ''}
-          </p>
-        )}
+        <div className="flex items-center gap-4">
+          <PackLogo offer={offer} size={split ? 72 : 56} />
+          <div>
+            {lead && <p className="text-sm font-semibold uppercase tracking-wide text-[#4F46E5]">Start here</p>}
+            <h3 className={`${split ? 'text-2xl' : 'text-xl'} font-bold text-gray-900`}>{offer.name}</h3>
+            {count && (
+              <p className="text-sm text-gray-500">
+                {count.total} skills{count.free ? `, ${count.free} of them free` : ''}
+              </p>
+            )}
+          </div>
+        </div>
         <p className="mt-3 text-gray-700">{offer.summary}</p>
         <ul className="mt-4 space-y-1.5 text-sm text-gray-700">
           {offer.covers.map((c) => (
@@ -153,7 +170,7 @@ function OfferCard({
           ))}
         </ul>
       </div>
-      <div className={`mt-auto pt-6 space-y-4 ${lead ? 'md:mt-0 md:pt-0 md:self-center' : ''}`}>
+      <div className={`mt-auto pt-6 space-y-4 ${split ? 'md:mt-0 md:pt-0 md:self-center' : ''}`}>
         {lifetime && offer.prices.lifetime && <LifetimeRow price={offer.prices.lifetime} left={lifetime.left} cap={lifetime.cap} until={lifetime.until} open={open} />}
         {owned ? (
           <p role="status" className="rounded-lg bg-green-50 text-green-800 text-sm font-semibold px-4 py-3">
@@ -192,11 +209,12 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
   const { notice } = await searchParams;
   const { account, latest, counts, ents, life, lifetimeForMe } = await loadState();
   const open = (await siteSettings()).kitsSalesOpen;
-  const card = (o: KitOffer, isLead = false) => (
+  const card = (o: KitOffer, isLead = false, wide = false) => (
     <OfferCard
       key={o.pack}
       offer={o}
       lead={isLead}
+      wide={wide}
       count={counts.get(o.pack)}
       have={account && latest ? holding(o.pack, ents, latest) : null}
       open={open}
@@ -207,16 +225,18 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
   const lead = kitOffers.find((o) => o.pack === LEAD_PACK);
   const bundle = kitOffers.find((o) => o.pack === BUNDLE_PACK);
   const addOns = kitOffers.filter((o) => o !== lead && o !== bundle);
+  const leadCount = counts.get(LEAD_PACK);
   const canBuyAny = !account || !latest || lifetimeForMe || kitOffers.some((o) => holding(o.pack, ents, latest).state !== 'latest');
   return (
     <>
       <DetailHeader
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Kits' }]}
         title="Emruz Release Kit"
-        summary="Claude skills that test, secure and check every release before it ships. Add the Founder and Marketing Kits when you need them."
+        summary="Claude skills that test, secure and check every release before it ships. Add the Founder, Marketing and Product Kits when you need them."
         primaryCta={{ label: open ? 'See prices' : 'Get notified at launch', href: open ? '#pricing' : '/contact?topic=kits' }}
         secondaryCta={account ? { label: 'Your kits', href: '/motiv/account#kits' } : { label: 'Sign in', href: '/signin?next=%2Fkits' }}
         sections={[
+          { label: 'Overview', href: '#overview' },
           { label: 'How it works', href: '#how' },
           { label: 'Prices', href: '#pricing' },
           ...(kitResults.length ? [{ label: 'Results', href: '#results' }] : []),
@@ -225,12 +245,41 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
         ]}
       />
 
+      <section id="overview" className="scroll-mt-20 bg-gradient-to-br from-[#1E1B4B] via-[#581C87] to-[#4F46E5] text-white">
+        <Container className="py-10 md:py-14 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
+          <div className="max-w-2xl">
+            <p className="inline-block text-xs font-semibold uppercase tracking-widest bg-white/15 rounded-full px-3 py-1 mb-4">
+              {latest ? `Release ${latest} · ` : ''}Works with Claude over MCP
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold leading-tight">Skills that make Claude check the work before it ships.</h2>
+            <p className="mt-4 text-lg text-indigo-100">
+              Start with the Release Kit for tests, security and launch checks. Add the Founder, Marketing and Product Kits when you need
+              them, or get every kit in one bundle.
+            </p>
+            <ul className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[lead, ...addOns].filter((o): o is KitOffer => !!o).map((o) => (
+                <li key={o.pack} className="flex items-center gap-2 text-sm font-semibold">
+                  <PackLogo offer={o} size={36} />
+                  {o.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {bundle && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoFor(bundle.pack)} alt="Emruz kits logo" width={192} height={192} className="hidden lg:block w-48 h-48 rounded-[22%] drop-shadow-xl" />
+          )}
+        </Container>
+      </section>
+
       <section id="how" className="scroll-mt-20 py-12 md:py-16">
         <Container>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <Plug className="w-6 h-6 text-[#4F46E5] mb-3" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center mb-3">
+                <Plug className="w-5 h-5" />
+              </div>
               <h3 className="font-semibold text-gray-900">Connect once</h3>
               <p className="mt-1 text-sm text-gray-600">
                 Add <span className="font-mono text-gray-800 break-all">{SITE_URL}/api/mcp</span> to Claude or another MCP app and sign
@@ -238,12 +287,21 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
               </p>
             </div>
             <div>
-              <ShieldCheck className="w-6 h-6 text-[#4F46E5] mb-3" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center mb-3">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
               <h3 className="font-semibold text-gray-900">Free to start</h3>
-              <p className="mt-1 text-sm text-gray-600">Free skills work with any account, including the testing kit. Paid kits add the rest.</p>
+              <p className="mt-1 text-sm text-gray-600">
+                {leadCount?.free
+                  ? `${leadCount.free} of the ${leadCount.total} skills in the Release Kit are free to use with any Emruz account, including the testing kit.`
+                  : 'Some skills in the Release Kit are free to use with any Emruz account, including the testing kit.'}{' '}
+                The rest of the Release Kit and the other kits are paid.
+              </p>
             </div>
             <div>
-              <RefreshCw className="w-6 h-6 text-[#4F46E5] mb-3" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center mb-3">
+                <RefreshCw className="w-5 h-5" />
+              </div>
               <h3 className="font-semibold text-gray-900">Buy once or subscribe</h3>
               <p className="mt-1 text-sm text-gray-600">
                 Buy a kit once and keep the release you bought, with a lower price to upgrade later. Or subscribe and always get the
@@ -271,13 +329,13 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
               <>
                 <h3 className="mt-10 text-xl font-bold text-gray-900">Add-ons</h3>
                 <p className="mt-1 mb-4 text-gray-600">Add to the Release Kit when you need them, or get every kit in the bundle.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{addOns.map((o) => card(o))}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{addOns.map((o) => card(o))}</div>
               </>
             )}
             {bundle && (
               <>
                 <h3 className="mt-10 mb-4 text-xl font-bold text-gray-900">Every kit</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{card(bundle)}</div>
+                {card(bundle, false, true)}
               </>
             )}
           </BuyForm>

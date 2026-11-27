@@ -11,7 +11,8 @@ import { subscriptionType } from '../src/lib/server/kits/sales-core.ts';
 import { BUNDLE_PACK, kitOffers, kitResults, LEAD_PACK } from '../src/content/kits.ts';
 
 // ---------- Triggers ----------
-assert.deepEqual(PURCHASE_TRIGGERS.map((t) => t.id), ['launch', 'customer_request', 'pricing_fundraise', 'incident', 'other']);
+assert.deepEqual(PURCHASE_TRIGGERS.map((t) => t.id), ['launch', 'customer_request', 'pricing_fundraise', 'incident', 'technical_decision', 'other']);
+assert.equal(triggerLabel('technical_decision'), 'A big technical or architecture decision', 'Product Kit buyers have a fitting answer (#85)');
 for (const t of PURCHASE_TRIGGERS) {
   assert.ok(isPurchaseTrigger(t.id));
   assert.match(t.id, /^[a-z_]{1,40}$/, 'fits the migration 024 check');

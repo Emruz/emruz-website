@@ -8,6 +8,7 @@ export const PURCHASE_TRIGGERS = [
   { id: 'customer_request', label: 'A customer asked about security or compliance' },
   { id: 'pricing_fundraise', label: 'Pricing work or a fundraise' },
   { id: 'incident', label: 'An incident or near miss' },
+  { id: 'technical_decision', label: 'A big technical or architecture decision' },
   { id: 'other', label: 'Something else' },
 ] as const;
 export type PurchaseTrigger = (typeof PURCHASE_TRIGGERS)[number]['id'];

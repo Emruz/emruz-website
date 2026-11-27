@@ -130,12 +130,20 @@ assert.ok(kitOffers.some((o) => o.pack === LEAD_PACK));
 assert.ok(kitOffers.some((o) => o.pack === BUNDLE_PACK), 'the all-kits bundle stays');
 assert.deepEqual(kitOffers.map((o) => o.pack), ['release', 'founder', 'marketing', 'product', 'all'], 'Product Kit is an add-on after Founder and Marketing (#81)');
 assert.ok(kitOffers.find((o) => o.pack === BUNDLE_PACK)!.covers.includes('Release, Founder, Marketing and Product Kits'), 'bundle names all four kits');
+// Every pack and the bundle has its logo from emruz-kits assets/packs, with nothing active in it (#81)
+for (const o of kitOffers) {
+  const svg = readFileSync(`public/kits/${o.pack}.svg`, 'utf8');
+  assert.match(svg, /^<svg[\s>]/, `${o.pack} logo is an SVG`);
+  assert.doesNotMatch(svg, /<script|<foreignObject|\son[a-z]+=|(?:xlink:)?href=["'](?!#)/i, `${o.pack} logo has no scripts or external references`);
+}
 const page = readFileSync('src/app/kits/page.tsx', 'utf8');
-assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle\)/, 'Release Kit, then add-ons, then the bundle');
+assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle, false, true\)/, 'Release Kit, then add-ons, then the bundle at full width');
 assert.match(page, /<select name="trigger" required/, 'buyers must say what made them buy');
 assert.match(page, /ask={canBuyAny}/, 'no question when there is nothing to buy');
 assert.match(page, /name="offer"/);
 assert.match(page, /href="\/kits\/security"/);
+assert.match(page, /id="overview"/, 'overview band like the Motiv page');
+assert.match(page, /skills in the Release Kit are free to use/, 'Free to start says which skills are free');
 assert.match(page, /kitResults\.length > 0 &&/, 'results hidden until there are published results');
 
 // Results: no placeholder claims. Each one links to where the customer published it.

@@ -9,6 +9,7 @@ import { canBuy, holding, LIFETIME_PACK, type Holding, type KitPlan } from '@/li
 import { entitlementsFor } from '@/lib/server/kits/store';
 import { currentAccount } from '@/lib/server/session';
 import { siteSettings } from '@/lib/server/settings';
+import { signInHref } from '@/lib/signin-next';
 
 export const metadata = {
   title: 'Emruz Release Kit: Claude skills that check every release before it ships',
@@ -54,19 +55,6 @@ async function loadState() {
 
 const fmtDay = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
-function LifetimeRow({ price, left, cap, until, open }: { price: number; left: number; cap: number; until: string; open: boolean }) {
-  return (
-    <div className="rounded-lg bg-indigo-50 p-4 space-y-3">
-      <PriceRow price={price} period="lifetime">
-        {open && <BuyButton pack={LIFETIME_PACK} plan="lifetime" label="Buy lifetime" primary />}
-      </PriceRow>
-      <p className="text-sm text-gray-700">
-        Founding offer: one payment, every future release for as long as Emruz offers the kits. {left} of {cap} left, until {fmtDay(until)}.
-      </p>
-    </div>
-  );
-}
-
 /** Pack logos, copied from emruz-kits assets/packs into public/kits (#81). */
 const logoFor = (pack: string) => `/kits/${pack}.svg`;
 
@@ -78,15 +66,18 @@ function PackLogo({ offer, size }: { offer: KitOffer; size: number }) {
 
 const PLAN_LABEL: Record<KitPlan, string> = { once: 'one time', upgrade: 'upgrade', month: 'monthly', year: 'annual', lifetime: 'lifetime' };
 
-function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan; label: string; primary?: boolean }) {
-  // Inside the price list form (BuyForm); Stripe Checkout asks what made them buy now (#86)
+function BuyButton({ pack, plan, label, primary, onDark }: { pack: string; plan: KitPlan; label: string; primary?: boolean; onDark?: boolean }) {
+  // Posts with the price list form (BuyForm), also from the banner (#91); Stripe Checkout asks what made them buy now (#86)
   return (
     <button
+      form={BUY_FORM}
       name="offer"
       value={`${pack}:${plan}`}
       aria-label={`${label}: ${kitOffers.find((o) => o.pack === pack)?.name ?? pack}, ${PLAN_LABEL[plan]}`}
       className={
-        primary
+        onDark
+          ? 'w-full bg-white text-[#4F46E5] px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-colors'
+          : primary
           ? 'w-full bg-[#4F46E5] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#4338CA] transition-colors'
           : 'w-full border border-[#4F46E5] text-[#4F46E5] px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-colors'
       }
@@ -97,9 +88,11 @@ function BuyButton({ pack, plan, label, primary }: { pack: string; plan: KitPlan
 }
 
 /** Price list: one form when sales are open, so every buy button posts its offer. Stripe Checkout asks what made them buy now (#86). */
+const BUY_FORM = 'kits-buy';
+
 function BuyForm({ open, children }: { open: boolean; children: React.ReactNode }) {
   if (!open) return <div>{children}</div>;
-  return <form action="/api/kits/checkout" method="post">{children}</form>;
+  return <form id={BUY_FORM} action="/api/kits/checkout" method="post">{children}</form>;
 }
 
 function PriceRow({ price, period, children }: { price: number; period: string; children?: React.ReactNode }) {
@@ -114,18 +107,18 @@ function PriceRow({ price, period, children }: { price: number; period: string; 
 }
 
 function OfferCard({
-  offer, count, have, open, lifetime, lead, wide,
+  offer, count, have, open, lead, wide,
 }: {
   offer: KitOffer;
   count?: { total: number; free: number };
   have: Holding | null;
   open: boolean;
-  lifetime: { left: number; cap: number; until: string } | null;
   lead?: boolean;
   /** Full width with prices beside the description, like the lead card (the bundle, #81). */
   wide?: boolean;
 }) {
-  const split = lead || wide;
+  // Only the bundle spreads across the row; the four kits sit two by two (#91)
+  const split = wide;
   const p = offer.prices;
   const owned = have?.state === 'latest';
   const upgradable = have?.state === 'held' && have.upgradable;
@@ -155,7 +148,6 @@ function OfferCard({
         </ul>
       </div>
       <div className={`mt-auto pt-6 space-y-4 ${split ? 'md:mt-0 md:pt-0 md:self-center' : ''}`}>
-        {lifetime && offer.prices.lifetime && <LifetimeRow price={offer.prices.lifetime} left={lifetime.left} cap={lifetime.cap} until={lifetime.until} open={open} />}
         {owned ? (
           <p role="status" className="rounded-lg bg-green-50 text-green-800 text-sm font-semibold px-4 py-3">
             You have the latest release. <Link href="/motiv/account#kits" className="underline">See your kits</Link>
@@ -202,14 +194,16 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
       count={counts.get(o.pack)}
       have={account && latest ? holding(o.pack, ents, latest) : null}
       open={open}
-      lifetime={o.pack === LIFETIME_PACK && lifetimeForMe && life.until ? { left: life.cap - life.sold, cap: life.cap, until: life.until } : null}
     />
   );
-  // Release Kit first, the other kits as add-ons, the all-kits bundle last (#71)
+  // Banner: free testing kit or All kits lifetime. Then the four kits, Release first, and the bundle (#91)
   const lead = kitOffers.find((o) => o.pack === LEAD_PACK);
   const bundle = kitOffers.find((o) => o.pack === BUNDLE_PACK);
   const addOns = kitOffers.filter((o) => o !== lead && o !== bundle);
   const leadCount = counts.get(LEAD_PACK);
+  const kits = [lead, ...addOns].filter((o): o is KitOffer => !!o);
+  const lifetime = bundle?.prices.lifetime && lifetimeForMe && life.until ? { price: bundle.prices.lifetime, left: life.cap - life.sold, cap: life.cap, until: life.until } : null;
+  const ownsBundle = !!(account && latest && holding(BUNDLE_PACK, ents, latest).state === 'latest');
   return (
     <>
       <DetailHeader
@@ -239,19 +233,49 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
               Start with the Release Kit for tests, security and launch checks. Add the Founder, Marketing and Product Kits when you need
               them, or get every kit in one bundle.
             </p>
-            <ul className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[lead, ...addOns].filter((o): o is KitOffer => !!o).map((o) => (
-                <li key={o.pack} className="flex items-center gap-2 text-sm font-semibold">
-                  <PackLogo offer={o} size={36} />
-                  {o.name}
-                </li>
-              ))}
-            </ul>
           </div>
-          {bundle && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoFor(bundle.pack)} alt="Emruz kits logo" width={192} height={192} className="hidden lg:block w-48 h-48 rounded-[22%] drop-shadow-xl" />
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:w-[34rem]">
+            <div className="flex flex-col rounded-xl bg-white/10 p-5 ring-1 ring-white/20">
+              {lead && <PackLogo offer={lead} size={48} />}
+              <h3 className="mt-3 text-lg font-bold">Start free</h3>
+              <p className="mt-1 text-sm text-indigo-100">Start with the testing kit, free. It&apos;s part of the Release Kit.</p>
+              <Link
+                href={account ? '#how' : signInHref('/kits')}
+                className="mt-auto pt-4 block"
+              >
+                <span className="block w-full rounded-lg bg-white px-4 py-2 text-center font-semibold text-[#4F46E5] hover:bg-indigo-50">
+                  {account ? 'Connect your app' : 'Sign in to start'}
+                </span>
+              </Link>
+            </div>
+            {bundle && (
+              <div className="flex flex-col rounded-xl bg-white/10 p-5 ring-1 ring-white/20">
+                <PackLogo offer={bundle} size={48} />
+                <h3 className="mt-3 text-lg font-bold">All four kits</h3>
+                {ownsBundle ? (
+                  <p className="mt-1 text-sm text-indigo-100">You have every kit. <Link href="/motiv/account#kits" className="underline">See your kits</Link></p>
+                ) : lifetime ? (
+                  <>
+                    <p className="mt-1 text-sm text-indigo-100">Every future release, one payment.</p>
+                    <p className="mt-3"><span className="text-3xl font-bold">${lifetime.price}</span> <span className="text-sm text-indigo-100">lifetime</span></p>
+                    <p className="mt-1 text-xs text-indigo-100">Founding offer: {lifetime.left} of {lifetime.cap} left, until {fmtDay(lifetime.until)}.</p>
+                    <div className="mt-auto pt-4">
+                      {open ? <BuyButton pack={LIFETIME_PACK} plan="lifetime" label="Buy lifetime" onDark /> : <p className="text-sm font-semibold">Available at launch.</p>}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-1 text-sm text-indigo-100">Release, Founder, Marketing and Product Kits in one purchase.</p>
+                    <Link href="#bundle" className="mt-auto pt-4 block">
+                      <span className="block w-full rounded-lg bg-white px-4 py-2 text-center font-semibold text-[#4F46E5] hover:bg-indigo-50">
+                        From ${bundle.prices.month} per month
+                      </span>
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </Container>
       </section>
 
@@ -307,19 +331,12 @@ export default async function KitsPage({ searchParams }: { searchParams: Promise
             <p role="status" className="mb-6 rounded-lg bg-amber-50 text-amber-900 text-sm font-semibold px-4 py-3">{notices[notice]}</p>
           )}
           <BuyForm open={open}>
-            {lead && card(lead, true)}
-            {addOns.length > 0 && (
-              <>
-                <h3 className="mt-10 text-xl font-bold text-gray-900">Add-ons</h3>
-                <p className="mt-1 mb-4 text-gray-600">Add to the Release Kit when you need them, or get every kit in the bundle.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{addOns.map((o) => card(o))}</div>
-              </>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{kits.map((o) => card(o, o === lead))}</div>
             {bundle && (
-              <>
+              <div id="bundle" className="scroll-mt-20">
                 <h3 className="mt-10 mb-4 text-xl font-bold text-gray-900">Every kit</h3>
                 {card(bundle, false, true)}
-              </>
+              </div>
             )}
           </BuyForm>
           {open && (

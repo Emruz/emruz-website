@@ -7,6 +7,7 @@ Releases are numbered vYYYYMM.#: the year and month, then the release number in 
 ## v202611.13
 
 - Sign in returns to the current page (#78): the Sign in links in the account menu and the mobile menu bring you back to the page you were on, home included, instead of your account page. Sign-in with no return page given lands on the home page. Email links, Google and Microsoft sign-in and sign in again all return to it.
+- Kits page (#91): the banner offers two ways in, start free with the testing kit or All kits with the founding lifetime offer. The four kits follow two by two with the Release Kit first and highlighted, then All kits at full width.
 
 ## v202611.12
 

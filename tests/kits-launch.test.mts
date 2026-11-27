@@ -139,7 +139,18 @@ for (const o of kitOffers) {
   assert.doesNotMatch(svg, /c2pa|<metadata/i, `${o.pack} logo carries no embedded metadata or provenance record`);
 }
 const page = readFileSync('src/app/kits/page.tsx', 'utf8');
-assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle, false, true\)/, 'Release Kit, then add-ons, then the bundle at full width');
+// Banner: free testing kit or All kits lifetime; then the four kits two by two, Release first and highlighted; then the bundle (#91)
+assert.match(page, /id="overview"[\s\S]*Start free[\s\S]*All four kits[\s\S]*id="how"/, 'both paths in the banner');
+assert.match(page, /Start with the testing kit, free/);
+assert.match(page, /href=\{account \? '#how' : signInHref\('\/kits'\)\}/, 'signed out: sign in and come back; signed in: connect');
+assert.match(page, /plan="lifetime" label="Buy lifetime" onDark/, 'lifetime is bought from the banner');
+assert.match(page, /\) : \(\s*<>\s*<p[^>]*>Release, Founder, Marketing and Product Kits in one purchase/, 'falls back to the regular bundle when lifetime is closed');
+assert.match(page, /form=\{BUY_FORM\}/, 'banner button posts with the checkout form');
+assert.match(page, /<form id=\{BUY_FORM\}/);
+assert.match(page, /md:grid-cols-2 gap-6">\{kits\.map\(\(o\) => card\(o, o === lead\)\)\}/, 'four kits two by two, Release highlighted');
+assert.deepEqual(kitOffers.filter((o) => o.pack !== BUNDLE_PACK).map((o) => o.pack)[0], LEAD_PACK, 'Release first');
+assert.match(page, /kits\.map[\s\S]*id="bundle"[\s\S]*card\(bundle, false, true\)/, 'bundle full width after the four kits');
+assert.doesNotMatch(page, /LifetimeRow/, 'lifetime row moved to the banner');
 assert.doesNotMatch(page, /name="trigger"/, 'no question on /kits: Stripe Checkout asks it (#86)');
 assert.match(page, /name="offer"/);
 assert.match(page, /href="\/kits\/security"/);

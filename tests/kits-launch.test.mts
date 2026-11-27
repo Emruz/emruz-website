@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   isDay, isInternalEmail, isPurchaseTrigger, KILL_LINES, launchReview, parseOffer, PURCHASE_TRIGGERS, releaseCyclesSince, salesMetrics,
-  triggerLabel, type PurchaseRow,
+  stripeTriggerValue, triggerField, triggerFromSession, triggerLabel, TRIGGER_FIELD_KEY, type PurchaseRow,
 } from '../src/lib/server/kits/launch-core.ts';
 import { subscriptionType } from '../src/lib/server/kits/sales-core.ts';
 import { BUNDLE_PACK, kitOffers, kitResults, LEAD_PACK } from '../src/content/kits.ts';
@@ -140,8 +140,7 @@ for (const o of kitOffers) {
 }
 const page = readFileSync('src/app/kits/page.tsx', 'utf8');
 assert.match(page, /card\(lead, true\)[\s\S]*Add-ons[\s\S]*card\(bundle, false, true\)/, 'Release Kit, then add-ons, then the bundle at full width');
-assert.match(page, /<select name="trigger" required/, 'buyers must say what made them buy');
-assert.match(page, /ask={canBuyAny}/, 'no question when there is nothing to buy');
+assert.doesNotMatch(page, /name="trigger"/, 'no question on /kits: Stripe Checkout asks it (#86)');
 assert.match(page, /name="offer"/);
 assert.match(page, /href="\/kits\/security"/);
 assert.match(page, /id="overview"/, 'overview band like the Motiv page');
@@ -177,14 +176,36 @@ assert.match(readFileSync('netlify/database/migrations/025_kit_excluded_emails.s
 
 // ---------- Checkout and webhook keep the trigger ----------
 const checkout = readFileSync('src/app/api/kits/checkout/route.ts', 'utf8');
-assert.match(checkout, /isPurchaseTrigger\(trigger\)\) return back\('\?notice=trigger'\)/);
-assert.match(checkout, /metadata = \{[^}]*trigger/);
+assert.match(checkout, /custom_fields: \[triggerField\(\)\]/, 'Stripe Checkout asks what made them buy now (#86)');
+assert.doesNotMatch(checkout, /notice=trigger|form\.get\('trigger'\)/, 'checkout no longer needs the /kits question');
 const sales = readFileSync('src/lib/server/kits/sales.ts', 'utf8');
 assert.match(sales, /purchase_trigger, subscription_type\)/);
 assert.match(sales, /\$\{subscription \? subscriptionType\(plan\) : null\}\)/, 'subscriptions store monthly or annual');
 assert.match(sales, /set subscription_type = \$\{type\}/, 'a monthly/annual switch is kept');
 assert.match(readFileSync('src/lib/server/kits/launch.ts', 'utf8'), /coalesce\(e\.subscription_type,/);
-assert.match(sales, /isPurchaseTrigger\(m\.trigger\) \? m\.trigger : null/);
+assert.match(sales, /const trigger = triggerFromSession\(session\)/);
+
+// Stripe checkout field (#86): a required dropdown with every trigger, alphanumeric values mapped back
+{
+  const f = triggerField();
+  assert.equal(f.key, TRIGGER_FIELD_KEY);
+  assert.match(f.key, /^[a-z0-9]+$/, 'Stripe keys are alphanumeric');
+  assert.equal(f.type, 'dropdown');
+  assert.equal(f.optional, false, 'required');
+  assert.ok(f.label.custom.length <= 50, 'Stripe label limit');
+  assert.equal(f.dropdown.options.length, PURCHASE_TRIGGERS.length);
+  for (const o of f.dropdown.options) assert.match(o.value, /^[a-zA-Z0-9]{1,100}$/, 'Stripe option values are alphanumeric');
+  assert.equal(new Set(f.dropdown.options.map((o) => o.value)).size, PURCHASE_TRIGGERS.length, 'values stay unique');
+  for (const t of PURCHASE_TRIGGERS) {
+    const s = { custom_fields: [{ key: TRIGGER_FIELD_KEY, dropdown: { value: stripeTriggerValue(t.id) } }] };
+    assert.equal(triggerFromSession(s), t.id, `${t.id} maps back`);
+  }
+  assert.equal(triggerFromSession({ custom_fields: [{ key: TRIGGER_FIELD_KEY, dropdown: { value: 'technicaldecision' } }] }), 'technical_decision');
+  assert.equal(triggerFromSession({ custom_fields: [{ key: TRIGGER_FIELD_KEY, dropdown: { value: 'made_up' } }] }), null, 'unknown value');
+  assert.equal(triggerFromSession({ custom_fields: [], metadata: { trigger: 'incident' } }), 'incident', 'checkouts started before #86 keep metadata');
+  assert.equal(triggerFromSession({ metadata: { trigger: '__proto__' } }), null);
+  assert.equal(triggerFromSession({}), null, 'before #71');
+}
 assert.match(readFileSync('netlify/database/migrations/024_kit_purchase_trigger.sql', 'utf8'), /add column if not exists purchase_trigger text/);
 assert.match(readFileSync('netlify/database/migrations/024_kit_purchase_trigger.sql', 'utf8'), /subscription_type text check \(subscription_type in \('monthly', 'annual'\)\)/);
 

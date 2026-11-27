@@ -8,6 +8,7 @@ Releases are numbered vYYYYMM.#: the year and month, then the release number in 
 
 - Site settings (#83): the Motiv Pro monthly, annual and lifetime prices may be separate Stripe products. The check that all three were for one product blocked every save on `/admin/settings`. Each price is still checked: it exists in this Stripe account, is active, is in USD, is not a kits price, and fits its plan.
 - Kits buy form (#85): "What made you buy now?" adds "A big technical or architecture decision" (`technical_decision`), so Product Kit buyers have a fitting answer. It is counted under purchase triggers on `/admin/kits`. No migration.
+- Kits checkout (#86): "What made you buy now?" moves from `/kits` to a required dropdown on the Stripe Checkout page, so Buy and Subscribe go straight to checkout without jumping back to the question. Purchases started before this keep their answer.
 
 ## v202611.11
 

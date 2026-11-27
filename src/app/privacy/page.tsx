@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy policy"
       summary="What we collect on emruz.com, why, who helps us run it, and the choices you have."
-      updated="25 November 2026"
+      updated="26 November 2026"
       path="/privacy"
     >
       <p>
@@ -22,8 +22,9 @@ export default function PrivacyPage() {
       </p>
       <p>
         <strong>The short version:</strong> we collect only what we need to answer you, run your account and sell
-        Motiv. We don&apos;t use analytics or advertising trackers, and we don&apos;t sell or share personal
-        information for advertising. Every page, font and image on emruz.com is served from emruz.com itself, so
+        Motiv. We don&apos;t use advertising trackers or third-party analytics, and we don&apos;t sell or share personal
+        information for advertising. Anything beyond necessary cookies is off unless you turn it on, and we honor
+        Global Privacy Control. Every page, font and image on emruz.com is served from emruz.com itself, so
         simply visiting the site doesn&apos;t send information about you to anyone else.
       </p>
 
@@ -105,6 +106,14 @@ export default function PrivacyPage() {
         app.
       </p>
 
+      <h3>When you chat with us</h3>
+      <p>
+        If you use the chat assistant on emruz.com, we store the conversation (your messages and the replies) to
+        answer you, follow up and improve our answers. We link a conversation to your visit or account only if you
+        allow improvement cookies or you are signed in and choose to; otherwise it is stored without that link. Chat
+        logs are kept for 13 months, and you can get a copy or have them deleted like any other data.
+      </p>
+
       <h3>Technical information</h3>
       <p>
         Like most websites, our hosting provider records technical details of requests, such as IP address, browser
@@ -171,20 +180,31 @@ export default function PrivacyPage() {
         don&apos;t transfer it for advertising or let anyone read it except as needed to support you.
       </p>
 
-      <h2>Cookies</h2>
-      <p>We use only cookies that are needed for the site to work. No analytics or advertising cookies.</p>
+      <h2 id="cookies">Cookies</h2>
+      <p>
+        All our cookies are first-party: set by emruz.com and read only by emruz.com. There are two kinds.
+        <strong> Necessary</strong> cookies are always on, because the site can&apos;t work without them.
+        <strong> Improvement</strong> cookies, for first-party analytics and for linking a chat conversation to your
+        visit, are off unless you turn them on. On your first visit we ask which you allow, and you can change your
+        choice any time in <Link href="/cookies">Cookie settings</Link>, linked at the bottom of every page. If your
+        browser sends a Global Privacy Control signal, we treat it as a choice to keep improvement cookies off. We
+        don&apos;t use advertising cookies.
+      </p>
       <table>
         <thead>
           <tr>
             <th>Cookie</th>
+            <th>Kind</th>
             <th>Purpose</th>
             <th>Lasts</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>emruz_session</td><td>Keeps you signed in</td><td>30 days</td></tr>
-          <tr><td>emruz_oauth_…</td><td>Protects a Microsoft, Google or Apple sign-in while it is in progress</td><td>10 minutes</td></tr>
-          <tr><td>emruz_admin_session</td><td>Emruz administrators only, while viewing an account to give support</td><td>Up to 30 days, or until they switch back</td></tr>
+          <tr><td>emruz_session</td><td>Necessary</td><td>Keeps you signed in</td><td>30 days</td></tr>
+          <tr><td>emruz_oauth_…</td><td>Necessary</td><td>Protects a Microsoft, Google or Apple sign-in while it is in progress</td><td>10 minutes</td></tr>
+          <tr><td>emruz_admin_session</td><td>Necessary</td><td>Emruz administrators only, while viewing an account to give support</td><td>Up to 30 days, or until they switch back</td></tr>
+          <tr><td>emruz_consent</td><td>Necessary</td><td>Remembers your cookie choice</td><td>12 months</td></tr>
+          <tr><td>None today</td><td>Improvement</td><td>We&apos;ll list any improvement cookie here before we use it, and set it only with your permission</td><td>-</td></tr>
         </tbody>
       </table>
 
@@ -210,6 +230,13 @@ export default function PrivacyPage() {
           page, or close your account. Withdrawing consent deletes them; we keep only the date you consented and
           withdrew.
         </li>
+        <li>Chat logs: 13 months.</li>
+        <li>Activity and security logs: 13 months.</li>
+        <li>
+          Accounts you ask us to delete: until we approve the request, then permanently deleted. Purchase records are
+          kept as described above.
+        </li>
+        <li>Privacy requests: two years after we close them, as a record of how we handled them.</li>
         <li>Sign-in links, sign-in attempts and rate-limit records: hours to days.</li>
       </ul>
 
@@ -226,10 +253,25 @@ export default function PrivacyPage() {
         <li>delete it, except what we must keep for legal, tax or fraud-prevention reasons;</li>
         <li>stop using it for a purpose, where the law gives you that right.</li>
       </ul>
+      <h3>How to make a request</h3>
+      <ul>
+        <li>
+          <strong>With an account:</strong> on <Link href="/account">your profile</Link>, download a copy of your data
+          straight away, or ask us to delete your account. Both ask you to sign in again if you haven&apos;t recently,
+          and a deletion request is confirmed by an email link.
+        </li>
+        <li>
+          <strong>Anyone:</strong> use the <Link href="/privacy/request">privacy request form</Link> to ask for a copy,
+          a correction, deletion, or to opt out. We email you a link to confirm the request comes from you.
+        </li>
+        <li>
+          Or email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> from the address you use with us.
+        </li>
+      </ul>
       <p>
-        Email <a href={`mailto:${LEGAL_CONTACT}`}>{LEGAL_CONTACT}</a> from the address on your account. We&apos;ll
-        respond within one month (45 days for California residents), or sooner where the law requires, and we won&apos;t treat you differently for exercising these
-        rights.
+        We review every request and respond within 30 days of confirming it (45 days for California residents), or sooner where the
+        law requires, and we won&apos;t treat you differently for exercising these rights. To opt out of improvement
+        cookies, use <Link href="/cookies">Cookie settings</Link> or turn on Global Privacy Control in your browser.
       </p>
       <p>
         <strong>California residents:</strong> we don&apos;t sell or share personal information as the California

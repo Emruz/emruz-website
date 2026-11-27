@@ -84,7 +84,7 @@ export async function currentAccount(): Promise<Account | null> {
                 where i.account_id = a.id and i.email_verified and i.email is not null), '{}') as verified_emails
     from sessions s join accounts a on a.id = s.account_id
     left join accounts adm on adm.id = s.impersonated_by
-    where s.token_hash = ${sha256(token)} and s.expires_at > now()
+    where s.token_hash = ${sha256(token)} and s.expires_at > now() and a.deleted_at is null
       and s.last_seen_at > now() - make_interval(days => ${IDLE_DAYS})`;
   if (!row) return null;
   const hash = sha256(token);

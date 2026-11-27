@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import type { TransactionSql } from 'postgres';
 import { db, logEvent } from '@/lib/server/db';
 import { currentAccount, requireRecentSignIn } from '@/lib/server/session';
 import { isUuid } from '@/lib/server/api';
@@ -43,7 +44,7 @@ import {
   EVIDENCE_REQUIRED_AT,
   type EngagementStatus,
 } from '@/content/workbench';
-import { frameworkFor } from '@/content/frameworks';
+import { frameworkFor, ratedCategories } from '@/content/frameworks';
 import {
   cleanObligations,
   erlForScope,
@@ -60,7 +61,7 @@ import {
 import { SCF_VERSION, scfEvidenceById } from '@/content/scf';
 import { obligationsOf } from '@/content/obligation-keys';
 import { assessmentType, isAssessmentType, type AssessmentType } from '@/content/engagement-types';
-import { CONSENT_TEXT, CONSENT_VERSION, cleanAnswers, cleanProfile, functions, isComplete } from '@/content/self-assessment';
+import { CONSENT_TEXT, CONSENT_VERSION, SELF_FRAMEWORK, cleanAnswers, cleanProfile, functions, isComplete } from '@/content/self-assessment';
 import { completeAssessment, getAssessment, getRegistration, reopenForEdit, startGuidedAssessment, type AssessmentRow } from '@/lib/server/assessments';
 import { addPartnerStaffMember, parseDomains, partnerRole, putPartnerLogo, sendPartnerInvite, setPartnerStaffMember } from '@/lib/server/partners';
 import { detectType } from '@/lib/server/filetype';
@@ -166,7 +167,8 @@ async function newEngagement(o: {
   let prefill: Record<string, number> = {};
   if (o.selfId && fw.usesProfile) {
     const [s] = await db()<{ answers: Answers; profile: Profile; target_ig: Tier | null }[]>`
-      select answers, profile, target_ig from assessments where id = ${o.selfId} and status = 'completed'`;
+      select answers, profile, target_ig from assessments
+      where id = ${o.selfId} and status = 'completed' and deleted_at is null and framework = ${SELF_FRAMEWORK}`;
     if (s) {
       prefill = prefillFromSelf(s.answers, s.profile, s.target_ig ?? o.ig);
       // Carry the obligations the client chose in the self-assessment.
@@ -210,8 +212,20 @@ export async function contactForEngagement(id: string) {
   };
 }
 
+/**
+ * A self-assessment picked when starting an engagement must be one this staff member may see,
+ * as selfOn checks (#76, review inj-2): its answers and obligations are copied in.
+ */
+async function selfForEngagement(ctx: { account: { id: string }; role: string | null }, id: unknown): Promise<string | null> {
+  if (!isUuid(id)) return null;
+  const [s] = await db()<{ assigned_to: string | null }[]>`
+    select assigned_to from assessments where id = ${id} and deleted_at is null`;
+  if (!s || (!seesAll(ctx.role) && s.assigned_to !== ctx.account.id)) throw new Error('Not found');
+  return id;
+}
+
 export async function createEngagement(form: FormData) {
-  const { account } = await staff();
+  const { account, role } = await staff();
   let clientId = form.get('client_id');
   const newClient = str(form.get('new_client'), 160);
   const contactId = form.get('contact_id');
@@ -243,7 +257,7 @@ export async function createEngagement(form: FormData) {
     ig: [1, 2, 3].includes(ig) ? ig : 2,
     start: date(form.get('start_date')),
     due: date(form.get('due_date')),
-    selfId: isUuid(selfId) ? selfId : null,
+    selfId: await selfForEngagement({ account, role }, selfId),
     actor: account,
   });
   if (contact) {
@@ -407,16 +421,19 @@ export async function addEvidenceLink(form: FormData) {
   const url = str(form.get('url'), 2000);
   if (!/^https:\/\//i.test(url)) redirect(`${ePath(e.id, 'evidence')}?error=url`);
   const title = str(form.get('title'), 200) || url;
-  const [ev] = await db()<{ id: string }[]>`
-    insert into evidence (engagement_id, kind, title, url, uploaded_by) values (${e.id}, 'link', ${title}, ${url}, ${account.id}) returning id`;
   const sub = str(form.get('subcategory'), 20);
-  if (hasItem(e, sub)) await db()`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
   const rid = form.get('request_id');
-  if (isUuid(rid)) {
-    await db()`update evidence set request_id = ${rid} where id = ${ev.id} and exists (select 1 from evidence_requests where id = ${rid} and engagement_id = ${e.id})`;
-    await linkEvidenceToRequestErl(ev.id, rid, e.id);
-    await db()`update evidence_requests set status = 'received' where id = ${rid} and engagement_id = ${e.id} and status = 'open'`;
-  }
+  // One transaction, as the upload route does, so a link never half-answers a request
+  await db().begin(async (tx) => {
+    const [ev] = await tx<{ id: string }[]>`
+      insert into evidence (engagement_id, kind, title, url, uploaded_by) values (${e.id}, 'link', ${title}, ${url}, ${account.id}) returning id`;
+    if (hasItem(e, sub)) await tx`insert into evidence_links (evidence_id, subcategory) values (${ev.id}, ${sub}) on conflict do nothing`;
+    if (isUuid(rid)) {
+      await tx`update evidence set request_id = ${rid} where id = ${ev.id} and exists (select 1 from evidence_requests where id = ${rid} and engagement_id = ${e.id})`;
+      await linkEvidenceToRequestErl(ev.id, rid, e.id, tx);
+      await tx`update evidence_requests set status = 'received' where id = ${rid} and engagement_id = ${e.id} and status = 'open'`;
+    }
+  });
   await logActivity(e.id, account.email, 'evidence_added', { title, kind: 'link' });
   revalidatePath(ePath(e.id, 'evidence'));
 }
@@ -440,13 +457,11 @@ export async function linkEvidenceErl(form: FormData) {
   const [ev] = await db()`select 1 from evidence where id = ${evId} and engagement_id = ${e.id}`;
   if (!ev) return;
   if (form.get('remove') === '1') {
-    await db()`delete from evidence_erl_links where evidence_id = ${evId} and erl_id = ${erl}`;
-    // Reopen the request when nothing answers it any more.
-    await db()`
-      update evidence_requests r set status = 'open', closed_at = null
-      where r.engagement_id = ${e.id} and r.erl_id = ${erl} and r.status = 'received'
-        and not exists (select 1 from evidence_erl_links x join evidence v on v.id = x.evidence_id where x.erl_id = ${erl} and v.engagement_id = ${e.id})
-        and not exists (select 1 from evidence v where v.request_id = r.id)`;
+    await db().begin(async (tx) => {
+      const removed = await tx`delete from evidence_erl_links where evidence_id = ${evId} and erl_id = ${erl} returning erl_id`;
+      // Reopen the request when the removed link answered it and nothing answers it any more
+      if (removed.length) await reopenUnanswered(tx, e.id, { erlIds: [erl] });
+    });
   } else {
     await db()`insert into evidence_erl_links (evidence_id, erl_id) values (${evId}, ${erl}) on conflict do nothing`;
     await db()`update evidence_requests set status = 'received' where engagement_id = ${e.id} and erl_id = ${erl} and status = 'open'`;
@@ -455,12 +470,37 @@ export async function linkEvidenceErl(form: FormData) {
   revalidatePath(ePath(e.id, 'evidence'));
 }
 
+/**
+ * Reopen received requests that no evidence answers any more: those the given evidence was
+ * filed against (requestIds) or answered through an ERL item (erlIds). Requests staff marked
+ * received by hand (closed_at set) are left as they are.
+ */
+async function reopenUnanswered(tx: TransactionSql, engagementId: string, o: { requestIds?: string[]; erlIds?: string[] }) {
+  const requestIds = o.requestIds ?? [];
+  const erlIds = o.erlIds ?? [];
+  if (!requestIds.length && !erlIds.length) return;
+  await tx`
+    update evidence_requests r set status = 'open', closed_at = null
+    where r.engagement_id = ${engagementId} and r.status = 'received' and r.closed_at is null
+      and (r.id = any(${requestIds}::uuid[]) or r.erl_id = any(${erlIds}::text[]))
+      and not exists (select 1 from evidence v where v.request_id = r.id)
+      and (r.erl_id is null or not exists (
+        select 1 from evidence_erl_links x join evidence v on v.id = x.evidence_id
+        where x.erl_id = r.erl_id and v.engagement_id = ${engagementId}))`;
+}
+
 export async function deleteEvidence(form: FormData) {
   const { account, e } = await staffOn(form.get('id'));
   const evId = form.get('evidence_id');
   if (!isUuid(evId)) return;
-  const [ev] = await db()<{ blob_key: string | null; title: string }[]>`
-    delete from evidence where id = ${evId} and engagement_id = ${e.id} returning blob_key, title`;
+  const ev = await db().begin(async (tx) => {
+    const erlIds = (await tx<{ erl_id: string }[]>`select erl_id from evidence_erl_links where evidence_id = ${evId}`).map((r) => r.erl_id);
+    const [gone] = await tx<{ blob_key: string | null; title: string; request_id: string | null }[]>`
+      delete from evidence where id = ${evId} and engagement_id = ${e.id} returning blob_key, title, request_id`;
+    // Reopen the requests it answered that nothing else answers (#76, review logicB-1)
+    if (gone) await reopenUnanswered(tx, e.id, { requestIds: gone.request_id ? [gone.request_id] : [], erlIds });
+    return gone;
+  });
   if (ev?.blob_key) await deleteEvidenceFile(ev.blob_key);
   if (ev) await logActivity(e.id, account.email, 'evidence_deleted', { title: ev.title });
   revalidatePath(ePath(e.id, 'evidence'));
@@ -540,8 +580,8 @@ export async function raiseErlRequests(form: FormData) {
   const { account, e } = await staffOn(form.get('id'));
   if (frameworkFor(e.assessment_type).type !== 'security') return;
   const [ratings, existing] = await Promise.all([getRatings(e.id), getRequests(e.id)]);
-  const rated = Object.values(ratings).filter((r) => !r.na && r.current_level !== null).map((r) => r.subcategory.split('-')[0]);
-  const cats = rated.length ? [...new Set(rated)] : frameworkFor(e.assessment_type).categories.map((c) => c.id);
+  const rated = ratedCategories(Object.values(ratings));
+  const cats = rated.length ? rated : frameworkFor(e.assessment_type).categories.map((c) => c.id);
   const have = new Set(existing.map((r) => r.erl_id).filter(Boolean));
   const todo = erlForScope(cats, cleanObligations(e.obligations)).filter((id) => !have.has(id));
   // One statement; the count is what was inserted, so a double submit adds and emails nothing.
@@ -632,8 +672,9 @@ export async function generateReport(form: FormData) {
     const ev = evidenceIndex(evidence);
     content.obligations = obligations.map((k) => obligationView(k, csf, ev, overrides[k] ?? {}));
     content.scfVersion = SCF_VERSION;
-    const inScope = new Set(Object.values(ratings).filter((r) => !r.na).map((r) => r.subcategory.split('-')[0]));
-    content.staffHours = staffHours({ categories: inScope.size || fw.categories.length, evidenceRequests: requests.length, obligations: obligations.length });
+    // Same scope as the ERL requests (raiseErlRequests)
+    const inScope = ratedCategories(Object.values(ratings));
+    content.staffHours = staffHours({ categories: inScope.length || fw.categories.length, evidenceRequests: requests.length, obligations: obligations.length });
   }
   const [{ v }] = await db()<{ v: number }[]>`select coalesce(max(version), 0) + 1 as v from reports where engagement_id = ${e.id}`;
   const [r] = await db()<{ id: string }[]>`
@@ -861,7 +902,7 @@ async function guidedOn(id: string) {
   const partner = role ? null : await partnerRole(account);
   if (!role && !partner) throw new Error('Not authorized');
   if (!isUuid(id)) throw new Error('Not found');
-  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null`;
+  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null and framework = ${SELF_FRAMEWORK}`;
   const row = a as AssessmentRow & { performed_by?: string | null; assigned_to?: string | null };
   if (!a || a.status !== 'in_progress') throw new Error('Not found');
   if (partner) {

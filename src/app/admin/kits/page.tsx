@@ -32,10 +32,10 @@ function LineBadge({ state }: { state: LineState }) {
 }
 
 /** Sales against the launch conditions set by the founder board review (#71). */
-async function LaunchConditions() {
+async function LaunchConditions({ tags }: { tags: string[] }) {
   let report: Awaited<ReturnType<typeof launchReport>>;
   try {
-    report = await launchReport();
+    report = await launchReport(new Date(), tags);
   } catch (e) {
     return <p role="alert" className="mb-8 text-sm text-red-700">Could not load sales: {e instanceof Error ? e.message : String(e)}</p>;
   }
@@ -210,7 +210,7 @@ export default async function KitsAdmin({ searchParams }: { searchParams: Promis
             <p className="text-gray-600">Published: {tags.slice(0, 5).join(', ') || 'none found'}</p>
           </div>
 
-          <LaunchConditions />
+          <LaunchConditions tags={tags} />
 
           <h2 className="text-xl font-bold text-gray-900 mb-3">Grant a kit</h2>
           <form action={grantKit} className="mb-10 max-w-xl space-y-4 rounded-lg border border-gray-200 p-6">

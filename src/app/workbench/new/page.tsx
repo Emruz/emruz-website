@@ -1,6 +1,7 @@
 import { DetailHeader, Container } from '@/components';
 import { db } from '@/lib/server/db';
-import { requireStaff, staffList } from '@/lib/server/workbench';
+import { requireStaff, seesAll, staffList } from '@/lib/server/workbench';
+import { SELF_FRAMEWORK } from '@/content/self-assessment';
 import { createEngagement } from '../actions';
 import { contactOptions } from '@/lib/server/profile';
 import ClientPicker from './ClientPicker';
@@ -10,7 +11,8 @@ import { btn, card, input, label } from '../ui';
 export const metadata = { title: 'New engagement', robots: { index: false } };
 
 export default async function NewEngagement({ searchParams }: { searchParams: Promise<{ client?: string; error?: string }> }) {
-  const { account } = await requireStaff('/workbench/new');
+  const { account, role } = await requireStaff('/workbench/new');
+  const all = seesAll(role);
   const sp = await searchParams;
   const [clients, staff, selfs, contacts] = await Promise.all([
     db()<{ id: string; name: string }[]>`select id, name from clients order by name`,
@@ -19,7 +21,9 @@ export default async function NewEngagement({ searchParams }: { searchParams: Pr
       select s.id, r.company, a.email, s.score, s.completed_at
       from assessments s join accounts a on a.id = s.account_id
       join assessment_registrations r on r.account_id = s.account_id and r.withdrawn_at is null
-      where s.status = 'completed' and s.deleted_at is null order by s.completed_at desc limit 200`,
+      where s.status = 'completed' and s.deleted_at is null and s.framework = ${SELF_FRAMEWORK}
+        and (${all} or s.assigned_to = ${account.id})
+      order by s.completed_at desc limit 200`,
     contactOptions(),
   ]);
   const leads = [{ account_id: account.id, email: account.email, name: account.name }, ...staff.filter((s) => s.account_id !== account.id)];

@@ -354,6 +354,15 @@ const ai = build('ai', 'AI Readiness', [
 
 export const frameworks: Record<AssessmentType, Framework> = { security, vciso, compliance, cloud, data, ai };
 
+/**
+ * Categories the assessor has rated: not N/A, with a level, and confirmed (a rating pre-filled
+ * from a self-assessment does not count until confirmed). Used for both the ERL request scope and
+ * the staff-hours estimate, so they agree (#76).
+ */
+export function ratedCategories(ratings: { subcategory: string; na: boolean; current_level: number | null; prefilled?: boolean }[]): string[] {
+  return [...new Set(ratings.filter((r) => !r.na && r.current_level !== null && !r.prefilled).map((r) => r.subcategory.split('-')[0]))];
+}
+
 export function frameworkFor(type: string | null | undefined): Framework {
   return frameworks[assessmentType(type).id];
 }

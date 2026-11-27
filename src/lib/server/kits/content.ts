@@ -2,7 +2,7 @@ import 'server-only';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { securityEvent } from '../alerts';
-import { siteSettings } from '../settings';
+import { settingsUnread, siteSettings } from '../settings';
 import { asText, isRef, parseSums, publishedRefs, readTarGz, sha256, skillFiles, validateManifest, type Bundle, type ManifestItem, type ReleaseInfo } from './content-core';
 
 /**
@@ -177,6 +177,20 @@ let lastGood: Bundle | null = null;
  */
 export async function currentBundle(): Promise<Bundle> {
   const hold = (await siteSettings()).skillsRef;
+  // Settings never read on this instance: the hold is unknown, so keep the last good release
+  // rather than move to the newest
+  if (!hold && settingsUnread()) {
+    if (lastGood) return lastGood;
+    const recorded = (await cacheGet('last-good'))?.toString('utf8');
+    if (recorded && isRef(recorded)) {
+      try {
+        lastGood = await bundleFor(recorded);
+        return lastGood;
+      } catch {
+        /* fall through to the newest release */
+      }
+    }
+  }
   let candidates: string[];
   if (hold && isRef(hold)) {
     candidates = [hold];
@@ -216,7 +230,25 @@ export async function currentBundle(): Promise<Bundle> {
   throw new Error('No usable Emruz kits release');
 }
 
-/** Published releases that pass the checks, newest first (for the admin grant form). Checks the newest 10. */
+/** Releases that passed the checks on this instance (tags are immutable). */
+const checkedRefs = new Set<string>();
+
+/** Checks a release without keeping it in the bundle cache, so listing tags does not push out the served release. */
+async function checkRef(ref: string): Promise<boolean> {
+  if (checkedRefs.has(ref) || bundles.has(ref)) return true;
+  const bad = badRefs.get(ref);
+  if (bad && Date.now() - bad < BAD_RETRY_MS) return false;
+  try {
+    await fetchBundle(ref);
+    checkedRefs.add(ref);
+    return true;
+  } catch {
+    badRefs.set(ref, Date.now());
+    return false;
+  }
+}
+
+/** Published releases that pass the checks, newest first (for the admin forms). Checks the newest 10. */
 export async function releaseTags(): Promise<string[]> {
   let refs: string[];
   try {
@@ -224,8 +256,8 @@ export async function releaseTags(): Promise<string[]> {
   } catch {
     return lastGood ? [lastGood.ref] : [];
   }
-  const checked = await Promise.allSettled(refs.map((r) => bundleFor(r)));
-  return refs.filter((_, i) => checked[i].status === 'fulfilled');
+  const ok = await Promise.all(refs.map(checkRef));
+  return refs.filter((_, i) => ok[i]);
 }
 
 export async function readSkill(item: ManifestItem, ref: string): Promise<{ text: string; files: string[] } | null> {

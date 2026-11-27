@@ -49,6 +49,16 @@ export async function grantKit(form: FormData) {
   back(`Granted ${pack} (${version}) to ${email}.`);
 }
 
+/** True only when Stripe confirms the subscription is cancelled. */
+async function subscriptionCancelled(id: string): Promise<boolean> {
+  try {
+    return (await stripe().subscriptions.retrieve(id)).status === 'canceled';
+  } catch (e) {
+    console.error('kit subscription re-check failed', e);
+    return false;
+  }
+}
+
 export async function revokeKit(form: FormData) {
   const actor = await admin();
   const id = form.get('id');
@@ -56,17 +66,27 @@ export async function revokeKit(form: FormData) {
   if (!isUuid(id)) back('Not found.', true);
   if (!reason) back('Give a reason to revoke.', true);
   // Revoke first with the admin's reason, so the customer.subscription.deleted webhook that the
-  // cancel triggers finds nothing left to revoke; if Stripe refuses the cancel, undo it
+  // cancel triggers finds nothing left to revoke; if Stripe refuses the cancel, undo it.
+  // The time is set here (millisecond precision) so the undo can match this revocation only.
+  const at = new Date();
   const [row] = await db()<{ account_id: string; pack: string; stripe_subscription_id: string | null }[]>`
-    update kit_entitlements set revoked_at = now(), revoked_by = ${actor}, revoked_reason = ${reason}
+    update kit_entitlements set revoked_at = ${at}, revoked_by = ${actor}, revoked_reason = ${reason}
     where id = ${id} and revoked_at is null returning account_id, pack, stripe_subscription_id`;
   if (row?.stripe_subscription_id) {
+    let cancelled = false;
     try {
       const s = await stripe().subscriptions.retrieve(row.stripe_subscription_id);
       if (s.status !== 'canceled') await stripe().subscriptions.cancel(row.stripe_subscription_id);
+      cancelled = true;
     } catch (e) {
       console.error('kit subscription cancel failed', e);
-      await db()`update kit_entitlements set revoked_at = null, revoked_by = null, revoked_reason = null where id = ${id}`;
+      // The cancel may have gone through before the error: check again before undoing
+      cancelled = await subscriptionCancelled(row.stripe_subscription_id);
+    }
+    if (!cancelled) {
+      await db()`
+        update kit_entitlements set revoked_at = null, revoked_by = null, revoked_reason = null
+        where id = ${id} and revoked_at = ${at} and revoked_by = ${actor} and revoked_reason = ${reason}`;
       back('Stripe would not cancel the subscription, so the kit was not revoked. Try again or cancel it in Stripe.', true);
     }
   }

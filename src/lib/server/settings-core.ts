@@ -98,12 +98,29 @@ export function checkSetting(def: SettingDef, raw: unknown): Checked {
   }
 }
 
-/** What a Stripe price must be for a Motiv plan: recurring monthly or yearly, or one time. */
-export function priceProblem(
-  plan: NonNullable<SettingDef['plan']>,
-  p: { active: boolean; type: string; recurring: { interval: string; interval_count?: number } | null },
-): string | null {
+/** Currency of every price on the site. */
+export const CURRENCY = 'usd';
+
+/** The parts of a Stripe price the Motiv checks need. */
+export interface PriceFacts {
+  active: boolean;
+  type: string;
+  recurring: { interval: string; interval_count?: number } | null;
+  currency: string;
+  lookup_key?: string | null;
+  product: string;
+}
+
+/**
+ * What a Stripe price must be for a Motiv plan: active, in US dollars, not a kits price,
+ * recurring monthly or yearly or one time, and for the same product as the other Motiv
+ * prices in effect (`product`, when one is set).
+ */
+export function priceProblem(plan: NonNullable<SettingDef['plan']>, p: PriceFacts, product?: string | null): string | null {
   if (!p.active) return 'that price is archived in Stripe.';
+  if (p.currency !== CURRENCY) return `the price must be in ${CURRENCY.toUpperCase()}, not ${p.currency.toUpperCase()}.`;
+  if (p.lookup_key?.startsWith('kits_')) return 'that is an Emruz kits price, not a Motiv price.';
+  if (product && p.product !== product) return 'that price is for a different Stripe product than the other Motiv prices.';
   if (plan === 'lifetime') return p.type === 'one_time' ? null : 'the lifetime price must be one time.';
   const want = plan === 'monthly' ? 'month' : 'year';
   if (p.type !== 'recurring' || p.recurring?.interval !== want || (p.recurring.interval_count ?? 1) !== 1) {
@@ -130,32 +147,53 @@ export interface SiteSettings {
   kitsLaunchDate: string | null;
 }
 
+export type SettingSource = 'saved' | 'netlify' | 'default' | 'cleared';
+
 /**
- * Typed settings from stored rows. With no stored row, the Netlify variable the
- * setting replaced is used if it is still set and passes the check (so values
- * carry over until saved on /admin/settings), then the default. A stored value
- * that no longer passes its check falls back to the default.
+ * The value in effect for one setting and where it comes from. A stored row wins: an empty
+ * row is an explicit clear (the default), stored while the Netlify variable is still set so
+ * the variable no longer applies. With no row, the Netlify variable the setting replaced is
+ * used if it is set and passes the check (so values carry over until saved on
+ * /admin/settings), then the default. A stored value that no longer passes its check falls
+ * back to the default.
  */
+export function effectiveSetting(
+  def: SettingDef,
+  stored: Record<string, string | undefined>,
+  env: Record<string, string | undefined> = process.env,
+): { value: string | null; source: SettingSource } {
+  const raw = Object.hasOwn(stored, def.key) ? stored[def.key] : undefined;
+  if (raw === undefined) {
+    const fromEnv = env[def.env]?.trim();
+    if (fromEnv) {
+      const c = checkSetting(def, fromEnv);
+      if (c.ok && c.value !== null) return { value: c.value, source: 'netlify' };
+    }
+    return { value: def.fallback, source: 'default' };
+  }
+  if (raw === '') return { value: def.fallback, source: 'cleared' };
+  const c = checkSetting(def, raw);
+  return c.ok && c.value !== null ? { value: c.value, source: 'saved' } : { value: def.fallback, source: 'default' };
+}
+
+/**
+ * The stored form of a value saved from /admin/settings. Default or blank is kept as an
+ * empty row while the Netlify variable is still set, so clearing works as the page shows;
+ * otherwise the row is removed (null).
+ */
+export function storedForm(def: SettingDef, value: string | null, env: Record<string, string | undefined> = process.env): string | null {
+  if (value !== null) return value;
+  return env[def.env]?.trim() ? '' : null;
+}
+
+/** Typed settings from stored rows; see effectiveSetting. */
 export function resolveSettings(
   stored: Record<string, string | undefined>,
   env: Record<string, string | undefined> = process.env,
 ): SiteSettings {
-  const get = (key: string): string | null => {
-    const def = settingDef(key)!;
-    const raw = stored[key];
-    if (raw === undefined) {
-      const fromEnv = env[def.env]?.trim();
-      if (fromEnv) {
-        const c = checkSetting(def, fromEnv);
-        if (c.ok && c.value !== null) return c.value;
-      }
-      return def.fallback;
-    }
-    const c = checkSetting(def, raw);
-    return c.ok && c.value !== null ? c.value : def.fallback;
-  };
+  const get = (key: string): string | null => effectiveSetting(settingDef(key)!, stored, env).value;
   const num = (key: string) => Number(get(key));
-  const launch = stored[KITS_LAUNCH_DATE];
+  const launch = Object.hasOwn(stored, KITS_LAUNCH_DATE) ? stored[KITS_LAUNCH_DATE] : undefined;
   return {
     kitsSalesOpen: get('kits_sales_open') === 'true',
     kitsLifetimeUntil: get('kits_lifetime_until')!,

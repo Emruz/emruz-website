@@ -108,8 +108,8 @@ export default function ReportDocument({ c, version, draft }: { c: ReportContent
           <>
             <h3 className="font-semibold text-gray-900 mb-2">Assessment team</h3>
             <ul className="mb-5 space-y-1">
-              {c.assessors.map((a) => (
-                <li key={a.name}>
+              {c.assessors.map((a, i) => (
+                <li key={i}>
                   <span className="font-semibold">{a.name}</span>
                   {a.credentials ? `, ${a.credentials}` : ''}
                   {a.title ? <span className="text-gray-600"> · {a.title}</span> : null}

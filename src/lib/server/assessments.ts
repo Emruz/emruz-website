@@ -66,18 +66,30 @@ export async function getRegistration(accountId: string): Promise<Registration |
 export const activeRegistration = (r: Registration | null) => !!r && !r.withdrawn_at;
 
 export async function getAssessment(id: string): Promise<AssessmentRow | null> {
-  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null`;
+  const [a] = await db()<AssessmentRow[]>`select * from assessments where id = ${id} and deleted_at is null and framework = ${SELF_FRAMEWORK}`;
   return a ?? null;
 }
 
 export async function listAssessments(accountId: string): Promise<AssessmentRow[]> {
-  return db()<AssessmentRow[]>`select * from assessments where account_id = ${accountId} and deleted_at is null order by created_at desc`;
+  return db()<AssessmentRow[]>`select * from assessments where account_id = ${accountId} and deleted_at is null and framework = ${SELF_FRAMEWORK} order by created_at desc`;
+}
+
+/**
+ * Self-assessments are read only in the current format (#76, review logicB-2): the column
+ * default is still the old framework, so a row written by an earlier deploy (during a cutover or after
+ * a rollback) is in the old question set and is left out. An old-format draft would block a
+ * new one (one open assessment per account) and cannot be continued, so it is removed.
+ */
+async function dropLegacyDraft(accountId: string) {
+  await db()`
+    delete from assessments
+    where account_id = ${accountId} and status = 'in_progress' and deleted_at is null and framework <> ${SELF_FRAMEWORK}`;
 }
 
 /** The account's assessment in progress, if any. */
 export async function openAssessment(accountId: string): Promise<AssessmentRow | null> {
   const [open] = await db()<AssessmentRow[]>`
-    select * from assessments where account_id = ${accountId} and status = 'in_progress' and deleted_at is null
+    select * from assessments where account_id = ${accountId} and status = 'in_progress' and deleted_at is null and framework = ${SELF_FRAMEWORK}
     order by updated_at desc limit 1`;
   return open ?? null;
 }
@@ -86,9 +98,10 @@ export async function openAssessment(accountId: string): Promise<AssessmentRow |
 export async function currentAssessment(accountId: string): Promise<AssessmentRow> {
   const open = await openAssessment(accountId);
   if (open) return open;
+  await dropLegacyDraft(accountId);
   // Start from the last profile so returning users don't answer it again
   const [last] = await db()<{ profile: Profile }[]>`
-    select profile from assessments where account_id = ${accountId} order by created_at desc limit 1`;
+    select profile from assessments where account_id = ${accountId} and framework = ${SELF_FRAMEWORK} order by created_at desc limit 1`;
   // This runs while the page renders, so a prefetch can race the real visit;
   // the assessments_one_open index makes sure they share one draft.
   const [created] = await db()<AssessmentRow[]>`
@@ -292,6 +305,7 @@ export async function startGuidedAssessment(opts: {
   }
   // assessments_one_open allows one open assessment per account, so a guided
   // session takes over the customer's open draft instead of adding a row.
+  await dropLegacyDraft(customerId);
   const [a] = await db()<{ id: string }[]>`
     insert into assessments (account_id, framework, performed_by, assigned_to, partner_id)
     values (${customerId}, ${SELF_FRAMEWORK}, ${opts.by.id}, ${opts.by.id}, ${partnerId})

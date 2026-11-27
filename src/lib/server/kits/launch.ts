@@ -7,7 +7,8 @@ import { lifetimeOffer } from './sales';
 import { siteSettings } from '../settings';
 
 /** Kits launch conditions (#71): sales outside Emruz against the kill lines, for /admin/kits. */
-export async function launchReport(now = new Date()): Promise<{
+/** `tags`: the page's releaseTags(), so they are listed once. */
+export async function launchReport(now = new Date(), tags?: string[]): Promise<{
   metrics: SalesMetrics;
   review: LaunchReview | null;
   launchDate: string | null;
@@ -41,7 +42,7 @@ export async function launchReport(now = new Date()): Promise<{
   );
   // Set on /admin/kits (#71), kept with the site settings (#74)
   const launchDate = (await siteSettings()).kitsLaunchDate;
-  const cycles = launchDate ? releaseCyclesSince(launchDate, await releaseTags()) : 0;
+  const cycles = launchDate ? releaseCyclesSince(launchDate, tags ?? (await releaseTags())) : 0;
   const offer = await lifetimeOffer(now);
   return {
     metrics,
